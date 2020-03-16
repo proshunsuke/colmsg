@@ -131,10 +131,10 @@ OPTIONS:
     * 3: ボイス
 * 各環境毎のデフォルトの保存先は以下のようになっています
   * |Platform | Value                  | Example                  |
-        | ------- | ---------------------- | ------------------------ |
-        | Linux   | `XDG_DOWNLOAD_DIR`     | /home/alice/Downloads    |
-        | macOS   | `$HOME`/Downloads      | /Users/Alice/Downloads   |
-        | Windows | `{FOLDERID_Downloads}` | C:\Users\Alice\Downloads |
+    | ------- | ---------------------- | ------------------------ |
+    | Linux   | `XDG_DOWNLOAD_DIR`     | /home/alice/Downloads    |
+    | macOS   | `$HOME`/Downloads      | /Users/Alice/Downloads   |
+    | Windows | `{FOLDERID_Downloads}` | C:\Users\Alice\Downloads |
 * 既に保存済のメッセージは上書き保存されません
 
 ## configファイル
