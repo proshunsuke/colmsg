@@ -1,4 +1,4 @@
-# <img src="https://lh3.googleusercontent.com/NJqDujmTh1rwBtdnoOFci0bXNSNcm9pNjg93IfOkVGnjJC8hS5fzupnWFvOgqVqR7FY=s180" width="30px" alt="欅坂46/日向坂46 メッセージのロゴ"> colmsg
+# <img src="https://lh3.googleusercontent.com/NJqDujmTh1rwBtdnoOFci0bXNSNcm9pNjg93IfOkVGnjJC8hS5fzupnWFvOgqVqR7FY=s180" width="24px" alt="欅坂46/日向坂46 メッセージのロゴ"> colmsg
 
 「欅坂46/日向坂46 メッセージ」アプリのメッセージをPCに保存します。
 
