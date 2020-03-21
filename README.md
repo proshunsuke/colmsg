@@ -1,30 +1,39 @@
-# colmsg
+# <img src="https://lh3.googleusercontent.com/NJqDujmTh1rwBtdnoOFci0bXNSNcm9pNjg93IfOkVGnjJC8hS5fzupnWFvOgqVqR7FY=s180" width="30px" alt="欅坂46/日向坂46 メッセージのロゴ"> colmsg
 
-「欅坂46/日向坂46 メッセージ」アプリのメッセージをローカルに保存します
+「欅坂46/日向坂46 メッセージ」アプリのメッセージをPCに保存します。
 
 ![sample.png](doc/sample.png)
 
-## 使い方
+## 概要
 
 `colmsg` のインストール方法は[こちら](#インストール)を参照してください。
 
 **まず初めに**「欅坂46/日向坂46 メッセージ」アプリのusernameとtokenを取得してください。
 取得方法は[こちら](doc/how_to_get_username_token.md)を参照してください。
 
-取得出来たらターミナルから以下を実行してください。
+取得出来たら以下を実行してください。
 `<username>` と `<token>` にそれぞれ取得してきたusernameとtokenを入れてください。  
-実行すると、購読しているメンバー全員の全期間のメッセージがダウンロードディレクトリに保存されます。
+購読しているメンバー全員の全期間のメッセージが保存されます。
 
 ```shell script
 $ colmsg -u <username> -t <token>
 ```
 
-しかし、usernameとtokenは機微情報なため、ターミナル上で直接入力するのはあまり良くないでしょう。
+## 特徴
+
+* [x] 端末のroot化の必要がありません
+* [x] Android, iosアプリどちらにも対応しています
+* [x] Windows, macos, Linuxで実行できます
+* [x] 様々な保存方法が選べます
+
+## 使い方
+
+概要で基本的な使い方を説明しました。しかし、usernameとtokenは機微情報なため、ターミナル上で直接入力するのはあまり良くないでしょう。
 そこで、configファイルにデフォルトのオプションを設定しておくことをおすすめします。
 configファイルについては[こちら](#configファイル)を参照してください。
-以降はconfigファイルでusernameとtokenが設定されているものとして例を示します。
+以降はconfigファイルでusernameとtokenが設定されているものとします。
 
-`colmsg` にはいくつかのオプションがあります。例を紹介します。
+`colmsg` にはいくつかのオプションがあり、様々な保存方法を選べます。
 
 特定のメンバーのメッセージを保存したい場合
 
@@ -47,7 +56,7 @@ $ colmsg -k image -k movie
 特定の日時以降のメッセージを保存したい場合
 
 ```shell script
-$ colmsg -F '2020/01/01/ 00:00:00'
+$ colmsg -F '2020/01/01 00:00:00'
 ```
 
 オプションは組み合わせて使用することが出来ます。より詳細な説明は以下を実行して確認してください。
@@ -80,7 +89,7 @@ OPTIONS:
     -F, --from <from>
             save messages after a specific date.
             date format is %Y/%m/%d %H:%M:%S
-            e.g. -F '2020/01/01/ 00:00:00'
+            e.g. -F '2020/01/01 00:00:00'
     -g, --group <group>
             save messages of specific group.
             if not specified, save messages both of groups [possible values: keyakizaka, hinatazaka]
@@ -96,7 +105,7 @@ OPTIONS:
     -T, --to <to>
             save messages before a specific date.
             date format is %Y/%m/%d %H:%M:%S
-            e.g. -T '2020/01/01/ 00:00:00'
+            e.g. -T '2020/01/01 00:00:00'
     -t, --token <token>
             set a token. token is required.
 
@@ -105,8 +114,6 @@ OPTIONS:
 ```
 
 ## 詳細な仕様
-
-`colmsg` は以下のような特徴があります。
 
 * 既にいくつかメッセージが保存されている場合にコマンドを実行すると、最後に保存したメッセージ以降のメッセージを取得して保存します
 * 保存されるメッセージは次のディレクトリ構造で保存されます
@@ -196,6 +203,7 @@ $ BASE_URL=http://127.0.0.1:3100 cargo run -- --help
 * [ ] macosでの動作確認
 * [ ] メッセージ保存処理の並列化
 * [ ] api clientのcrate化
+* [ ] swagger specの配置
 
 ## ライセンス
 
