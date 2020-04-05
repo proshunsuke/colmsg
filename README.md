@@ -63,54 +63,6 @@ $ colmsg -F '2020/01/01 00:00:00'
 
 ```shell script
 $ colmsg --help
-
-colmsg 0.1.0
-A CLI tool for saving messages of '欅坂/日向坂メッセージアプリ' locally.
-
-USAGE:
-    colmsg [FLAGS] [OPTIONS] --token <token> --username <username>
-
-FLAGS:
-        --delete
-            delete all saved messages.
-            if you execute command with this option, all saved messages are deleted from your disk.
-            please use be careful.
-    -h, --help
-            Prints help information
-
-    -V, --version
-            Prints version information
-
-
-OPTIONS:
-    -d, --dir <dir>
-            set a project directory.
-            default directory is ~/Documents/colmsg.
-    -F, --from <from>
-            save messages after a specific date.
-            date format is %Y/%m/%d %H:%M:%S
-            e.g. -F '2020/01/01 00:00:00'
-    -g, --group <group>
-            save messages of specific group.
-            if not specified, save messages both of groups [possible values: keyakizaka, hinatazaka]
-    -k, --kind <kind>...
-            save specific kind of messages.
-            if not specified, save all kinds of messages.
-            e.g. -k text -k image [possible values: text, image, movie, voice]
-    -n, --name <name>...
-            save messages of specific members (菅井友香,佐々木久美,..)
-            name must be a valid full name of kanji.
-            if not specified, save messages of all members.
-            e.g. -n 菅井友香 -n 佐々木久美.
-    -T, --to <to>
-            save messages before a specific date.
-            date format is %Y/%m/%d %H:%M:%S
-            e.g. -T '2020/01/01 00:00:00'
-    -t, --token <token>
-            set a token. token is required.
-
-    -u, --username <username>
-            set a username. username is required.
 ```
 
 ## 詳細な仕様
@@ -128,7 +80,7 @@ OPTIONS:
                 ├── 3_2_20200101000001.mp4
                 └── 4_3_20200101000002.mp4
         
-        ```
+    ```
 * ファイル名の形式は `<シーケンス番号>_<種類>_<日付>.<拡張子>` となっています
   * シーケンス番号はメッセージの時系列を表す番号になっています。若い数字程昔のメッセージです。ファイルブラウザでディレクトリを見る際に辞書順で並べると保存したメッセージが時系列通りに並びます
   * 種類の数字は以下のように対応しています
@@ -136,24 +88,25 @@ OPTIONS:
     * 1: 画像
     * 2: 動画
     * 3: ボイス
-* 各環境毎のデフォルトの保存先は以下のようになっています
-  * |Platform | Value                  | Example                  |
-    | ------- | ---------------------- | ------------------------ |
-    | Linux   | `XDG_DOWNLOAD_DIR`     | /home/alice/Downloads    |
-    | macOS   | `$HOME`/Downloads      | /Users/Alice/Downloads   |
-    | Windows | `{FOLDERID_Downloads}` | C:\Users\Alice\Downloads |
+* 各環境毎のデフォルトの保存先は以下を実行することで確認することが出来ます
+  * ```shell script
+    $ colmsg --download-dir
+    ```
 * 既に保存済のメッセージは上書き保存されません
 
 ## configファイル
 
 `colmsg` は設定ファイルで予めオプションを指定することが出来ます。
-各環境毎のオプションの保存先は以下のようになっています
+デフォルトのパスは以下を実行することで確認することが出来ます。
 
-|Platform | Value                                 | Example                                        |
-| ------- | ------------------------------------- | ---------------------------------------------- |
-| Linux   | `$XDG_CONFIG_HOME` or `$HOME`/.config | /home/alice/.config/colmsg/config              |
-| macOS   | `$HOME`/Library/Preferences           | /Users/Alice/Library/Preferences/colmsg/config |
-| Windows | `{FOLDERID_RoamingAppData}`           | C:\Users\Alice\AppData\Roaming/colmsg/config   |
+```shell script
+$ colmsg --config-dir
+```
+また、環境変数 `COLMSG_CONFIG_PATH` に設定ファイルの場所を明記することもできます。
+
+```shell script
+export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
+```
 
 ### フォーマット
 
