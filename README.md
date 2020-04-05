@@ -129,9 +129,7 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 
 ### バイナリ
 
-ビルド済の実行ファイルを以下からダウンロードしてください。
-
-TODO: リリースページへ飛ばす
+異なるアーキテクチャのためのビルド済実行ファイルを[リリースページ](https://github.com/proshunsuke/colmsg/releases)に配置しました。
 
 ## 開発
 
