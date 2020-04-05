@@ -127,6 +127,15 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 
 ## インストール
 
+### macOS
+
+Homebrewでインストールすることが出来ます。
+
+```shell script
+$ brew tap proshunsuke/colmsg
+$ brew install colmsg
+```
+
 ### バイナリ
 
 異なるアーキテクチャのためのビルド済実行ファイルを[リリースページ](https://github.com/proshunsuke/colmsg/releases)に配置しました。
