@@ -158,9 +158,7 @@ $ BASE_URL=http://127.0.0.1:3100 cargo run -- --help
 * [ ] CIによる自動テスト
 * [ ] usernameとtokenの詳しい取得方法
 * [ ] examplesの用意
-* [ ] バイナリファイルの用意
 * [ ] windowsでの動作確認
-* [ ] macosでの動作確認
 * [ ] メッセージ保存処理の並列化
 * [ ] api clientのcrate化
 * [ ] swagger specの配置
