@@ -136,6 +136,14 @@ $ brew tap proshunsuke/colmsg
 $ brew install colmsg
 ```
 
+### Arch Linux
+
+[AUR](https://aur.archlinux.org/packages/colmsg/)からインストールできます。
+
+```bash
+yay -S colmsg
+```
+
 ### バイナリ
 
 異なるアーキテクチャのためのビルド済実行ファイルを[リリースページ](https://github.com/proshunsuke/colmsg/releases)に配置しました。
