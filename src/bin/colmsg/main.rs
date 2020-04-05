@@ -6,9 +6,12 @@ mod clap_app;
 pub mod config;
 
 use std::process;
+use std::io;
+use std::io::Write;
 
 use crate::{app::App};
 
+use colmsg::dirs::PROJECT_DIRS;
 use colmsg::{errors::*, Config};
 use colmsg::controller::Controller;
 
@@ -19,7 +22,17 @@ fn run_controller(config: &Config) -> Result<bool> {
 
 fn run() -> Result<bool> {
     let app = App::new()?;
-    run_controller(&app.config()?)
+    let config = &app.config()?;
+
+    if app.matches.is_present("config-dir") {
+        writeln!(io::stdout(), "{}", PROJECT_DIRS.config_dir().to_string_lossy())?;
+        Ok(true)
+    } else if app.matches.is_present("download-dir") {
+        writeln!(io::stdout(), "{}", PROJECT_DIRS.download_dir().to_string_lossy())?;
+        Ok(true)
+    } else {
+        run_controller(&config)
+    }
 }
 
 fn main() {
