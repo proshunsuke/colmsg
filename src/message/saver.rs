@@ -78,13 +78,7 @@ impl<'b> Saver<'b> {
         let member_file_name_list = self.sorted_file_name_list_by_dir_buf(&member_dir_buf);
         let mut fromdate = match self.config.from {
             Some(f) => f.format("%Y/%m/%d %H:%M:%S").to_string(),
-            None => {
-                if member_file_name_list.is_empty() {
-                    String::from("1970/01/01 09:00:00")
-                } else {
-                    self.latest_date_by_file_name_list(&member_file_name_list)?
-                }
-            }
+            None => self.latest_date_by_file_name_list(&member_file_name_list)?
         };
 
         let todate = match &self.config.to {
@@ -114,6 +108,7 @@ impl<'b> Saver<'b> {
 
             // 最新のメッセージまで保存し終わったら終了する
             if history.len() < COUNT as usize { break; };
+            let member_file_name_list = self.sorted_file_name_list_by_dir_buf(&member_dir_buf);
             fromdate = self.latest_date_by_file_name_list(&member_file_name_list)?;
         }
         println!("complete saving messages of {}!", member_name);
@@ -193,6 +188,7 @@ impl<'b> Saver<'b> {
     }
 
     fn latest_date_by_file_name_list(&self, file_name_list: &Vec<String>) -> Result<String> {
+        if file_name_list.is_empty() { return Ok(String::from("1970/01/01 09:00:00")) }
         let re = Regex::new(r"(?x)\d+_\d+_(?P<date>\d+)").unwrap();
         let caps = &re.captures(file_name_list.last().unwrap()).unwrap();
         let date = &caps["date"].parse::<String>().unwrap();
