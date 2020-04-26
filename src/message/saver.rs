@@ -138,7 +138,7 @@ impl<'b> Saver<'b> {
             Some(contents) => contents,
             None => return Ok(())
         };
-        if &history.kind == 2 { return Ok(()); }
+        if history.kind == 2 { return Ok(()); }
         let file_name = message::file::file_name(seq_id, media, &history.body.date)?;
         // 既に保存済のファイルはAPIリクエストしない&上書き保存せずスルー
         if member_file_name_list.contains(&file_name) { return Ok(()); }
