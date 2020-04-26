@@ -121,16 +121,34 @@ impl<'b> Saver<'b> {
         member_file_name_list: &Vec<String>,
         member_dir_buf: &PathBuf,
     ) -> Result<()> {
-        let file_name = message::file::file_name(&history.body.seq_id, &history.body.media, &history.body.date)?;
+        // この値が無い場合やkindが2の場合はletterなので保存せずスルー
+        let seq_id = match &history.body.seq_id {
+            Some(seq_id) => seq_id,
+            None => return Ok(())
+        };
+        let media = match &history.body.media {
+            Some(media) => media,
+            None => return Ok(())
+        };
+        let talk = match &history.body.talk {
+            Some(talk) => talk,
+            None => return Ok(())
+        };
+        let contents = match &history.body.contents {
+            Some(contents) => contents,
+            None => return Ok(())
+        };
+        if &history.kind == 2 { return Ok(()); }
+        let file_name = message::file::file_name(seq_id, media, &history.body.date)?;
         // 既に保存済のファイルはAPIリクエストしない&上書き保存せずスルー
         if member_file_name_list.contains(&file_name) { return Ok(()); }
-        match history.body.media {
+        match media {
             0 => {
                 if !self.config.kind.contains(&Kind::Text) { return Ok(()); }
                 let message_file_text = Text::new(
                     member_dir_buf,
                     file_name,
-                    &history.body.talk,
+                    talk,
                 );
                 message_file_text.save()
             }
@@ -139,8 +157,8 @@ impl<'b> Saver<'b> {
                 let message_file_image = Image::new(
                     member_dir_buf,
                     file_name,
-                    &history.body.talk,
-                    &history.body.contents,
+                    talk,
+                    contents,
                     &self.config.username,
                     &self.config.token,
                 );
@@ -151,7 +169,7 @@ impl<'b> Saver<'b> {
                 let message_file_movie = Movie::new(
                     member_dir_buf,
                     file_name,
-                    &history.body.contents,
+                    contents,
                     &self.config.username,
                     &self.config.token,
                 );
@@ -162,13 +180,16 @@ impl<'b> Saver<'b> {
                 let message_file_voice = Voice::new(
                     member_dir_buf,
                     file_name,
-                    &history.body.contents,
+                    contents,
                     &self.config.username,
                     &self.config.token,
                 );
                 message_file_voice.save()
             }
-            _ => { Err("unknown media".into()) }
+            _ => {
+                println!("unknown media type: {}", {media});
+                Ok(())
+            }
         }
     }
 
