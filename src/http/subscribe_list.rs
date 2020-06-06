@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::http;
+use crate::errors::*;
 
 const PATH: &str = "/subscribe/list";
 
@@ -46,7 +47,7 @@ struct SubscribeListReq {
     username: String,
 }
 
-pub fn request(token: &String, username: &String) -> Result<SubscribeList, reqwest::Error> {
+pub fn request(token: &String, username: &String) -> Result<SubscribeList> {
     let client = http::Client::new();
     let token = String::from(token);
     let username = String::from(username);

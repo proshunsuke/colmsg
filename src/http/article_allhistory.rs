@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::http;
+use crate::errors::*;
 
 const PATH: &str = "/article/allhistory";
 
@@ -95,7 +96,7 @@ pub fn request(
     fromdate: &String,
     sortorder: u32,
     todate: &String,
-) -> Result<ArticleAllhistory, reqwest::Error> {
+) -> Result<ArticleAllhistory> {
     let client = http::Client::new();
     let group = String::from(group);
     let token = String::from(token);

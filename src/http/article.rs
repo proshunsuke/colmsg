@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::http;
+use crate::errors::*;
 
 const PATH: &str = "/article";
 
@@ -26,7 +27,7 @@ pub struct ArticleReq {
     pub username: String,
 }
 
-pub fn request(article: &String, token: &String, username: &String) -> Result<Article, reqwest::Error> {
+pub fn request(article: &String, token: &String, username: &String) -> Result<Article> {
     let client = http::Client::new();
     let article = String::from(article);
     let token = String::from(token);
