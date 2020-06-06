@@ -1,6 +1,6 @@
 [package]
 name = "colmsg"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["proshunsuke <shunsuke0901@gmail.com>"]
 categories = ["command-line-utilities"]
 description="'欅坂46/日向坂46 メッセージ'アプリのメッセージをPCに保存します."
