@@ -7,6 +7,7 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use url::Url;
 
+use crate::errors::*;
 use crate::reqwest;
 
 pub struct Client {
@@ -18,26 +19,38 @@ impl Client {
     pub fn new() -> Client {
         Client {
             client: reqwest_client::new(),
-            base_url: base_url()
+            base_url: base_url(),
         }
     }
 
-    pub fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT, reqwest::Error>
+    pub fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT>
         where RT: DeserializeOwned, JT: Serialize + ?Sized {
         let url = Url::parse(&self.base_url).unwrap().join(&path).unwrap();
-        self.client
+        let response: Response = self.client
             .post(url)
             .headers(self.header())
             .json(json)
-            .send()?
-            .json::<RT>()
+            .send()?;
+        let body = response.text()?;
+        let result = serde_json::from_str::<RT>(&body);
+        match result {
+            Ok(t) => Ok(t),
+            Err(e) => {
+                let error_message = format!(
+                    "error: {}, response body: {}", e.to_string(), &body
+                );
+                Err(error_message.into())
+            }
+        }
     }
 
-    pub fn get_request(&self, url: &str) -> Result<Response, reqwest::Error> {
-        self.client
+    pub fn get_request(&self, url: &str) -> Result<Response> {
+        Ok(
+            self.client
             .get(url)
             .headers(self.header())
-            .send()
+            .send()?
+        )
     }
 
     fn header(&self) -> HeaderMap {
