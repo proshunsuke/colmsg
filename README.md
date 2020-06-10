@@ -1,7 +1,7 @@
 # <img src="https://lh3.googleusercontent.com/NJqDujmTh1rwBtdnoOFci0bXNSNcm9pNjg93IfOkVGnjJC8hS5fzupnWFvOgqVqR7FY=s180" width="24px" alt="欅坂46/日向坂46 メッセージのロゴ"> colmsg
 
-※ 現在colmsgは「欅坂46/日向坂46 メッセージ」アプリのVer2.0.00に対応しておりません。対応状況は[こちら](https://github.com/proshunsuke/colmsg/issues/29)を参照してください  
-(※ The colmsg does not support with "欅坂46/日向坂46 メッセージ" version 2.0.00 now. Please reference [this](https://github.com/proshunsuke/colmsg/issues/29)))
+### ※ **現在colmsgは「欅坂46/日向坂46 メッセージ」アプリのVer2.0.00に対応しておりません。対応状況は[こちら](https://github.com/proshunsuke/colmsg/issues/29)を参照してください**  
+### (※ **The colmsg does not support with "欅坂46/日向坂46 メッセージ" version 2.0.00 now. Please reference [this](https://github.com/proshunsuke/colmsg/issues/29))**)
 
 「欅坂46/日向坂46 メッセージ」アプリのメッセージをPCに保存します。
 
