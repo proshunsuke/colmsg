@@ -19,6 +19,8 @@
 $ colmsg -t <refresh_token>
 ```
 
+Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
+
 ## 特徴
 
 * [x] 端末のroot化の必要がありません
@@ -124,6 +126,13 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 ```
 
 ## インストール
+
+### Windows
+
+Windows用のビルド済実行ファイルをzipに圧縮して[リリースページ](https://github.com/proshunsuke/colmsg/releases)に配置しています。  
+ダウンロードして[7-Zip](https://sevenzip.osdn.jp/)などの解凍ソフトで解凍してください。  
+解凍後に実行ファイル `colmsg.exe` が取得出来ます。  
+[PowerShell](https://docs.microsoft.com/ja-jp/powershell/)上などで実行してください。
 
 ### macOS
 
