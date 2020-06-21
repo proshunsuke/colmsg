@@ -9,11 +9,18 @@ use std::process;
 use std::io;
 use std::io::Write;
 
-use crate::{app::App};
+use reqwest::StatusCode;
+
+use crate::{
+    app::App,
+    config::delete_access_token_file,
+};
 
 use colmsg::dirs::PROJECT_DIRS;
 use colmsg::{errors::*, Config};
+use colmsg::errors::ErrorKind::ReqwestError;
 use colmsg::controller::Controller;
+
 
 fn run_controller(config: &Config) -> Result<bool> {
     let controller = Controller::new(config);
@@ -36,7 +43,20 @@ fn run() -> Result<bool> {
 }
 
 fn main() {
-    let result = run();
+    let mut result = run();
+    loop {
+        match &result {
+            Err(Error(ReqwestError(re), _)) => {
+                if Some(StatusCode::UNAUTHORIZED) != re.status() { break; };
+                if let Err(de) = delete_access_token_file() {
+                    result = Err(de);
+                    break;
+                };
+                result = run();
+            }
+            _ => { break; }
+        }
+    }
 
     match result {
         Err(error) => {

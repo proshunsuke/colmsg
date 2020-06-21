@@ -39,17 +39,7 @@ e.g. -n 菅井友香 -n 佐々木久美.")
                 .help("Save messages after the specific date.")
                 .long_help("Save messages after the specific date.
 Date format is %Y/%m/%d %H:%M:%S
-e.g. -F '2020/01/01/ 00:00:00'")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("to")
-                .long("to")
-                .short("T")
-                .help("Save messages before the specific date.")
-                .long_help("Save messages before the specific date.
-Date format is %Y/%m/%d %H:%M:%S
-e.g. -T '2020/01/01/ 00:00:00'")
+e.g. -F '2020/01/01 00:00:00'")
                 .takes_value(true),
         )
         .arg(
@@ -57,7 +47,7 @@ e.g. -T '2020/01/01/ 00:00:00'")
                 .long("kind")
                 .short("k")
                 .multiple(true)
-                .possible_values(&["text", "image", "movie", "voice"])
+                .possible_values(&["text", "picture", "video", "voice"])
                 .help("Save specific kind of messages.")
                 .long_help("Save specific kind of messages.
 If not specified, save all kinds of messages.
@@ -74,21 +64,12 @@ Use '--download-dir' to confirm the default directory.")
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("username")
-                .long("username")
-                .short("u")
-                .required(true)
-                .help("Set the username.")
-                .long_help("Set the username. username is required.")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("token")
-                .long("token")
+            Arg::with_name("refresh_token")
+                .long("refresh_token")
                 .short("t")
                 .required(true)
-                .help("Set the token.")
-                .long_help("Set the token. token is required.")
+                .help("Set the refresh token.")
+                .long_help("Set the refresh token. refresh token is required.")
                 .takes_value(true),
         )
         .arg(

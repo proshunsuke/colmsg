@@ -4,22 +4,20 @@ use std::io;
 use std::path::PathBuf;
 
 use chrono::NaiveDateTime;
-use reqwest::blocking::Response;
 
 use crate::errors::*;
-use crate::http;
 
 pub struct Text<'a> {
     member_dir_buf: &'a PathBuf,
     file_name: String,
-    talk: &'a str,
+    talk: &'a Option<String>,
 }
 
 impl Text<'_> {
     pub fn new<'a>(
         member_dir_buf: &'a PathBuf,
         file_name: String,
-        talk: &'a str
+        talk: &'a Option<String>,
     ) -> Text<'a> {
         Text { member_dir_buf, file_name, talk }
     }
@@ -32,72 +30,51 @@ impl SaveToFile for Text<'_> {
     }
 }
 
-pub struct Image<'a> {
+pub struct Picture<'a> {
     member_dir_buf: &'a PathBuf,
     file_name: String,
-    talk: &'a str,
-    contents: &'a str,
-    username: &'a String,
-    token: &'a String,
+    talk: &'a Option<String>,
+    file_url: &'a Option<String>,
 }
 
-impl Image<'_> {
+impl Picture<'_> {
     pub fn new<'a>(
         member_dir_buf: &'a PathBuf,
         file_name: String,
-        talk: &'a str,
-        contents: &'a str,
-        username: &'a String,
-        token: &'a String,
-    ) -> Image<'a> {
-        Image { member_dir_buf, file_name, talk, contents, username, token }
+        talk: &'a Option<String>,
+        file_url: &'a Option<String>,
+    ) -> Picture<'a> {
+        Picture { member_dir_buf, file_name, talk, file_url }
     }
 }
 
-impl SaveToFile for Image<'_> {
+impl SaveToFile for Picture<'_> {
     fn save(&self) -> Result<()> {
-        let article_res = http::article::request(&String::from(self.contents), &self.token, &self.username)?;
-
-        if article_res.result.phoneimage.is_some() || article_res.result.silent.is_some() { return Ok(()); }
-
-        let mut response = http::Client::new().get_request(&article_res.result.url)?;
-
-        if !&self.talk.is_empty() { save_text(self.member_dir_buf, &self.file_name, self.talk)?};
-
-        save_media(self.member_dir_buf, &self.file_name, &mut response, "jpg")?;
+        save_media(self.member_dir_buf, &self.file_name, self.file_url, "jpg")?;
+        save_text(self.member_dir_buf, &self.file_name, self.talk)?;
         Ok(())
     }
 }
 
-pub struct Movie<'a> {
+pub struct Video<'a> {
     member_dir_buf: &'a PathBuf,
     file_name: String,
-    contents: &'a str,
-    username: &'a String,
-    token: &'a String,
+    file_url: &'a Option<String>,
 }
 
-impl Movie<'_> {
+impl Video<'_> {
     pub fn new<'a>(
         member_dir_buf: &'a PathBuf,
         file_name: String,
-        contents: &'a str,
-        username: &'a String,
-        token: &'a String,
-    ) -> Movie<'a> {
-        Movie { member_dir_buf, file_name, contents, username, token }
+        file_url: &'a Option<String>,
+    ) -> Video<'a> {
+        Video { member_dir_buf, file_name, file_url }
     }
 }
 
-impl SaveToFile for Movie<'_> {
+impl SaveToFile for Video<'_> {
     fn save(&self) -> Result<()> {
-        let article_res = http::article::request(&String::from(self.contents), &self.token, &self.username)?;
-
-        if article_res.result.silent.is_none() { return Ok(()); }
-
-        let mut response = http::Client::new().get_request(&article_res.result.url)?;
-        save_media(self.member_dir_buf, &self.file_name, &mut response, "mp4")?;
-
+        save_media(self.member_dir_buf, &self.file_name, self.file_url, "mp4")?;
         Ok(())
     }
 }
@@ -105,31 +82,22 @@ impl SaveToFile for Movie<'_> {
 pub struct Voice<'a> {
     member_dir_buf: &'a PathBuf,
     file_name: String,
-    contents: &'a str,
-    username: &'a String,
-    token: &'a String,
+    file_url: &'a Option<String>,
 }
 
 impl Voice<'_> {
     pub fn new<'a>(
         member_dir_buf: &'a PathBuf,
         file_name: String,
-        contents: &'a str,
-        username: &'a String,
-        token: &'a String,
+        file_url: &'a Option<String>,
     ) -> Voice<'a> {
-        Voice {member_dir_buf, file_name, contents, username, token }
+        Voice { member_dir_buf, file_name, file_url }
     }
 }
 
 impl SaveToFile for Voice<'_> {
     fn save(&self) -> Result<()> {
-        let article_res = http::article::request(&String::from(self.contents), &self.token, &self.username)?;
-
-        if article_res.result.phoneimage.is_none() { return Ok(()); }
-
-        let mut response = http::Client::new().get_request(&article_res.result.url)?;
-        save_media(self.member_dir_buf, &self.file_name, &mut response, "mp4")?;
+        save_media(self.member_dir_buf, &self.file_name, self.file_url, "mp4")?;
         Ok(())
     }
 }
@@ -139,31 +107,34 @@ pub trait SaveToFile {
 }
 
 pub fn file_name<'a>(seq_id: &u32, media: &u32, date: &str) -> Result<String> {
-    let date = NaiveDateTime::parse_from_str(date, "%Y/%m/%d %H:%M:%S");
-    if let Err(e) = date {
-        println!("parse error. date: {:#?}", date);
-        return Err(e.into());
-    }
-    let date = date.unwrap()
+    let parse_result = NaiveDateTime::parse_from_str(date, "%Y-%m-%dT%H:%M:%SZ");
+    if let Err(_e) = parse_result { return Err(format!("Parse error. date: {}", date).into()); }
+    let date = parse_result
+        .unwrap()
         .format("%Y%m%d%H%M%S")
         .to_string();
     Ok(format!("{}_{}_{}", seq_id, media, &date))
 }
 
-fn save_text(member_dir_buf: &PathBuf, filename: &String, talk: &str) -> Result<()> {
-    let mut file = create_file(member_dir_buf, &filename, "txt")?;
-    let talk = talk.replace("\\r\\n", "\n");
+fn save_text(member_dir_buf: &PathBuf, filename: &String, talk: &Option<String>) -> Result<()> {
+    if let Some(t) = talk {
+        let mut file = create_file(member_dir_buf, &filename, "txt")?;
+        let talk = t.replace("\\r\\n", "\n");
 
-    writeln!(file, "{}", talk)?;
-    file.flush().unwrap();
+        writeln!(file, "{}", talk)?;
+        file.flush()?;
+    }
     Ok(())
 }
 
-fn save_media(member_dir_buf: &PathBuf, filename: &String, response: &mut Response, extension: &str) -> Result<()> {
-    let mut file = create_file(member_dir_buf, &filename, &extension)?;
-    copy(response, &mut file)?;
+fn save_media(member_dir_buf: &PathBuf, filename: &String, file_url: &Option<String>, extension: &str) -> Result<()> {
+    if let Some(f) = file_url {
+        let mut response = reqwest::blocking::get(f)?;
+        let mut file = create_file(member_dir_buf, &filename, &extension)?;
+        copy(&mut response, &mut file)?;
 
-    file.flush().unwrap();
+        file.flush()?;
+    }
     Ok(())
 }
 

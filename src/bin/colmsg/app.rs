@@ -9,6 +9,7 @@ use colmsg::dirs::PROJECT_DIRS;
 use crate::{
     clap_app,
     config::get_args_from_config_file,
+    config::get_access_token_from_file
 };
 
 pub struct App {
@@ -46,9 +47,9 @@ impl App {
         let name = match self.matches.values_of("name") {
             Some(names) => {
                 names
-                    .map(|name| {name.trim()})
+                    .map(|name| { name.trim() })
                     .collect::<Vec<_>>()
-            },
+            }
             None => vec![]
         };
 
@@ -61,27 +62,18 @@ impl App {
             None => None
         };
 
-        let to = self.matches
-            .value_of("to")
-            .map(|to| NaiveDateTime::parse_from_str(to, "%Y/%m/%d %H:%M:%S"));
-        let to = match to {
-            Some(Ok(t)) => Some(t),
-            Some(Err(e)) => return Err(e.into()),
-            None => None
-        };
-
         let kind = match self.matches.values_of("kind") {
             Some(k) => {
                 k.map(|v| {
                     match v {
                         "text" => Kind::Text,
-                        "image" => Kind::Image,
-                        "movie" => Kind::Movie,
+                        "picture" => Kind::Picture,
+                        "video" => Kind::Video,
                         "voice" | _ => Kind::Voice, // _ はあり得ないはずだが怒られるのでとりあえずVoiceにする
                     }
                 }).collect::<Vec<_>>()
             }
-            None => vec![Kind::Text, Kind::Image, Kind::Movie, Kind::Voice]
+            None => vec![Kind::Text, Kind::Picture, Kind::Video, Kind::Voice]
         };
 
         let dir = self.matches
@@ -89,22 +81,18 @@ impl App {
             .map(PathBuf::from)
             .unwrap_or_else(|| PROJECT_DIRS.download_dir().to_path_buf());
         if !dir.is_dir() {
-            println!("create directory: {}", dir.display());
+            println!("create download directory: {}", dir.display());
             if let Err(e) = fs::create_dir_all(&dir) {
                 return Err(e.into());
             }
         }
 
-        let username = self.matches
-            .value_of("username")
+        let refresh_token = self.matches
+            .value_of("refresh_token")
             .map(String::from)
-            .unwrap_or_else(|| String::from("invalid_username"));
+            .unwrap_or_else(|| String::from("invalid_refresh_token"));
 
-        let token = self.matches
-            .value_of("token")
-            .map(String::from)
-            .unwrap_or_else(|| String::from("invalid_token"));
-
-        Ok(Config { group, name, from, to, kind, dir, username, token })
+        let access_token = get_access_token_from_file(&refresh_token)?;
+        Ok(Config { group, name, from, kind, dir, access_token })
     }
 }
