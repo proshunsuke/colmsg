@@ -46,14 +46,11 @@ pub fn get_access_token_from_file(refresh_token: &String) -> Result<String> {
     let dir = PROJECT_DIRS.config_dir().to_path_buf();
     if !dir.is_dir() { fs::create_dir_all(&dir)? };
     let file = dir.join("access_token");
-    if file.is_file() {
-        Ok(fs::read_to_string(file)?)
-    } else {
-        let update_token_res = http::update_token::request(refresh_token)?;
-        let mut f = File::create(file)?;
-        f.write_all(update_token_res.access_token.as_ref())?;
-        Ok(update_token_res.access_token)
-    }
+    if file.is_file() { return Ok(fs::read_to_string(file)?); }
+    let update_token_res = http::update_token::request(refresh_token)?;
+    let mut f = File::create(file)?;
+    f.write_all(update_token_res.access_token.as_ref())?;
+    Ok(update_token_res.access_token)
 }
 
 pub fn delete_access_token_file() -> Result<()> {

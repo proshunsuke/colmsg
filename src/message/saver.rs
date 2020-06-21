@@ -77,14 +77,7 @@ impl<'b> Saver<'b> {
     fn save_messages(&self, member_identifier: MemberIdentifier) -> Result<()> {
         println!("saving messages of {}...", member_identifier.name);
 
-        let mut member_dir_buf = self.config.dir.clone();
-        member_dir_buf.push(&member_identifier.gen);
-        member_dir_buf.push(&member_identifier.name);
-        if !member_dir_buf.is_dir() {
-            println!("create directory: {}", member_dir_buf.display());
-            fs::create_dir_all(&member_dir_buf)?
-        }
-
+        let member_dir_buf = self.create_member_dir_buf(&member_identifier)?;
         let id_dates = self.id_dates(&member_dir_buf);
         let mut fromdate = match self.config.from {
             Some(f) => f.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
@@ -98,10 +91,7 @@ impl<'b> Saver<'b> {
             // メッセージを取得するAPIを叩くと複数件のメッセージを取得出来る
             // そのメッセージを1件ずつ処理するためのループ
             for message in &timeline.messages {
-                match message {
-                    Some(m) => self.save_message(&m, &id_dates, &member_dir_buf)?,
-                    None => break
-                }
+                self.save_message(&message, &id_dates, &member_dir_buf)?
             };
 
             // 最新のメッセージまで保存し終わったら終了する
@@ -112,6 +102,17 @@ impl<'b> Saver<'b> {
         println!("complete saving messages of {}!", &member_identifier.name);
 
         Ok(())
+    }
+
+    fn create_member_dir_buf(&self, member_identifier: &MemberIdentifier) -> Result<PathBuf> {
+        let mut member_dir_buf = self.config.dir.clone();
+        member_dir_buf.push(&member_identifier.gen);
+        member_dir_buf.push(&member_identifier.name);
+        if !member_dir_buf.is_dir() {
+            println!("create directory: {}", member_dir_buf.display());
+            fs::create_dir_all(&member_dir_buf)?
+        }
+        Ok(member_dir_buf)
     }
 
     fn save_message(

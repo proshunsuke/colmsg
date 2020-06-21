@@ -48,9 +48,9 @@ pub struct TimelineLetters {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Timeline {
-    pub comments: Vec<Option<TimelineComments>>,
-    pub letters: Vec<Option<TimelineLetters>>,
-    pub messages: Vec<Option<TimelineMessages>>,
+    pub comments: Vec<TimelineComments>,
+    pub letters: Vec<TimelineLetters>,
+    pub messages: Vec<TimelineMessages>,
     pub queried_at: String,
 }
 
