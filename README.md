@@ -2,7 +2,7 @@
 
 「欅坂46/日向坂46 メッセージ」アプリのメッセージをPCに保存します。
 
-![sample.png](doc/sample.png)
+![sample.png](https://user-images.githubusercontent.com/3148511/85219015-fef60580-b3da-11ea-8b99-51666d27abe3.png)
 
 ## 概要
 

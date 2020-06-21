@@ -7,11 +7,56 @@
 ## 外部サービス連携
 
 **必ず**外部サービス連携をしてください。外部サービス連携をしないとデータが失われる可能性があります。  
-失われなかった場合でもデータ復旧のためにアプリ開発会社への問い合わせを行う必要があり、これには時間がかかる可能性があります。
+失われなかった場合でもデータ復旧のためにアプリ開発会社への問い合わせを行う必要があり、これには時間がかかる可能性があります。  
+ちなみにおすすめはGoogleです。
 
-<img src="setting.png" width="240" alt="setting.png"> → <img src="sosical_service.png" width="240" alt="sosical_service.png">
+<img src="https://user-images.githubusercontent.com/3148511/85218998-e0900a00-b3da-11ea-95a6-1bcf80453c3f.png" width="225" alt="setting.png"> → <img src="https://user-images.githubusercontent.com/3148511/85218999-e128a080-b3da-11ea-9841-4b2688057cdc.png" width="225" alt="sosical_service.png">
 
+## アプリデータの削除
 
-[mitmproxy](https://mitmproxy.org/)を使用して通信内容からusernameとtokenを取得してください。
+一度アプリのデータを削除する必要があります。  
+過去のメッセージなどは外部サービス連携を行っていれば失われることは無いはずです。  
 
-Android 7 以降ではmitmproxyが動作しないため、[Genymotion](https://www.genymotion.com/)などのエミュレータを使用し、Android 6 以前の環境を作ってusernameとtokenを取得してください。
+### iosアプリの場合
+
+iosを使っている人の場合は一度アプリをアンインストールしてからインストールし直してください。  
+この時、またアプリは起動しないでください。
+
+### Androidアプリの場合
+
+Androidアプリを使っている人の場合はアプリのバージョンによって異なります。
+
+#### Android 6 以前の場合
+
+Android 6 以降を使用している人の場合は [Androidアプリ共通のデータ削除](#Androidアプリ共通のデータ削除) へ進んでください。
+
+#### Android 7 以前の場合
+
+Android 7 以降を使用している人の場合は後述するmitmproxyが動作しないため、[Genymotion](https://www.genymotion.com/)などのエミュレータを使用し、Android 6 以前の環境を作ってください。
+
+[こちらの記事](https://qiita.com/sou_lab/items/bb06bb653b291c90bf45)などを参考にしてGenymotionにGoogle Play ストアを入れてください。
+その後「欅坂46/日向坂46 メッセージ」アプリをインストールしてください。
+[Androidアプリ共通のデータ削除](#Androidアプリ共通のデータ削除) へ進んでください。
+
+#### Androidアプリ共通のデータ削除
+
+Androidアプリの場合はアンインストールすることなくデータ削除を行うことが出来ます。  
+以下の手順に従ってデータ削除を行ってください。
+
+<img src="https://user-images.githubusercontent.com/3148511/85218993-de2db000-b3da-11ea-9655-b0b4c56b766d.png" width="225"> → <img src="https://user-images.githubusercontent.com/3148511/85218994-df5edd00-b3da-11ea-8666-fc874ac41786.png" width="225"> → <img src="https://user-images.githubusercontent.com/3148511/85218996-dff77380-b3da-11ea-8478-03b3a0f46d62.png" width="225"> → <img src="https://user-images.githubusercontent.com/3148511/85218996-dff77380-b3da-11ea-8478-03b3a0f46d62.png" width="225"> → <img src="https://user-images.githubusercontent.com/3148511/85218997-dff77380-b3da-11ea-80be-0d5b72b0a366.png" width="225">
+
+## refresh_tokenの取得
+
+[mitmproxy](https://mitmproxy.org/)を使用します。  
+mitmproxyの使用方法は検索すればたくさん出てきます。[こちら](https://vivibit.net/windows-mitmproxy-https)や[こちら](https://qiita.com/hkurokawa/items/9034274cc1b9e1405c68)の記事なども参考になるかも知れません。
+Genymotionを使用している人の場合、プロキシのホスト名は `10.0.3.2` を指定すると上手くいきます([参考](https://qiita.com/hkusu/items/499575a566b20ce4d95b))。
+
+次にmitmwebを起動し、アプリの通信内容を確認します。  
+アプリを起動し、アカウントの引き継ぎを行ってください。
+
+<img src="https://user-images.githubusercontent.com/3148511/85219595-50ed5a00-b3e0-11ea-8782-988eb3716507.png" width="225"> → <img src="https://user-images.githubusercontent.com/3148511/85219596-521e8700-b3e0-11ea-8db6-4295173f63db.png" width="225"> → <img src="https://user-images.githubusercontent.com/3148511/85219597-52b71d80-b3e0-11ea-9044-3d7db5c23b69.png" width="225">
+
+アカウントの引き継ぎを行っている最中にmitmproxyがアプリの通信内容をブラウザに表示させているはずです。  
+ブラウザを確認し、 `https://api.kh.glastonr.net/v2/signin` へリクエストしている項目を探してください。その項目の `Response` を確認し、 `refresh_token` を取得してください。
+
+<img src="https://user-images.githubusercontent.com/3148511/85219821-c60d5f00-b3e1-11ea-8dca-d986c21ba75c.png">
