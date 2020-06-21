@@ -22,8 +22,9 @@ pub mod errors {
             Clap(::clap::Error);
             Io(::std::io::Error);
             ParseError(::chrono::format::ParseError);
+            UrlParseError(::url::ParseError);
             ReqwestError(::reqwest::Error);
-
+            InvalidHeaderValue(::reqwest::header::InvalidHeaderValue);
         }
     }
 

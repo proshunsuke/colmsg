@@ -17,7 +17,7 @@ impl Text<'_> {
     pub fn new<'a>(
         member_dir_buf: &'a PathBuf,
         file_name: String,
-        talk: &'a Option<String>
+        talk: &'a Option<String>,
     ) -> Text<'a> {
         Text { member_dir_buf, file_name, talk }
     }
@@ -91,7 +91,7 @@ impl Voice<'_> {
         file_name: String,
         file_url: &'a Option<String>,
     ) -> Voice<'a> {
-        Voice {member_dir_buf, file_name, file_url }
+        Voice { member_dir_buf, file_name, file_url }
     }
 }
 
@@ -107,12 +107,10 @@ pub trait SaveToFile {
 }
 
 pub fn file_name<'a>(seq_id: &u32, media: &u32, date: &str) -> Result<String> {
-    let date = NaiveDateTime::parse_from_str(date, "%Y-%m-%dT%H:%M:%SZ");
-    if let Err(e) = date {
-        println!("parse error. date: {:#?}", date);
-        return Err(e.into());
-    }
-    let date = date.unwrap()
+    let parse_result = NaiveDateTime::parse_from_str(date, "%Y-%m-%dT%H:%M:%SZ");
+    if let Err(_e) = parse_result { return Err(format!("Parse error. date: {}", date).into()); }
+    let date = parse_result
+        .unwrap()
         .format("%Y%m%d%H%M%S")
         .to_string();
     Ok(format!("{}_{}_{}", seq_id, media, &date))
@@ -124,7 +122,7 @@ fn save_text(member_dir_buf: &PathBuf, filename: &String, talk: &Option<String>)
         let talk = t.replace("\\r\\n", "\n");
 
         writeln!(file, "{}", talk)?;
-        file.flush().unwrap();
+        file.flush()?;
     }
     Ok(())
 }
@@ -135,7 +133,7 @@ fn save_media(member_dir_buf: &PathBuf, filename: &String, file_url: &Option<Str
         let mut file = create_file(member_dir_buf, &filename, &extension)?;
         copy(&mut response, &mut file)?;
 
-        file.flush().unwrap();
+        file.flush()?;
     }
     Ok(())
 }
