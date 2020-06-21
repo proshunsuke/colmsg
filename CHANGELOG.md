@@ -1,5 +1,19 @@
 ## Packaging
 
+# v1.0.0
+
+https://github.com/proshunsuke/colmsg/pull/30
+
+## Changes
+
+* support "欅坂46/日向坂46 メッセージ" version 2.0.00
+* support Windows
+* update README.md
+* update doc
+  * change how to get token
+* change interface for "欅坂46/日向坂46 メッセージ" version 2.0.00
+  * run "colmsg --help" for details
+
 # v0.1.3
 
 https://github.com/proshunsuke/colmsg/pull/26
