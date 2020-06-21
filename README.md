@@ -1,26 +1,25 @@
 # <img src="https://lh3.googleusercontent.com/NJqDujmTh1rwBtdnoOFci0bXNSNcm9pNjg93IfOkVGnjJC8hS5fzupnWFvOgqVqR7FY=s180" width="24px" alt="欅坂46/日向坂46 メッセージのロゴ"> colmsg
 
-### ※ **現在colmsgは「欅坂46/日向坂46 メッセージ」アプリのVer2.0.00に対応しておりません。対応状況は[こちら](https://github.com/proshunsuke/colmsg/issues/29)を参照してください**  
-### (※ **The colmsg does not support with "欅坂46/日向坂46 メッセージ" version 2.0.00 now. Please reference [this](https://github.com/proshunsuke/colmsg/issues/29))**)
-
 「欅坂46/日向坂46 メッセージ」アプリのメッセージをPCに保存します。
 
-![sample.png](doc/sample.png)
+![sample.png](https://user-images.githubusercontent.com/3148511/85219015-fef60580-b3da-11ea-8b99-51666d27abe3.png)
 
 ## 概要
 
 `colmsg` のインストール方法は[こちら](#インストール)を参照してください。
 
-**まず初めに**「欅坂46/日向坂46 メッセージ」アプリのusernameとtokenを取得してください。
-取得方法は[こちら](doc/how_to_get_username_token.md)を参照してください。
+**まず初めに**「欅坂46/日向坂46 メッセージ」アプリのrefresh_tokenを取得してください。
+取得方法は[こちら](doc/how_to_get_refresh_token.md)を参照してください。
 
 取得出来たら以下を実行してください。
-`<username>` と `<token>` にそれぞれ取得してきたusernameとtokenを入れてください。  
+`<refresh_token>` に取得してきたrefresh_tokenを入れてください。  
 購読しているメンバー全員の全期間のメッセージが保存されます。
 
 ```shell script
-$ colmsg -u <username> -t <token>
+$ colmsg -t <refresh_token>
 ```
+
+Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
 
 ## 特徴
 
@@ -31,10 +30,11 @@ $ colmsg -u <username> -t <token>
 
 ## 使い方
 
-概要で基本的な使い方を説明しました。しかし、usernameとtokenは機微情報なため、ターミナル上で直接入力するのはあまり良くないでしょう。
+概要で基本的な使い方を説明しました。
+しかし、refresh_tokenは機微情報なため、ターミナル上で直接入力するのはあまり良くないでしょう。  
 そこで、configファイルにデフォルトのオプションを設定しておくことをおすすめします。
 configファイルについては[こちら](#configファイル)を参照してください。
-以降はconfigファイルでusernameとtokenが設定されているものとします。
+以降はconfigファイルでrefresh_tokenが設定されているものとします。
 
 `colmsg` にはいくつかのオプションがあり、様々な保存方法を選べます。
 
@@ -53,7 +53,7 @@ $ colmsg -g keyakizaka
 特定の種類のメッセージを保存したい場合
 
 ```shell script
-$ colmsg -k image -k movie
+$ colmsg -k image -k video
 ```
 
 特定の日時以降のメッセージを保存したい場合
@@ -85,7 +85,7 @@ $ colmsg --help
         
     ```
 * ファイル名の形式は `<シーケンス番号>_<種類>_<日付>.<拡張子>` となっています
-  * シーケンス番号はメッセージの時系列を表す番号になっています。若い数字程昔のメッセージです。ファイルブラウザでディレクトリを見る際に辞書順で並べると保存したメッセージが時系列通りに並びます
+  * シーケンス番号はメッセージの時系列を表す番号になっています。若い数字程昔のメッセージです。ファイルブラウザで辞書順に並べると保存したメッセージが時系列通りに並びます
   * 種類の数字は以下のように対応しています
     * 0: テキストメッセージ
     * 1: 画像
@@ -118,17 +118,21 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 設定ファイルの例:
 
 ```bash
-# usernameを指定
--u username
-
-# tokenを指定
--t token
+# refresh_tokenを指定
+-t refresh_token
 
 # メディアファイルだけ保存するように設定
--k image -k movie -k voice
+-k image -k video -k voice
 ```
 
 ## インストール
+
+### Windows
+
+Windows用のビルド済実行ファイルをzipに圧縮して[リリースページ](https://github.com/proshunsuke/colmsg/releases)に配置しています。  
+ダウンロードして[7-Zip](https://sevenzip.osdn.jp/)などの解凍ソフトで解凍してください。  
+解凍後に実行ファイル `colmsg.exe` が取得出来ます。  
+[PowerShell](https://docs.microsoft.com/ja-jp/powershell/)上などで実行してください。
 
 ### macOS
 

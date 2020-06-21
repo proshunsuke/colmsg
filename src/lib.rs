@@ -12,16 +12,19 @@ extern crate url;
 
 pub mod controller;
 pub mod dirs;
-mod http;
+pub mod http;
 mod message;
 
 pub mod errors {
     error_chain! {
         foreign_links {
+            ShellWordsParseError(::shell_words::ParseError);
             Clap(::clap::Error);
             Io(::std::io::Error);
             ParseError(::chrono::format::ParseError);
+            UrlParseError(::url::ParseError);
             ReqwestError(::reqwest::Error);
+            InvalidHeaderValue(::reqwest::header::InvalidHeaderValue);
         }
     }
 
@@ -48,14 +51,14 @@ use chrono::{NaiveDateTime};
 pub enum Group {
     Keyakizaka,
     Hinatazaka,
-    All
+    All,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Kind {
     Text,
-    Image,
-    Movie,
+    Picture,
+    Video,
     Voice,
 }
 
@@ -63,9 +66,7 @@ pub struct Config<'a> {
     pub group: Group,
     pub name: Vec<&'a str>,
     pub from: Option<NaiveDateTime>,
-    pub to: Option<NaiveDateTime>,
     pub kind: Vec<Kind>,
     pub dir: PathBuf,
-    pub username: String,
-    pub token: String,
+    pub access_token: String,
 }
