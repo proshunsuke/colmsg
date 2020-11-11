@@ -78,7 +78,7 @@ impl Client {
     fn insert_headers(&self, mut header: HeaderMap) -> Result<HeaderMap> {
         header.insert(ACCEPT, "application/json".parse()?);
         header.insert(CONTENT_TYPE, "application/json".parse()?);
-        header.insert("X-Talk-App-ID", "jp.co.sonymusic.communication.keyakizaka 2.0".parse()?);
+        header.insert("X-Talk-App-ID", "jp.co.sonymusic.communication.keyakizaka 2.1".parse()?);
         header.insert(ACCEPT_LANGUAGE, "ja-JP".parse()?);
         header.insert(USER_AGENT, "Dalvik/2.1.0 (Linux; U; Android 6.0; Samsung Galaxy S7 for keyaki messages Build/MRA58K)".parse()?);
         header.insert(CONNECTION, "Keep-Alive".parse()?);
