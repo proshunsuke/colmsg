@@ -51,7 +51,7 @@ $ colmsg -n 菅井友香 -n 佐々木久美
 特定のグループのメッセージを保存したい場合
 
 ```shell script
-$ colmsg -g keyakizaka
+$ colmsg -g sakurazaka
 ```
 
 特定の種類のメッセージを保存したい場合

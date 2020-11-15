@@ -46,10 +46,11 @@ pub mod errors {
 use std::path::PathBuf;
 
 use chrono::{NaiveDateTime};
+use crate::http::client::SHClient;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Group {
-    Keyakizaka,
+    Sakurazaka,
     Hinatazaka,
     All,
 }
@@ -62,11 +63,12 @@ pub enum Kind {
     Voice,
 }
 
-pub struct Config<'a> {
+pub struct Config<'a, C: SHClient> {
     pub group: Group,
     pub name: Vec<&'a str>,
     pub from: Option<NaiveDateTime>,
     pub kind: Vec<Kind>,
     pub dir: PathBuf,
+    pub client: C,
     pub access_token: String,
 }

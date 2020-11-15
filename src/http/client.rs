@@ -1,10 +1,10 @@
 use std::env;
 
-use reqwest::blocking::Client as reqwest_client;
-use reqwest::blocking::Response;
-use reqwest::header::{HeaderMap, CONTENT_TYPE, ACCEPT_LANGUAGE, USER_AGENT, CONNECTION, ACCEPT_ENCODING, TE, AUTHORIZATION, ACCEPT};
-use serde::Serialize;
-use serde::de::DeserializeOwned;
+use reqwest::{
+    blocking::Client as reqwest_client, blocking::Response,
+    header::{HeaderMap, CONTENT_TYPE, ACCEPT_LANGUAGE, USER_AGENT, CONNECTION, ACCEPT_ENCODING, TE, AUTHORIZATION, ACCEPT},
+};
+use serde::{Serialize, de::DeserializeOwned};
 use url::Url;
 
 #[cfg(feature = "401")]
@@ -13,16 +13,19 @@ use rand::Rng;
 use crate::errors::*;
 use crate::reqwest;
 
-pub struct Client {
+#[derive(Debug, Clone)]
+struct Client {
     client: reqwest_client,
     base_url: String,
+    x_talk_app_id: String,
 }
 
 impl Client {
-    pub fn new() -> Client {
+    pub fn new(base_url: String, x_talk_app_id: String) -> Client {
         Client {
             client: reqwest_client::new(),
-            base_url: base_url(),
+            base_url,
+            x_talk_app_id,
         }
     }
 
@@ -78,7 +81,7 @@ impl Client {
     fn insert_headers(&self, mut header: HeaderMap) -> Result<HeaderMap> {
         header.insert(ACCEPT, "application/json".parse()?);
         header.insert(CONTENT_TYPE, "application/json".parse()?);
-        header.insert("X-Talk-App-ID", "jp.co.sonymusic.communication.keyakizaka 2.1".parse()?);
+        header.insert("X-Talk-App-ID", (&self.x_talk_app_id).parse()?);
         header.insert(ACCEPT_LANGUAGE, "ja-JP".parse()?);
         header.insert(USER_AGENT, "Dalvik/2.1.0 (Linux; U; Android 6.0; Samsung Galaxy S7 for keyaki messages Build/MRA58K)".parse()?);
         header.insert(CONNECTION, "Keep-Alive".parse()?);
@@ -106,8 +109,44 @@ impl Client {
     fn insert_401_header(&self, header: HeaderMap) -> Result<HeaderMap> { Ok(header) }
 }
 
+pub trait SHClient: Clone {
+    fn new() -> Self where Self: Sized;
+
+    fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT>
+        where RT: DeserializeOwned, JT: Serialize + ?Sized;
+
+    fn get_request<RT>(&self, path: &str, access_token: &str, parameters: Option<Vec<(&str, &str)>>) -> Result<RT>
+        where RT: DeserializeOwned;
+}
+
+#[derive(Debug, Clone)]
+pub struct SClient {
+    client: Client,
+}
+
+impl SHClient for SClient {
+    fn new() -> SClient {
+        SClient {
+            client: Client::new(
+                base_url(),
+                "jp.co.sonymusic.communication.sakurazaka 2.1".to_string(),
+            ),
+        }
+    }
+
+    fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT>
+        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+        self.client.post_request(path, json)
+    }
+
+    fn get_request<RT>(&self, path: &str, access_token: &str, parameters: Option<Vec<(&str, &str)>>) -> Result<RT>
+        where RT: DeserializeOwned {
+        self.client.get_request(path, access_token, parameters)
+    }
+}
+
 fn base_url() -> String {
-    env::var("BASE_URL")
+    env::var("BASE_S_URL")
         .ok()
-        .unwrap_or_else(|| "https://api.kh.glastonr.net".to_string())
+        .unwrap_or_else(|| "https://api.s46.glastonr.net".to_string())
 }

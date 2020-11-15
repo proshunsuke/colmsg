@@ -13,7 +13,7 @@ pub fn build_app() -> ClapApp<'static, 'static> {
             Arg::with_name("group")
                 .long("group")
                 .short("g")
-                .possible_values(&["keyakizaka", "hinatazaka"])
+                .possible_values(&["sakurazaka", "hinatazaka"])
                 .help("Save messages of specific group.")
                 .long_help("Save messages of specific group.
 If not specified, save messages both of groups")
@@ -64,12 +64,11 @@ Use '--download-dir' to confirm the default directory.")
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("refresh_token")
-                .long("refresh_token")
-                .short("t")
-                .required(true)
-                .help("Set the refresh token.")
-                .long_help("Set the refresh token. refresh token is required.")
+            Arg::with_name("s_refresh_token")
+                .long("s_refresh_token")
+                .short("st")
+                .help("Set the sakurazaka refresh token.")
+                .long_help("Set the sakurazaka refresh token.")
                 .takes_value(true),
         )
         .arg(
