@@ -1,9 +1,6 @@
-# <img src="https://lh3.googleusercontent.com/NJqDujmTh1rwBtdnoOFci0bXNSNcm9pNjg93IfOkVGnjJC8hS5fzupnWFvOgqVqR7FY=s180" width="24px" alt="欅坂46/日向坂46 メッセージのロゴ"> colmsg
+# <img src="https://user-images.githubusercontent.com/3148511/99256532-e3433e00-2858-11eb-9dce-c5941574224e.png" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/99256580-f6eea480-2858-11eb-848e-3351c3d8159b.png" width="32px" alt="日向坂46メッセージのロゴ"> colmsg
 
-### ※ **「欅坂46/日向坂46 メッセージ」が10/14に「櫻坂46メッセージ」と「日向坂46メッセージ」に分かれるため、colmsgは10/14以降に動作しなくなる可能性があります。対応状況は[こちら](https://github.com/proshunsuke/colmsg/issues/33)を参照してください**  
-### (※ **"欅坂46/日向坂46 メッセージ" will be divided into "櫻坂46メッセージ" and "日向坂46メッセージ" on 10/14, so the colmsg may not work after 10/14. Please reference [this](https://github.com/proshunsuke/colmsg/issues/33))**)
-
-「欅坂46/日向坂46 メッセージ」アプリのメッセージをPCに保存します。
+「櫻坂46メッセージ」「日向坂46メッセージ」アプリのメッセージをPCに保存します。
 
 ![sample.png](https://user-images.githubusercontent.com/3148511/85219015-fef60580-b3da-11ea-8b99-51666d27abe3.png)
 
@@ -11,15 +8,16 @@
 
 `colmsg` のインストール方法は[こちら](#インストール)を参照してください。
 
-**まず初めに**「欅坂46/日向坂46 メッセージ」アプリのrefresh_tokenを取得してください。  
+**まず初めに**「櫻坂46メッセージ」「日向坂46メッセージ」アプリそれぞれのrefresh_tokenを取得してください。  
 取得方法は[こちら](doc/how_to_get_refresh_token.md)を参照してください。
 
 取得出来たら以下を実行してください。  
-`<refresh_token>` に取得してきたrefresh_tokenを入れてください。  
+`<s_refresh_token>` , `<h_refresh_token>` に「櫻坂46メッセージ」「日向坂46メッセージ」それぞれで取得してきたrefresh_tokenを入れてください。  
+※片方のアプリのみ購読している方は片方のみを指定してください。  
 購読しているメンバー全員の全期間のメッセージが保存されます。  
 
 ```shell script
-$ colmsg -t <refresh_token>
+$ colmsg -st <s_refresh_token> -ht <h_refresh_token>
 ```
 
 Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
@@ -30,7 +28,9 @@ Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてく�
 * ✅ Android, iosアプリどちらにも対応しています
 * ✅ Windows, macos, Linuxで実行できます
 * ✅ 様々な保存方法が選べます
-* ✅ 2020年6月10日のアプリアップデート後のバージョン(2.0.00)に対応しています
+* ✅ 2020年10月14日のアプリアップデート後のバージョンに対応しています
+  * 「櫻坂46メッセージ」: バージョン1.0.00.65
+  * 「日向坂46メッセージ」: バージョン2.1.00.10020.68
 
 ## 使い方
 
@@ -51,7 +51,7 @@ $ colmsg -n 菅井友香 -n 佐々木久美
 特定のグループのメッセージを保存したい場合
 
 ```shell script
-$ colmsg -g keyakizaka
+$ colmsg -g sakurazaka
 ```
 
 特定の種類のメッセージを保存したい場合
@@ -82,7 +82,7 @@ $ colmsg --help
         │   └── 佐々木久美
         │       ├── 1_0_20191231235959.txt
         │       └── 2_1_20200101000000.jpg
-        └── 欅坂46
+        └── 櫻坂46
             └── 菅井友香
                 ├── 3_2_20200101000001.mp4
                 └── 4_3_20200101000002.mp4
@@ -122,8 +122,11 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 設定ファイルの例:
 
 ```bash
-# refresh_tokenを指定
--t refresh_token
+# s_refresh_tokenを指定
+-st s_refresh_token
+
+# h_refresh_tokenを指定
+-ht h_refresh_token
 
 # メディアファイルだけ保存するように設定
 -k image -k video -k voice
@@ -164,10 +167,10 @@ yay -S colmsg
 `colmsg` は外部APIを叩きます。開発時はAPIのモックサーバを建てると良いでしょう。そのためのSwagger Specを配置してあります。  
 TODO: Swagger Specを置く
 
-モックサーバのbase urlを環境変数 `BASE_URL` で指定することが出来ます。以下のように指定することでモックサーバ宛てにAPIを叩きにいきます。
+モックサーバのbase urlを環境変数 `S_BASE_URL` , `H_BASE_URL` で指定することが出来ます。以下のように指定することでモックサーバ宛てにAPIを叩きにいきます。
 
 ```shell script
-$ BASE_URL=http://127.0.0.1:3100 cargo run -- --help
+$ S_BASE_URL=http://127.0.0.1:3100 cargo run -- --help
 ```
 
 ## TODO

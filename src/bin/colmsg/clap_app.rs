@@ -5,15 +5,15 @@ pub fn build_app() -> ClapApp<'static, 'static> {
         .version(crate_version!())
         .global_setting(AppSettings::ColoredHelp)
         .about(
-            "A CLI tool for '欅坂/日向坂メッセージアプリ'.\n\n\
+            "A CLI tool for '櫻坂46メッセージ/日向坂46メッセージ' app.\n\n\
              Use '--help' instead of '-h' to see a more detailed version of the help text.",
         )
-        .long_about("A CLI tool for saving messages of '欅坂/日向坂メッセージアプリ' locally.")
+        .long_about("A CLI tool for saving messages of '櫻坂46メッセージ/日向坂46メッセージ' app locally.")
         .arg(
             Arg::with_name("group")
                 .long("group")
                 .short("g")
-                .possible_values(&["keyakizaka", "hinatazaka"])
+                .possible_values(&["sakurazaka", "hinatazaka"])
                 .help("Save messages of specific group.")
                 .long_help("Save messages of specific group.
 If not specified, save messages both of groups")
@@ -64,12 +64,19 @@ Use '--download-dir' to confirm the default directory.")
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("refresh_token")
-                .long("refresh_token")
-                .short("t")
-                .required(true)
-                .help("Set the refresh token.")
-                .long_help("Set the refresh token. refresh token is required.")
+            Arg::with_name("s_refresh_token")
+                .long("s_refresh_token")
+                .short("st")
+                .help("Set the sakurazaka refresh token.")
+                .long_help("Set the sakurazaka refresh token.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("h_refresh_token")
+                .long("h_refresh_token")
+                .short("ht")
+                .help("Set the hinatazaka refresh token.")
+                .long_help("Set the hinatazaka refresh token.")
                 .takes_value(true),
         )
         .arg(

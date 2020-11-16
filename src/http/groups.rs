@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::http;
-use crate::errors::*;
+use crate::{errors::*, http::client::SHClient};
 
 const PATH: &str = "/v2/groups";
 
@@ -10,7 +9,7 @@ pub struct GroupsSubscription {
     pub end_at: Option<String>,
     pub start_at: String,
     #[serde(rename = "type")]
-    pub subscription_type: String
+    pub subscription_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -25,12 +24,11 @@ pub struct Groups {
     pub thumbnail: String,
     pub trial_days: Option<u32>,
     pub updated_at: String,
-    pub subscription: Option<GroupsSubscription>
+    pub subscription: Option<GroupsSubscription>,
 }
 
-pub fn request(access_token: &String) -> Result<Vec<Groups>> {
-    let client = http::Client::new();
+pub fn request<C: SHClient>(client: C, access_token: &String) -> Result<Vec<Groups>> {
     let access_token = String::from(access_token);
 
-    client.get_request::<Vec<Groups>>(PATH,  &access_token, None)
+    client.get_request::<Vec<Groups>>(PATH, &access_token, None)
 }

@@ -1,7 +1,7 @@
-use std::io::{Write, copy};
-use std::fs::File;
-use std::io;
-use std::path::PathBuf;
+use std::{
+    io::{Write, copy},
+    fs::File, io, path::PathBuf,
+};
 
 use chrono::NaiveDateTime;
 
