@@ -1,5 +1,21 @@
 ## Packaging
 
+# v2.0.0
+
+https://github.com/proshunsuke/colmsg/pull/37
+
+## BREAKING CHANGES
+
+* support "櫻坂46メッセージ" and "日向坂46メッセージ"
+* **no longer support "欅坂46/日向坂46 メッセージ"**
+* add --s_refresh_token and --h_refresh_token options
+* remove --refresh_token option
+
+## Changes
+
+* update README.md
+* update doc
+
 # v1.0.0
 
 https://github.com/proshunsuke/colmsg/pull/30
