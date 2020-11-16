@@ -146,7 +146,7 @@ impl SHClient for SClient {
 }
 
 fn s_base_url() -> String {
-    env::var("BASE_S_URL")
+    env::var("S_BASE_URL")
         .ok()
         .unwrap_or_else(|| "https://api.s46.glastonr.net".to_string())
 }
@@ -178,7 +178,7 @@ impl SHClient for HClient {
 }
 
 fn h_base_url() -> String {
-    env::var("BASE_H_URL")
+    env::var("H_BASE_URL")
         .ok()
         .unwrap_or_else(|| "https://api.kh.glastonr.net".to_string())
 }
