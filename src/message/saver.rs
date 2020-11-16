@@ -5,25 +5,24 @@ use regex::Regex;
 use walkdir::{WalkDir, DirEntry};
 use chrono::NaiveDateTime;
 
-use crate::errors::*;
-use crate::{Config, http, message, Group, Kind};
-use crate::message::file::{Text, Picture, SaveToFile, Video, Voice};
-use crate::http::groups::Groups;
-use crate::http::tags::Tags;
-use crate::http::timeline::TimelineMessages;
+use crate::{
+    errors::*, Config, message, Kind,
+    http::{self, groups::Groups, tags::Tags, timeline::TimelineMessages, client::SHClient},
+    message::file::{Text, Picture, SaveToFile, Video, Voice},
+};
 
-pub struct Saver<'a> {
-    config: &'a Config<'a>
+pub struct Saver<'a, C: SHClient> {
+    config: &'a Config<'a, C>
 }
 
-impl<'b> Saver<'b> {
-    pub fn new<'a>(config: &'a Config) -> Saver<'a> {
+impl<'b, C: SHClient> Saver<'b, C> {
+    pub fn new<'a>(config: &'a Config<C>) -> Saver<'a, C> {
         Saver { config }
     }
 
     pub fn save(&self) -> Result<()> {
-        let groups = http::groups::request(&self.config.access_token)?;
-        let tags = http::tags::request(&self.config.access_token)?;
+        let groups = http::groups::request(self.config.client.clone(), &self.config.access_token)?;
+        let tags = http::tags::request(self.config.client.clone(), &self.config.access_token)?;
 
         // TODO: 並列処理したい
         // 購読しているメンバー毎にメッセージを保存するためのループ
@@ -39,13 +38,6 @@ impl<'b> Saver<'b> {
             .iter()
             .cloned()
             .filter(|m| { m.subscription })
-            .filter(|m| {
-                match self.config.group {
-                    Group::Keyakizaka => m.group == "欅坂46",
-                    Group::Hinatazaka => m.group == "日向坂46",
-                    Group::All => true
-                }
-            })
             .filter(|m| {
                 if self.config.name.is_empty() { return true; } // メンバー指定が無い場合は全メンバーを対象にする
                 self.config.name.contains(&&*self.trim(&m.name))
@@ -86,7 +78,7 @@ impl<'b> Saver<'b> {
 
         // 購読しているメンバーのメッセージを取得するAPIを複数回叩くためのループ
         loop {
-            let timeline = http::timeline::request(&self.config.access_token, &member_identifier.id, &fromdate)?;
+            let timeline = http::timeline::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id, &fromdate)?;
 
             // メッセージを取得するAPIを叩くと複数件のメッセージを取得出来る
             // そのメッセージを1件ずつ処理するためのループ
@@ -134,7 +126,7 @@ impl<'b> Saver<'b> {
                     &message.text,
                 );
                 message_file_text.save()?
-            },
+            }
             "picture" => {
                 if !self.config.kind.contains(&Kind::Picture) { return Ok(()); }
                 let message_file_picture = Picture::new(
@@ -144,7 +136,7 @@ impl<'b> Saver<'b> {
                     &message.file,
                 );
                 message_file_picture.save()?
-            },
+            }
             "video" => {
                 if !self.config.kind.contains(&Kind::Video) { return Ok(()); }
                 let message_file_video = Video::new(
@@ -153,7 +145,7 @@ impl<'b> Saver<'b> {
                     &message.file,
                 );
                 message_file_video.save()?
-            },
+            }
             "voice" => {
                 if !self.config.kind.contains(&Kind::Voice) { return Ok(()); }
                 let message_file_voice = Voice::new(
@@ -162,7 +154,7 @@ impl<'b> Saver<'b> {
                     &message.file,
                 );
                 message_file_voice.save()?
-            },
+            }
             _ => {
                 let err = format!("unknown type: {}", message.messages_type.as_str());
                 return Err(err.into());

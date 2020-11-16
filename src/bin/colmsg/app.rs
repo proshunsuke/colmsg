@@ -3,21 +3,27 @@ use std::fs;
 
 use clap::ArgMatches;
 use wild;
+use chrono::NaiveDateTime;
 
-use colmsg::dirs::PROJECT_DIRS;
+use colmsg::{
+    dirs::PROJECT_DIRS,
+    errors::*,
+    Config,
+    Group,
+    Kind,
+    http::client::{SClient, SHClient, HClient}
+};
 
 use crate::{
     clap_app,
     config::get_args_from_config_file,
-    config::get_access_token_from_file
+    config::get_access_token_from_file,
 };
 
 pub struct App {
     pub matches: ArgMatches<'static>
 }
 
-use colmsg::{errors::*, Config, Group, Kind};
-use chrono::NaiveDateTime;
 
 impl App {
     pub fn new() -> Result<Self> {
@@ -37,9 +43,19 @@ impl App {
         Ok(clap_app::build_app().get_matches_from(args))
     }
 
-    pub fn config(&self) -> Result<Config> {
+    pub fn sakurazaka_config(&self) -> Result<Config<SClient>> {
+        let client = SClient::new();
+        self.config("s_refresh_token", client)
+    }
+
+    pub fn hinatazaka_config(&self) -> Result<Config<HClient>> {
+        let client = HClient::new();
+        self.config("h_refresh_token", client)
+    }
+
+    fn config<S: AsRef<str>, C: SHClient>(&self, refresh_token_str: S, client: C) -> Result<Config<C>> {
         let group = match self.matches.value_of("group") {
-            Some("keyakizaka") => Group::Keyakizaka,
+            Some("sakurazaka") => Group::Sakurazaka,
             Some("hinatazaka") => Group::Hinatazaka,
             _ => Group::All
         };
@@ -88,11 +104,11 @@ impl App {
         }
 
         let refresh_token = self.matches
-            .value_of("refresh_token")
+            .value_of(refresh_token_str)
             .map(String::from)
             .unwrap_or_else(|| String::from("invalid_refresh_token"));
 
-        let access_token = get_access_token_from_file(&refresh_token)?;
-        Ok(Config { group, name, from, kind, dir, access_token })
+        let access_token = get_access_token_from_file(&refresh_token, client.clone())?;
+        Ok(Config { group, name, from, kind, dir, client: client.clone(), access_token })
     }
 }

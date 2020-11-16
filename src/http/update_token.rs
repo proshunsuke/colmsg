@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::http;
-use crate::errors::*;
+use crate::{errors::*, http::client::SHClient};
 
 const PATH: &str = "/v2/update_token";
 
@@ -23,8 +22,7 @@ pub struct UpdateTokenReq {
     pub refresh_token: String
 }
 
-pub fn request(refresh_token: &String) -> Result<UpdateToken> {
-    let client = http::Client::new();
+pub fn request<C: SHClient>(client: C, refresh_token: &String) -> Result<UpdateToken> {
     let refresh_token = String::from(refresh_token);
 
     let update_token_json = UpdateTokenReq { refresh_token };
