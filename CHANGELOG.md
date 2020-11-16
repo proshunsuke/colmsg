@@ -15,6 +15,7 @@ https://github.com/proshunsuke/colmsg/pull/37
 
 * update README.md
 * update doc
+* add doc for "欅坂46/日向坂46 メッセージ" users
 
 # v1.0.0
 
