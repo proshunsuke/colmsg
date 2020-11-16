@@ -128,7 +128,7 @@ impl SHClient for SClient {
     fn new() -> SClient {
         SClient {
             client: Client::new(
-                base_url(),
+                s_base_url(),
                 "jp.co.sonymusic.communication.sakurazaka 2.1".to_string(),
             ),
         }
@@ -145,8 +145,40 @@ impl SHClient for SClient {
     }
 }
 
-fn base_url() -> String {
+fn s_base_url() -> String {
     env::var("BASE_S_URL")
         .ok()
         .unwrap_or_else(|| "https://api.s46.glastonr.net".to_string())
+}
+
+#[derive(Debug, Clone)]
+pub struct HClient {
+    client: Client,
+}
+
+impl SHClient for HClient {
+    fn new() -> HClient {
+        HClient {
+            client: Client::new(
+                h_base_url(),
+                "jp.co.sonymusic.communication.keyakizaka 2.1".to_string(),
+            ),
+        }
+    }
+
+    fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT>
+        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+        self.client.post_request(path, json)
+    }
+
+    fn get_request<RT>(&self, path: &str, access_token: &str, parameters: Option<Vec<(&str, &str)>>) -> Result<RT>
+        where RT: DeserializeOwned {
+        self.client.get_request(path, access_token, parameters)
+    }
+}
+
+fn h_base_url() -> String {
+    env::var("BASE_H_URL")
+        .ok()
+        .unwrap_or_else(|| "https://api.kh.glastonr.net".to_string())
 }

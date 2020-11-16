@@ -72,6 +72,14 @@ Use '--download-dir' to confirm the default directory.")
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("h_refresh_token")
+                .long("h_refresh_token")
+                .short("ht")
+                .help("Set the hinatazaka refresh token.")
+                .long_help("Set the hinatazaka refresh token.")
+                .takes_value(true),
+        )
+        .arg(
             Arg::with_name("delete")
                 .long("delete")
                 .help("Delete all saved messages.")

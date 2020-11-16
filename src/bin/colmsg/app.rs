@@ -11,7 +11,7 @@ use colmsg::{
     Config,
     Group,
     Kind,
-    http::client::{SClient, SHClient}
+    http::client::{SClient, SHClient, HClient}
 };
 
 use crate::{
@@ -46,6 +46,11 @@ impl App {
     pub fn sakurazaka_config(&self) -> Result<Config<SClient>> {
         let client = SClient::new();
         self.config("s_refresh_token", client)
+    }
+
+    pub fn hinatazaka_config(&self) -> Result<Config<HClient>> {
+        let client = HClient::new();
+        self.config("h_refresh_token", client)
     }
 
     fn config<S: AsRef<str>, C: SHClient>(&self, refresh_token_str: S, client: C) -> Result<Config<C>> {
