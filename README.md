@@ -1,5 +1,7 @@
 # <img src="https://user-images.githubusercontent.com/3148511/99256532-e3433e00-2858-11eb-9dce-c5941574224e.png" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/99256580-f6eea480-2858-11eb-848e-3351c3d8159b.png" width="32px" alt="日向坂46メッセージのロゴ"> colmsg
 
+[「欅坂46/日向坂46 メッセージ」アプリを使用していた方へ](doc/changes_about_sakurazaka_and_hinatazaka_app.md)
+
 「櫻坂46メッセージ」「日向坂46メッセージ」アプリのメッセージをPCに保存します。
 
 ![sample.png](https://user-images.githubusercontent.com/3148511/85219015-fef60580-b3da-11ea-8b99-51666d27abe3.png)
@@ -17,7 +19,7 @@
 購読しているメンバー全員の全期間のメッセージが保存されます。  
 
 ```shell script
-$ colmsg -st <s_refresh_token> -ht <h_refresh_token>
+$ colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token>
 ```
 
 Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
@@ -123,10 +125,10 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 
 ```bash
 # s_refresh_tokenを指定
--st s_refresh_token
+--s_refresh_token s_refresh_token
 
 # h_refresh_tokenを指定
--ht h_refresh_token
+--h_refresh_token h_refresh_token
 
 # メディアファイルだけ保存するように設定
 -k image -k video -k voice

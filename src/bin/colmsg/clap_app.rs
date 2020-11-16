@@ -66,7 +66,6 @@ Use '--download-dir' to confirm the default directory.")
         .arg(
             Arg::with_name("s_refresh_token")
                 .long("s_refresh_token")
-                .short("st")
                 .help("Set the sakurazaka refresh token.")
                 .long_help("Set the sakurazaka refresh token.")
                 .takes_value(true),
@@ -74,7 +73,6 @@ Use '--download-dir' to confirm the default directory.")
         .arg(
             Arg::with_name("h_refresh_token")
                 .long("h_refresh_token")
-                .short("ht")
                 .help("Set the hinatazaka refresh token.")
                 .long_help("Set the hinatazaka refresh token.")
                 .takes_value(true),
