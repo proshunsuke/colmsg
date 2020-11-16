@@ -1,5 +1,7 @@
 # <img src="https://user-images.githubusercontent.com/3148511/99256532-e3433e00-2858-11eb-9dce-c5941574224e.png" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/99256580-f6eea480-2858-11eb-848e-3351c3d8159b.png" width="32px" alt="日向坂46メッセージのロゴ"> colmsg
 
+[「欅坂46/日向坂46 メッセージ」アプリを使用していた方へ](doc/changes_about_sakurazaka_and_hinatazaka_app.md)
+
 「櫻坂46メッセージ」「日向坂46メッセージ」アプリのメッセージをPCに保存します。
 
 ![sample.png](https://user-images.githubusercontent.com/3148511/85219015-fef60580-b3da-11ea-8b99-51666d27abe3.png)
@@ -17,7 +19,7 @@
 購読しているメンバー全員の全期間のメッセージが保存されます。  
 
 ```shell script
-$ colmsg -st <s_refresh_token> -ht <h_refresh_token>
+$ colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token>
 ```
 
 Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
@@ -77,16 +79,15 @@ $ colmsg --help
 * 既にいくつかメッセージが保存されている場合にコマンドを実行すると、最後に保存したメッセージ以降のメッセージを取得して保存します  
 * 保存されるメッセージは次のディレクトリ構造で保存されます
   * ```shell script
-        .
-        ├── 日向坂46
+        colmsg/
+        ├── 日向坂46 一期生
         │   └── 佐々木久美
         │       ├── 1_0_20191231235959.txt
         │       └── 2_1_20200101000000.jpg
-        └── 櫻坂46
+        └── 櫻坂46 一期生
             └── 菅井友香
                 ├── 3_2_20200101000001.mp4
                 └── 4_3_20200101000002.mp4
-        
     ```
 * ファイル名の形式は `<シーケンス番号>_<種類>_<日付>.<拡張子>` となっています
   * シーケンス番号はメッセージの時系列を表す番号になっています。若い数字程昔のメッセージです。ファイルブラウザで辞書順に並べると保存したメッセージが時系列通りに並びます
@@ -123,10 +124,10 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 
 ```bash
 # s_refresh_tokenを指定
--st s_refresh_token
+--s_refresh_token s_refresh_token
 
 # h_refresh_tokenを指定
--ht h_refresh_token
+--h_refresh_token h_refresh_token
 
 # メディアファイルだけ保存するように設定
 -k image -k video -k voice

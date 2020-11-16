@@ -5,10 +5,10 @@ pub fn build_app() -> ClapApp<'static, 'static> {
         .version(crate_version!())
         .global_setting(AppSettings::ColoredHelp)
         .about(
-            "A CLI tool for '櫻坂46メッセージ/日向坂46メッセージ' app.\n\n\
+            "A CLI tool for '櫻坂46メッセージ' and '日向坂46メッセージ' app.\n\n\
              Use '--help' instead of '-h' to see a more detailed version of the help text.",
         )
-        .long_about("A CLI tool for saving messages of '櫻坂46メッセージ/日向坂46メッセージ' app locally.")
+        .long_about("A CLI tool for saving messages of '櫻坂46メッセージ' and '日向坂46メッセージ' app locally.")
         .arg(
             Arg::with_name("group")
                 .long("group")
@@ -66,7 +66,6 @@ Use '--download-dir' to confirm the default directory.")
         .arg(
             Arg::with_name("s_refresh_token")
                 .long("s_refresh_token")
-                .short("st")
                 .help("Set the sakurazaka refresh token.")
                 .long_help("Set the sakurazaka refresh token.")
                 .takes_value(true),
@@ -74,7 +73,6 @@ Use '--download-dir' to confirm the default directory.")
         .arg(
             Arg::with_name("h_refresh_token")
                 .long("h_refresh_token")
-                .short("ht")
                 .help("Set the hinatazaka refresh token.")
                 .long_help("Set the hinatazaka refresh token.")
                 .takes_value(true),
