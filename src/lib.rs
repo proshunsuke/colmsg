@@ -49,13 +49,6 @@ use chrono::{NaiveDateTime};
 use crate::http::client::SHClient;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Group {
-    Sakurazaka,
-    Hinatazaka,
-    All,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Kind {
     Text,
     Picture,
@@ -64,7 +57,6 @@ pub enum Kind {
 }
 
 pub struct Config<'a, C: SHClient> {
-    pub group: Group,
     pub name: Vec<&'a str>,
     pub from: Option<NaiveDateTime>,
     pub kind: Vec<Kind>,
