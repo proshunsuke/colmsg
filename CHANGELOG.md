@@ -1,5 +1,14 @@
 ## Packaging
 
+# v2.0.1
+
+https://github.com/proshunsuke/colmsg/pull/44
+
+## Fix bugs
+
+* write standard error output when sakurazaka
+* fix letters error
+
 # v2.0.0
 
 https://github.com/proshunsuke/colmsg/pull/37

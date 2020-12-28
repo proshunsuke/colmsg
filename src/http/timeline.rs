@@ -37,7 +37,7 @@ pub struct TimelineLetters {
     pub id: u32,
     pub is_favorite: bool,
     pub member_id: u32,
-    pub opened_at: String,
+    pub opened_at: Option<String>,
     pub text: String,
     pub thumbnail: String,
     pub thumbnail_height: u32,
