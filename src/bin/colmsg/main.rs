@@ -60,6 +60,8 @@ fn run() -> Result<bool> {
         }
     }
 
+    if let Err(_e) = &result { return result; }
+
     result = run_hinatazaka(&app);
     loop {
         match &result {
