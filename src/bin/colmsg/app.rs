@@ -9,7 +9,6 @@ use colmsg::{
     dirs::PROJECT_DIRS,
     errors::*,
     Config,
-    Group,
     Kind,
     http::client::{SClient, SHClient, HClient}
 };
@@ -54,12 +53,6 @@ impl App {
     }
 
     fn config<S: AsRef<str>, C: SHClient>(&self, refresh_token_str: S, client: C) -> Result<Config<C>> {
-        let group = match self.matches.value_of("group") {
-            Some("sakurazaka") => Group::Sakurazaka,
-            Some("hinatazaka") => Group::Hinatazaka,
-            _ => Group::All
-        };
-
         let name = match self.matches.values_of("name") {
             Some(names) => {
                 names
@@ -109,6 +102,6 @@ impl App {
             .unwrap_or_else(|| String::from("invalid_refresh_token"));
 
         let access_token = get_access_token_from_file(&refresh_token, client.clone())?;
-        Ok(Config { group, name, from, kind, dir, client: client.clone(), access_token })
+        Ok(Config { name, from, kind, dir, client: client.clone(), access_token })
     }
 }

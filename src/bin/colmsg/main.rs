@@ -12,7 +12,7 @@ use reqwest::StatusCode;
 use crate::{app::App, config::delete_access_token_file};
 
 use colmsg::dirs::PROJECT_DIRS;
-use colmsg::{errors::*, Config, Group};
+use colmsg::{errors::*, Config};
 use colmsg::errors::ErrorKind::ReqwestError;
 use colmsg::controller::Controller;
 use colmsg::http::client::{SClient, SHClient, HClient};
@@ -23,18 +23,22 @@ fn run_controller<C: SHClient>(config: &Config<C>) -> Result<bool> {
 }
 
 fn run_sakurazaka(app: &App) -> Result<bool> {
-    let config: Config<SClient> = app.sakurazaka_config()?;
-    match &config.group {
-        Group::Sakurazaka | Group::All => run_controller(&config),
-        _ => Ok(true)
+    match app.matches.value_of("group") {
+        Some("hinatazaka") => Ok(true),
+        _ => {
+            let config: Config<SClient> = app.sakurazaka_config()?;
+            run_controller(&config)
+        }
     }
 }
 
 fn run_hinatazaka(app: &App) -> Result<bool> {
-    let config: Config<HClient> = app.hinatazaka_config()?;
-    match &config.group {
-        Group::Hinatazaka | Group::All => run_controller(&config),
-        _ => Ok(true)
+    match app.matches.value_of("group") {
+        Some("sakurazaka") => Ok(true),
+        _ => {
+            let config: Config<HClient> = app.hinatazaka_config()?;
+            run_controller(&config)
+        }
     }
 }
 
