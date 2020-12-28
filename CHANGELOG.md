@@ -1,5 +1,13 @@
 ## Packaging
 
+# v2.0.2
+
+https://github.com/proshunsuke/colmsg/pull/48
+
+## Fix bugs
+
+* fixed issue that can not save hinatazaka messages
+
 # v2.0.1
 
 https://github.com/proshunsuke/colmsg/pull/44
