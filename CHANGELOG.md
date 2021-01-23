@@ -1,5 +1,13 @@
 ## Packaging
 
+# v2.0.3
+
+https://github.com/proshunsuke/colmsg/pull/51
+
+## Fix bugs
+
+* changed api version with the version up of app
+
 # v2.0.2
 
 https://github.com/proshunsuke/colmsg/pull/48
