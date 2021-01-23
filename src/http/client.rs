@@ -129,7 +129,7 @@ impl SHClient for SClient {
         SClient {
             client: Client::new(
                 s_base_url(),
-                "jp.co.sonymusic.communication.sakurazaka 2.1".to_string(),
+                "jp.co.sonymusic.communication.sakurazaka 2.2".to_string(),
             ),
         }
     }
@@ -161,7 +161,7 @@ impl SHClient for HClient {
         HClient {
             client: Client::new(
                 h_base_url(),
-                "jp.co.sonymusic.communication.keyakizaka 2.1".to_string(),
+                "jp.co.sonymusic.communication.keyakizaka 2.2".to_string(),
             ),
         }
     }
