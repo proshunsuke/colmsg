@@ -1,5 +1,13 @@
 ## Packaging
 
+# v2.0.4
+
+https://github.com/proshunsuke/colmsg/pull/57
+
+## Fix bugs
+
+* fixed an issue that could not be saved messages because of missing member_id
+
 # v2.0.3
 
 https://github.com/proshunsuke/colmsg/pull/51
