@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  swagger-editor-kh:
+    image: swaggerapi/swagger-editor
+    container_name: "swagger-editor-kh"
+    ports:
+      - "8001:8080"
+    volumes:
+      - ./api/api-kh-glastonr-net.yaml:/api-kh-glastonr-net.yaml
+      - ./api/components:/components
+    environment:
+      SWAGGER_FILE: /api-kh-glastonr-net.yaml
+
+  swagger-ui-kh:
+    image: swaggerapi/swagger-ui
+    container_name: "swagger-ui-kh"
+    ports:
+      - "8002:8080"
+    volumes:
+      - ./api/api-kh-glastonr-net.yaml:/api-kh-glastonr-net.yaml
+      - ./api/components:/components
+    environment:
+      SWAGGER_JSON: /api-kh-glastonr-net.yaml
+
+  swagger-api-kh:
+    image: stoplight/prism:3
+    container_name: "swagger-api-kh"
+    ports:
+      - "8003:4010"
+    command: mock -h 0.0.0.0 /api-kh-glastonr-net.yaml
+    volumes:
+      - ./api/api-kh-glastonr-net.yaml:/api-kh-glastonr-net.yaml
+      - ./api/components:/components
