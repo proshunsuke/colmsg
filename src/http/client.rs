@@ -29,23 +29,32 @@ impl Client {
         }
     }
 
-    pub fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT>
+    pub fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
         where RT: DeserializeOwned, JT: Serialize + ?Sized {
+        let mut header = self.insert_headers(HeaderMap::new())?;
+        header = self.insert_dynamic_header(header, is_dynamic)?;
         let url = Url::parse(&self.base_url)?.join(&path)?;
         let request_url = url.as_ref().to_string();
         let response: Response = self.client
             .post(url)
-            .headers(self.insert_headers(HeaderMap::new())?)
+            .headers(header)
             .json(json)
             .send()?
             .error_for_status()?;
         self.handle_response(response, &request_url)
     }
 
-    pub fn get_request<RT>(&self, path: &str, access_token: &str, parameters: Option<Vec<(&str, &str)>>) -> Result<RT>
+    pub fn get_request<RT>(
+        &self,
+        path: &str,
+        access_token: &str,
+        parameters: Option<Vec<(&str, &str)>>,
+        is_dynamic: bool
+    ) -> Result<RT>
         where RT: DeserializeOwned {
         let mut header = self.insert_headers(HeaderMap::new())?;
         header = self.insert_optional_headers(header, access_token)?;
+        header = self.insert_dynamic_header(header, is_dynamic)?;
 
         let iter = match parameters {
             Some(v) => v,
@@ -107,15 +116,33 @@ impl Client {
 
     #[cfg(not(feature = "401"))]
     fn insert_401_header(&self, header: HeaderMap) -> Result<HeaderMap> { Ok(header) }
+
+    fn insert_dynamic_header(&self, mut header: HeaderMap, is_dynamic: bool) -> Result<HeaderMap> {
+        // 開発時はmockサーバーがOpenApiで定義された動的なデータを返すようにする
+        match (env::var("H_BASE_URL"), env::var("H_BASE_URL"), is_dynamic) {
+            (Err(_), Err(_), _) => Ok(header),
+            (_, _, false) => Ok(header),
+            _ => {
+                header.insert("Prefer", "dynamic=true".parse()?);
+                Ok(header)
+            }
+        }
+    }
 }
 
 pub trait SHClient: Clone {
     fn new() -> Self where Self: Sized;
 
-    fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT>
+    fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
         where RT: DeserializeOwned, JT: Serialize + ?Sized;
 
-    fn get_request<RT>(&self, path: &str, access_token: &str, parameters: Option<Vec<(&str, &str)>>) -> Result<RT>
+    fn get_request<RT>(
+        &self,
+        path: &str,
+        access_token: &str,
+        parameters: Option<Vec<(&str, &str)>>,
+        is_dynamic: bool
+    ) -> Result<RT>
         where RT: DeserializeOwned;
 }
 
@@ -134,14 +161,20 @@ impl SHClient for SClient {
         }
     }
 
-    fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT>
+    fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
         where RT: DeserializeOwned, JT: Serialize + ?Sized {
-        self.client.post_request(path, json)
+        self.client.post_request(path, json, is_dynamic)
     }
 
-    fn get_request<RT>(&self, path: &str, access_token: &str, parameters: Option<Vec<(&str, &str)>>) -> Result<RT>
+    fn get_request<RT>(
+        &self,
+        path: &str,
+        access_token: &str,
+        parameters: Option<Vec<(&str, &str)>>,
+        is_dynamic: bool
+    ) -> Result<RT>
         where RT: DeserializeOwned {
-        self.client.get_request(path, access_token, parameters)
+        self.client.get_request(path, access_token, parameters, is_dynamic)
     }
 }
 
@@ -166,14 +199,20 @@ impl SHClient for HClient {
         }
     }
 
-    fn post_request<RT, JT>(&self, path: &str, json: &JT) -> Result<RT>
+    fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
         where RT: DeserializeOwned, JT: Serialize + ?Sized {
-        self.client.post_request(path, json)
+        self.client.post_request(path, json, is_dynamic)
     }
 
-    fn get_request<RT>(&self, path: &str, access_token: &str, parameters: Option<Vec<(&str, &str)>>) -> Result<RT>
+    fn get_request<RT>(
+        &self,
+        path: &str,
+        access_token: &str,
+        parameters: Option<Vec<(&str, &str)>>,
+        is_dynamic: bool
+    ) -> Result<RT>
         where RT: DeserializeOwned {
-        self.client.get_request(path, access_token, parameters)
+        self.client.get_request(path, access_token, parameters, is_dynamic)
     }
 }
 
