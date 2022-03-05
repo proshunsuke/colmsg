@@ -1,0 +1,4 @@
+schema:
+  type: string
+  default: application/json; charset=UTF-8
+required: true

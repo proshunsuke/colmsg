@@ -1,0 +1,6 @@
+schema:
+  type: string
+  default: application/json
+in: header
+name: Content-type
+required: true

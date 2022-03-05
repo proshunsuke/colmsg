@@ -1,0 +1,4 @@
+schema:
+  type: string
+  default: brim9o0c7pom6kc9lpp0
+required: true

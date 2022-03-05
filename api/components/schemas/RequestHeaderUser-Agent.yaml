@@ -1,0 +1,6 @@
+schema:
+  type: string
+  default: Dalvik/2.1.0 (Linux; U; Android 6.0; Samsung Galaxy S7 for keyaki messages Build/MRA58K)
+in: header
+name: User-Agent
+required: true

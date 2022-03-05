@@ -19,7 +19,7 @@
 購読しているメンバー全員の全期間のメッセージが保存されます。  
 
 ```shell script
-$ colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token>
+colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token>
 ```
 
 Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
@@ -47,31 +47,31 @@ configファイルについては[こちら](#configファイル)を参照して
 特定のメンバーのメッセージを保存したい場合
 
 ```shell script
-$ colmsg -n 菅井友香 -n 佐々木久美
+colmsg -n 菅井友香 -n 佐々木久美
 ```
 
 特定のグループのメッセージを保存したい場合
 
 ```shell script
-$ colmsg -g sakurazaka
+colmsg -g sakurazaka
 ```
 
 特定の種類のメッセージを保存したい場合
 
 ```shell script
-$ colmsg -k image -k video
+colmsg -k picture -k video
 ```
 
 特定の日時以降のメッセージを保存したい場合
 
 ```shell script
-$ colmsg -F '2020/01/01 00:00:00'
+colmsg -F '2020/01/01 00:00:00'
 ```
 
 オプションは組み合わせて使用することが出来ます。より詳細な説明は以下を実行して確認してください。
 
 ```shell script
-$ colmsg --help
+colmsg --help
 ```
 
 ## 詳細な仕様
@@ -98,7 +98,7 @@ $ colmsg --help
     * 3: ボイス
 * 各環境毎のデフォルトの保存先は以下を実行することで確認することが出来ます
   * ```shell script
-    $ colmsg --download-dir
+    colmsg --download-dir
     ```
 * 既に保存済のメッセージは上書き保存されません
 
@@ -108,7 +108,7 @@ $ colmsg --help
 デフォルトのパスは以下を実行することで確認することが出来ます。
 
 ```shell script
-$ colmsg --config-dir
+colmsg --config-dir
 ```
 また、環境変数 `COLMSG_CONFIG_PATH` に設定ファイルの場所を明記することもできます。
 
@@ -147,8 +147,8 @@ Windows用のビルド済実行ファイルをzipに圧縮して[リリースペ
 Homebrewでインストールすることが出来ます。
 
 ```shell script
-$ brew tap proshunsuke/colmsg
-$ brew install colmsg
+brew tap proshunsuke/colmsg
+brew install colmsg
 ```
 
 ### Arch Linux
@@ -165,24 +165,25 @@ yay -S colmsg
 
 ## 開発
 
-`colmsg` は外部APIを叩きます。開発時はAPIのモックサーバを建てると良いでしょう。そのためのSwagger Specを配置してあります。  
-TODO: Swagger Specを置く
+`colmsg` は外部APIを叩きます。開発時はOpenApiを利用したモックサーバーを建てることが出来ます。
 
-モックサーバのbase urlを環境変数 `S_BASE_URL` , `H_BASE_URL` で指定することが出来ます。以下のように指定することでモックサーバ宛てにAPIを叩きにいきます。
+```shell
+make server/kh
+```
+
+モックサーバのbase urlを環境変数 `S_BASE_URL` , `H_BASE_URL` で指定することが出来ます。
 
 ```shell script
-$ S_BASE_URL=http://127.0.0.1:3100 cargo run -- --help
+S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 cargo run -- -d ~/Downloads/temp/ --help
 ```
 
 ## TODO
 
 * [ ] deleteの実装
-* [ ] docker環境の用意
 * [ ] CIによる自動テスト
 * [ ] examplesの用意
 * [ ] メッセージ保存処理の並列化
 * [ ] api clientのcrate化
-* [ ] swagger specの配置
 
 ## ライセンス
 

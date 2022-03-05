@@ -1,0 +1,4 @@
+schema:
+  type: string
+  default: Accept-Encoding
+required: true

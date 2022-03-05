@@ -21,5 +21,5 @@ pub struct Tags {
 pub fn request<C: SHClient>(client: C, access_token: &String) -> Result<Vec<Tags>> {
     let access_token = String::from(access_token);
 
-    client.get_request::<Vec<Tags>>(PATH, &access_token, None)
+    client.get_request::<Vec<Tags>>(PATH, &access_token, None, false)
 }

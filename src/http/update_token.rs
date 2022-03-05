@@ -26,5 +26,5 @@ pub fn request<C: SHClient>(client: C, refresh_token: &String) -> Result<UpdateT
     let refresh_token = String::from(refresh_token);
 
     let update_token_json = UpdateTokenReq { refresh_token };
-    client.post_request::<UpdateToken, UpdateTokenReq>(PATH, &update_token_json)
+    client.post_request::<UpdateToken, UpdateTokenReq>(PATH, &update_token_json, true)
 }

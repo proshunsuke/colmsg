@@ -1,0 +1,6 @@
+schema:
+  type: string
+  default: ja-JP
+in: header
+name: Accept-Language
+required: true

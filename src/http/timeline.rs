@@ -63,5 +63,5 @@ pub fn request<C: SHClient>(client: C, access_token: &String, id: &u32, fromdate
         ("order", ORDER)
     ];
 
-    client.get_request::<Timeline>(path.as_str(), &access_token, Some(parameters))
+    client.get_request::<Timeline>(path.as_str(), &access_token, Some(parameters), true)
 }
