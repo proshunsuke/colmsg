@@ -1,0 +1,6 @@
+schema:
+  type: string
+  default: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTIwOTU1MDUsInN1YiI6IjEzMDIxMSJ9.TAesJMXAgS8fopvSv4Rbxb3N8HGUuu7p4Y8d7xToNrQ
+in: header
+name: Authorization
+required: true

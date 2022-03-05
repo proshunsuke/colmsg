@@ -1,0 +1,7 @@
+schema:
+  type: string
+  default: application/json
+in: header
+name: Accept
+required: true
+description: ''

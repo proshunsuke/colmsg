@@ -1,0 +1,4 @@
+schema:
+  type: string
+  default: keep-alive
+required: true

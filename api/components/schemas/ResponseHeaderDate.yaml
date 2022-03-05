@@ -1,0 +1,4 @@
+schema:
+  type: string
+  default: 'Sat, 13 Jun 2020 23:44:32 GMT'
+required: true

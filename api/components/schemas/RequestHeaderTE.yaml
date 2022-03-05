@@ -1,0 +1,6 @@
+schema:
+  type: string
+  default: 'gzip, deflate; q=0.5'
+in: header
+name: TE
+required: true
