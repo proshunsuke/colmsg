@@ -1,0 +1,1873 @@
+openapi: 3.0.0
+info:
+  title: api.n46.glastonr.net
+  version: '2.0'
+  description: '"乃木坂46メッセージ" ver2.00'
+  contact:
+    name: pro_shunsuke
+    url: 'https://twitter.com/pro_shunsuke'
+    email: shunsuke0901@gmail.com
+servers:
+  - url: 'https://api.n46.glastonr.net'
+    description: Production server (uses live data)
+  - url: 'http://localhost:8006'
+    description: Sandbox server (uses test data)
+paths:
+  /v2/update_token:
+    post:
+      summary: /v2/update_token
+      operationId: post-v2-update_token
+      description: access_tokenの更新
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-Length.yaml'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+                  pattern: '^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$'
+                  example: 7bfd1c98-fb66-4c2d-a1da-af65845fb1da
+              required:
+                - refresh_token
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    pattern: "^[a-zA-Z0-9]{36}\\.[a-zA-Z0-9]{44}\\.[a-zA-Z0-9-_]{43}$"
+                  expires_in:
+                    type: integer
+                    minimum: 0
+                    enum:
+                      - 3600
+                  refresh_token:
+                    type: string
+                    pattern: '^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$'
+                required:
+                  - access_token
+                  - expires_in
+                  - refresh_token
+              examples:
+                example:
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTIxMjE1MzQsInN1YiI6IjEzMDIxMSJ9.tz663WGim12HGUj4F-R-yJc8Iieu70A6MKVR0iSv-Ns
+                    expires_in: 3600
+                    refresh_token: 331c4f45-fcfb-4306-9588-f02cc5dcd575
+        '400':
+          description: Bad Request
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  parameter:
+                    type: string
+                required:
+                  - code
+                  - message
+                  - parameter
+              examples:
+                invalid_parameter:
+                  value:
+                    code: invalid_parameter
+                    message: リフレッシュトークンが正しくありません
+                    parameter: refresh_token
+  /v2/signin:
+    post:
+      summary: /v2/signin
+      operationId: post-v2-signin
+      description: sign in
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-Length.yaml'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                auth_type:
+                  type: string
+                  enum:
+                    - facebook
+                    - google
+                    - twitter
+                device_uuid:
+                  type: string
+                  pattern: '^[A-Z0-9]{43}=$'
+                token:
+                  type: string
+                  pattern: '^[A-Za-z0-9_]{1025}$'
+              required:
+                - auth_type
+                - device_uuid
+                - token
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    pattern: "^[A-Za-z0-9]{36}\\.[A-Za-z0-9]{44}\\.[A-Za-z0-9]{43}$"
+                  auth_type:
+                    type: string
+                    enum:
+                      - facebook
+                      - google
+                      - twitter
+                  device_uuid:
+                    type: string
+                  expires_in:
+                    type: number
+                    enum:
+                      - 3600
+                  refresh_token:
+                    type: string
+                    pattern: '^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$'
+                  username:
+                    type: string
+                    pattern: '^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$'
+                required:
+                  - access_token
+                  - auth_type
+                  - device_uuid
+                  - expires_in
+                  - refresh_token
+                  - username
+              examples:
+                example:
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTIwOTU1MDUsInN1YiI6IjEzMDIxMSJ9.TAesJMXAgS8fopvSv4Rbxb3N8HGUuu7p4Y8d7xToNrQ
+                    auth_type: google
+                    device_uuid: aiA4wmWk8TMFc6XoNglRbeAwIRM4KDKMqea1FYns=
+                    expires_in: 3600
+                    refresh_token: 331c4f45-fcfb-4306-9588-f02cc5dcd575
+                    username: 2rydsxfe-pzb1-3386-46339-j3mq6olz1p00
+  /v2/subscriptions:
+    post:
+      summary: /v2/subscriptions
+      operationId: post-v2-subscriptions
+      description: 購読情報の取得
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-Length.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_id:
+                  type: integer
+                  minimum: 0
+                  example: 45
+              required:
+                - group_id
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auto_renewing:
+                    type: boolean
+                  start_at:
+                    type: string
+                    pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+                  state:
+                    type: string
+                    enum:
+                      - active
+                  type:
+                    type: string
+                    enum:
+                      - paid
+                      - nopaid
+                      - free
+              examples:
+                example:
+                  value:
+                    auto_renewing: false
+                    group_id: 45
+                    start_at: 2022-02-27T15:21:12Z
+                    state: active
+                    type: free
+  /v2/groups:
+    get:
+      summary: /v2/groups
+      operationId: get-v2-groups
+      description: メンバー一覧の取得
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 20
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      minimum: 1
+                    is_letter_destination:
+                      type: boolean
+                    name:
+                      $ref: '#/components/schemas/MembersEnum'
+                    phone_image:
+                      type: string
+                      format: uri
+                    priority:
+                      type: integer
+                      minimum: 0
+                    state:
+                      type: string
+                      enum:
+                        - open
+                        - closed
+                    tags:
+                      $ref: '#/components/schemas/TagsEnum'
+                    thumbnail:
+                      type: string
+                      format: uri
+                    trial_days:
+                      type: integer
+                      minimum: 0
+                    updated_at:
+                      type: string
+                      pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+                    options:
+                      type: object
+                      properties:
+                        is_letter_open_notified:
+                          type: boolean
+                        is_message_commentable:
+                          type: boolean
+                        mobile_mail_address:
+                          type: string
+                          pattern: 'touser-%w{6}_%w{6}-[a-z0-9]{8}@mail\.nogizaka46\.qw\.to'
+                        sp_message_permission:
+                          type: string
+                          enum:
+                            - none
+                      required:
+                        - is_letter_open_notified
+                        - is_message_commentable
+                        - sp_message_permission
+                    subscription:
+                      type: object
+                      properties:
+                        auto_renewing:
+                          type: boolean
+                        start_at:
+                          type: string
+                          pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+                        end_at:
+                          type: string
+                          pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+                        state:
+                          type: string
+                          enum:
+                            - active
+                        type:
+                          type: string
+                          enum:
+                            - paid
+                            - nopaid
+                            - free
+                      required:
+                        - auto_renewing
+                        - start_at
+                        - state
+                        - type
+                  required:
+                    - id
+                    - is_letter_destination
+                    - name
+                    - priority
+                    - state
+                    - tags
+                    - thumbnail
+                    - updated_at
+              examples:
+                example:
+                  value:
+                    - id: 45
+                      is_letter_destination: false
+                      name: 乃木坂46
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/official.jpg'
+                      priority: 10010
+                      state: open
+                      subscription:
+                        auto_renewing: false
+                        start_at: '2022-02-27T15:21:12Z'
+                        state: active
+                        type: free
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-announcements
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/official.jpg'
+                      updated_at: '2022-03-03T04:22:29Z'
+                    - id: 1
+                      is_letter_destination: false
+                      name: 秋元 真夏
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-manatsu_akimoto-1d3df0f2@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/akimotomanatsu.jpg'
+                      priority: 10000
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/1-20220204-060039.jfif'
+                      updated_at: '2022-02-21T15:10:03Z'
+                    - id: 17
+                      is_letter_destination: false
+                      name: 伊藤 理々杏
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-riria_ito-lL6w3s2i@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/itouriria.jpg'
+                      priority: 9990
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/17-20220204-060707.jfif'
+                      updated_at: '2022-02-21T15:11:11Z'
+                    - id: 18
+                      is_letter_destination: false
+                      name: 岩本 蓮加
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-renka_iwamoto-qeZ0h1ss@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/iwamotorenka.jpg'
+                      priority: 9980
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/18-20220204-060724.jfif'
+                      updated_at: '2022-02-21T15:11:25Z'
+                    - id: 19
+                      is_letter_destination: false
+                      name: 梅澤 美波
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-minami_umezawa-YsAe3NwK@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/umezawaminami.jpg'
+                      priority: 9970
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/19-20220204-060741.jfif'
+                      updated_at: '2022-02-21T15:11:35Z'
+                    - id: 29
+                      is_letter_destination: false
+                      name: 遠藤 さくら
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-sakura_endo-nTp8iN3A@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/endousakura.jpg'
+                      priority: 9960
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/29-20220204-061041.jfif'
+                      updated_at: '2022-02-21T15:11:47Z'
+                    - id: 30
+                      is_letter_destination: false
+                      name: 賀喜 遥香
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-haruka_kaki-3BWijU2s@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/kakiharuka.jpg'
+                      priority: 9950
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/30-20220204-061056.jfif'
+                      updated_at: '2022-02-21T15:11:58Z'
+                    - id: 31
+                      is_letter_destination: false
+                      name: 掛橋 沙耶香
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-sayaka_kakehashi-6WVUHeLM@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/kakehashisayaka.jpg'
+                      priority: 9940
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/31-20220204-061114.jfif'
+                      updated_at: '2022-02-21T15:12:08Z'
+                    - id: 32
+                      is_letter_destination: false
+                      name: 金川 紗耶
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-saya_kanagawa-bPUASTpu@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/kanagawasaya.jpg'
+                      priority: 9930
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/32-20220204-061132.jfif'
+                      updated_at: '2022-02-21T15:12:17Z'
+                    - id: 33
+                      is_letter_destination: false
+                      name: 北川 悠理
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-yuri_kitagawa-WPXXTrju@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/kitagawayuri.jpg'
+                      priority: 9920
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/33-20220204-061152.jfif'
+                      updated_at: '2022-02-21T15:12:26Z'
+                    - id: 10
+                      is_letter_destination: false
+                      name: 北野 日奈子
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-hinako_kitano-0zf12b50@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/kitanohinako.jpg'
+                      priority: 9910
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/10-20220204-060422.jfif'
+                      updated_at: '2022-02-21T15:12:35Z'
+                    - id: 21
+                      is_letter_destination: false
+                      name: 久保 史緒里
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-shiori_kubo-NF9AfclC@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/kuboshiori.jpg'
+                      priority: 9900
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/21-20220204-060757.jfif'
+                      updated_at: '2022-02-21T15:12:43Z'
+                    - id: 34
+                      is_letter_destination: false
+                      name: 黒見 明香
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-haruka_kuromi-rmKBZSw3@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/kuromiharuka.jpg'
+                      priority: 9890
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/34-20220204-061210.jfif'
+                      updated_at: '2022-02-21T15:12:53Z'
+                    - id: 3
+                      is_letter_destination: false
+                      name: 齋藤 飛鳥
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-asuka_saito-9jh0yCp3@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/saitouasuka.jpg'
+                      priority: 9880
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/3-20220204-060100.jfif'
+                      updated_at: '2022-02-21T15:13:02Z'
+                    - id: 22
+                      is_letter_destination: false
+                      name: 阪口 珠美
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-tamami_sakaguchi-Jz87HkGi@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/sakaguchitamami.jpg'
+                      priority: 9870
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/22-20220204-060811.jfif'
+                      updated_at: '2022-02-21T15:13:11Z'
+                    - id: 23
+                      is_letter_destination: false
+                      name: 佐藤 楓
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-kaede_satou-fBvDXXrW@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/satoukaede.jpg'
+                      priority: 9860
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/23-20220204-060830.jfif'
+                      updated_at: '2022-02-21T15:13:18Z'
+                    - id: 35
+                      is_letter_destination: false
+                      name: 佐藤 璃果
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-rika_sato-VxaxV7XQ@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/satourika.jpg'
+                      priority: 9850
+                      state: open
+                      subscription:
+                        auto_renewing: true
+                        start_at: '2022-02-27T15:53:48Z'
+                        state: active
+                        type: paid
+                        end_at: '2022-03-27T17:53:33Z'
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/35-20220204-061227.jfif'
+                      updated_at: '2022-02-21T15:13:27Z'
+                    - id: 36
+                      is_letter_destination: false
+                      name: 柴田 柚菜
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-yuna_shibata-xzzShmwp@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/shibatayuna.jpg'
+                      priority: 9840
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/36-20220204-061242.jfif'
+                      updated_at: '2022-02-21T15:13:35Z'
+                    - id: 12
+                      is_letter_destination: false
+                      name: 鈴木 絢音
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-ayane_suzuki-NfjRt6o7@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/suzukiayane.jpg'
+                      priority: 9820
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/12-20220204-060448.jfif'
+                      updated_at: '2022-02-21T15:13:45Z'
+                    - id: 37
+                      is_letter_destination: false
+                      name: 清宮 レイ
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-rei_seimiya-LErUVMjD@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/seimiyarei.jpg'
+                      priority: 9810
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/37-20220204-061256.jfif'
+                      updated_at: '2022-02-21T15:13:58Z'
+                    - id: 38
+                      is_letter_destination: false
+                      name: 田村 真佑
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-mayu_tamura-7cAVpSQC@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/tamuramayu.jpg'
+                      priority: 9800
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/38-20220204-061314.jfif'
+                      updated_at: '2022-02-21T15:14:16Z'
+                    - id: 39
+                      is_letter_destination: false
+                      name: 筒井 あやめ
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-ayame_tsutsui-eJzA3FXf@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/tsutsuiayame.jpg'
+                      priority: 9790
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/39-20220204-061349.jfif'
+                      updated_at: '2022-02-21T15:15:49Z'
+                    - id: 24
+                      is_letter_destination: false
+                      name: 中村 麗乃
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-reno_nakamura-Bt50AGR8@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/nakamurareno.jpg'
+                      priority: 9770
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/24-20220204-060900.jfif'
+                      updated_at: '2022-02-21T15:16:05Z'
+                    - id: 40
+                      is_letter_destination: false
+                      name: 早川 聖来
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-seira_hayakawa-4Q557LGs@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/hayakawaseira.jpg'
+                      priority: 9760
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/40-20220204-061413.jfif'
+                      updated_at: '2022-02-21T15:16:32Z'
+                    - id: 41
+                      is_letter_destination: false
+                      name: 林 瑠奈
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-runa_hayashi-VnpZM4Ya@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/hayashiruna.jpg'
+                      priority: 9750
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/41-20220204-061430.jfif'
+                      updated_at: '2022-02-21T15:16:44Z'
+                    - id: 5
+                      is_letter_destination: false
+                      name: 樋口 日奈
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-hina_higuchi-056a827e@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/higuchihina.jpg'
+                      priority: 9740
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/5-20220204-060120.jfif'
+                      updated_at: '2022-02-21T15:16:55Z'
+                    - id: 42
+                      is_letter_destination: false
+                      name: 松尾 美佑
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-miyu_matsuo-RSjsB9pb@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/matsuomiyu.jpg'
+                      priority: 9720
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/42-20220204-061441.jfif'
+                      updated_at: '2022-02-21T15:17:08Z'
+                    - id: 25
+                      is_letter_destination: false
+                      name: 向井 葉月
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-hazuki_mukai-8nWmD9NT@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/mukaihazuki.jpg'
+                      priority: 9710
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/25-20220204-060933.jfif'
+                      updated_at: '2022-02-21T15:17:20Z'
+                    - id: 43
+                      is_letter_destination: false
+                      name: 矢久保 美緒
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-mio_yakubo-p8jU7Ms4@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/yakubomio.jpg'
+                      priority: 9700
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/43-20220204-061455.jfif'
+                      updated_at: '2022-02-21T15:17:31Z'
+                    - id: 15
+                      is_letter_destination: false
+                      name: 山崎 怜奈
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-rena_yamazaki-IY60T4Qy@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/yamazakirena.jpg'
+                      priority: 9690
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/15-20220204-060644.jfif'
+                      updated_at: '2022-02-21T15:17:42Z'
+                    - id: 26
+                      is_letter_destination: false
+                      name: 山下 美月
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-mizuki_yamashita-48oHk2uD@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/yamashitamizuki.jpg'
+                      priority: 9680
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/26-20220204-060951.jfif'
+                      updated_at: '2022-02-21T15:17:53Z'
+                    - id: 44
+                      is_letter_destination: false
+                      name: 弓木 奈於
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-nao_yumiki-YTzgGxNZ@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/yumikinao.jpg'
+                      priority: 9670
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/44-20220204-061509.jfif'
+                      updated_at: '2022-02-21T15:18:04Z'
+                    - id: 27
+                      is_letter_destination: false
+                      name: 吉田 綾乃ｸﾘｽﾃｨｰ
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-ayano_christie_yoshida-4qQYP4Yn@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/yoshidaayanochristie.jpg'
+                      priority: 9660
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/27-20220204-061008.jfif'
+                      updated_at: '2022-02-21T15:18:16Z'
+                    - id: 28
+                      is_letter_destination: false
+                      name: 与田 祐希
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-yuuki_yoda-u3leF8ZB@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/yodayuuki.jpg'
+                      priority: 9650
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/28-20220204-061023.jfif'
+                      updated_at: '2022-02-21T15:18:28Z'
+                    - id: 8
+                      is_letter_destination: false
+                      name: 和田 まあや
+                      options:
+                        is_letter_open_notified: false
+                        is_message_commentable: false
+                        sp_message_permission: none
+                        mobile_mail_address: 'touser-maaya_wada-7a7a31fc@mail.nogizaka46.qw.to'
+                      phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/wadamaaya.jpg'
+                      priority: 9640
+                      state: open
+                      tags:
+                        - nogizaka46.com
+                        - nogizaka46-1
+                      thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/8-20220204-060348.jfif'
+                      updated_at: '2022-02-21T15:18:40Z'
+                    - id: 2
+                      is_letter_destination: false
+                      name: 生田 絵梨花
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T18:59:34Z'
+                    - id: 4
+                      is_letter_destination: false
+                      name: 高山 一実
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T18:59:40Z'
+                    - id: 6
+                      is_letter_destination: false
+                      name: 星野 みなみ
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T18:59:47Z'
+                    - id: 7
+                      is_letter_destination: false
+                      name: 松村 沙友理
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T18:59:54Z'
+                    - id: 9
+                      is_letter_destination: false
+                      name: 伊藤 純奈
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T19:00:00Z'
+                    - id: 11
+                      is_letter_destination: false
+                      name: 新内 眞衣
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T19:00:07Z'
+                    - id: 13
+                      is_letter_destination: false
+                      name: 寺田 蘭世
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T19:00:13Z'
+                    - id: 14
+                      is_letter_destination: false
+                      name: 堀 未央奈
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T19:00:20Z'
+                    - id: 16
+                      is_letter_destination: false
+                      name: 渡辺 みり愛
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T19:00:27Z'
+                    - id: 20
+                      is_letter_destination: false
+                      name: 大園 桃子
+                      priority: 0
+                      state: closed
+                      tags: []
+                      thumbnail: ''
+                      updated_at: '2022-02-09T19:00:33Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - unauthorized
+                  message:
+                    type: string
+                    enum:
+                      - 認証情報エラー
+              examples:
+                example:
+                  value:
+                    code: unauthorized
+                    message: 認証情報エラー
+  /v2/tags:
+    get:
+      summary: /v2/tags
+      operationId: get-v2-tags
+      description: タグ一覧の取得
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: false
+                items:
+                  type: object
+                  properties:
+                    meta:
+                      type: object
+                      properties:
+                        dimension:
+                          type: string
+                          enum:
+                            - company
+                    name:
+                      type: string
+                      enum:
+                        - 乃木坂46
+                        - 乃木坂46 お知らせ
+                        - 乃木坂46 2期生
+                        - 乃木坂46 3期生
+                        - 乃木坂46 4期生
+                    priority:
+                      type: integer
+                      minimum: 0
+                    updated_at:
+                      type: string
+                      pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+                    uuid:
+                      type: string
+                      enum:
+                        - nogizaka46.com
+                        - nogizaka46-announcements
+                        - nogizaka46-1
+                        - nogizaka46-2
+                        - nogizaka46-3
+                        - nogizaka46-4
+                  required:
+                    - name
+                    - priority
+                    - updated_at
+                    - uuid
+              examples:
+                example:
+                  value:
+                    - meta:
+                        dimension: company
+                      name: 乃木坂46
+                      priority: 200
+                      updated_at: '2022-02-21T17:20:38Z'
+                      uuid: nogizaka46.com
+                    - name: 乃木坂46 お知らせ
+                      priority: 199
+                      updated_at: '2022-02-21T17:20:49Z'
+                      uuid: nogizaka46-announcements
+                    - name: 乃木坂46
+                      priority: 198
+                      updated_at: '2022-02-21T15:25:57Z'
+                      uuid: nogizaka46-1
+                    - name: 乃木坂46 2期生
+                      priority: 197
+                      updated_at: '2022-02-09T18:55:03Z'
+                      uuid: nogizaka46-2
+                    - name: 乃木坂46 3期生
+                      priority: 196
+                      updated_at: '2022-02-09T18:55:12Z'
+                      uuid: nogizaka46-3
+                    - name: 乃木坂46 4期生
+                      priority: 195
+                      updated_at: '2022-02-09T18:55:22Z'
+                      uuid: nogizaka46-4
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - unauthorized
+                  message:
+                    type: string
+                    enum:
+                      - 認証情報エラー
+              examples:
+                example:
+                  value:
+                    code: unauthorized
+                    message: 認証情報エラー
+  '/v2/groups/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: '/v2/groups/{id}'
+      operationId: get-v2-group-id
+      description: 特定IDのメンバー取得
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    minimum: 1
+                  is_letter_destination:
+                    type: boolean
+                  name:
+                    $ref: '#/components/schemas/MembersEnum'
+                  phone_image:
+                    type: string
+                    format: uri
+                  priority:
+                    type: integer
+                    minimum: 0
+                  state:
+                    type: string
+                    enum:
+                      - open
+                      - closed
+                  tags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TagsEnum'
+                  thumbnail:
+                    type: string
+                    format: uri
+                  trial_days:
+                    type: integer
+                    minimum: 0
+                  updated_at:
+                    type: string
+                    pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+                  subscription:
+                    type: object
+                    properties:
+                      auto_renewing:
+                        type: boolean
+                      end_at:
+                        type: string
+                        pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+                      start_at:
+                        type: string
+                        pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+                      state:
+                        type: string
+                        enum:
+                          - active
+                      type:
+                        type: string
+                        enum:
+                          - paid
+                          - nopaid
+                          - free
+                    required:
+                      - auto_renewing
+                      - start_at
+                      - state
+                      - type
+                  options:
+                    type: object
+                    properties:
+                      is_letter_open_notified:
+                        type: boolean
+                      is_message_commentable:
+                        type: boolean
+                      mobile_mail_address:
+                        type: string
+                        pattern: 'touser-%w{6}_%w{6}-[a-z0-9]{8}@mail\.nogizaka46\.qw\.to'
+                      sp_message_permission:
+                        type: string
+                        enum:
+                          - none
+                    required:
+                      - is_letter_open_notified
+                      - is_message_commentable
+                      - sp_message_permission
+                required:
+                  - id
+                  - is_letter_destination
+                  - name
+                  - priority
+                  - state
+                  - tags
+                  - thumbnail
+                  - updated_at
+              examples:
+                paid:
+                  value:
+                    id: 35
+                    is_letter_destination: false
+                    name: 佐藤 璃果
+                    options:
+                      is_letter_open_notified: false
+                      is_message_commentable: false
+                      mobile_mail_address: 'touser-rika_sato-VxaxV7XQ@mail.nogizaka46.qw.to'
+                      sp_message_permission: none
+                    phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/satourika.jpg'
+                    priority: 9850
+                    state: open
+                    subscription:
+                      auto_renewing: true,
+                      end_at: '2022-03-27T17:53:33Z'
+                      start_at: '2022-02-27T15:53:48Z'
+                      state: active
+                      type: paid
+                    tags:
+                      - nogizaka46.com
+                      - nogizaka46-1
+                    thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/35-20220204-061227.jfif'
+                    trial_days: 0
+                    updated_at: '2022-02-21T15:13:27Z'
+                nopaid:
+                  value:
+                    id: 36
+                    is_letter_destination: false
+                    name: 柴田 柚菜
+                    options:
+                      is_letter_open_notified: false
+                      is_message_commentable: false
+                      mobile_mail_address: 'touser-yuna_shibata-xzzShmwp@mail.nogizaka46.qw.to'
+                      sp_message_permission: none
+                    phone_image: 'https://djznowbmqickg.cloudfront.net/public/groups/phone-images/shibatayuna.jpg'
+                    priority: 9840
+                    state: open
+                    tags:
+                      - keyakizaka46-1
+                      - keyakizaka46.com
+                    thumbnail: 'https://djznowbmqickg.cloudfront.net/public/groups/thumbnails/36-20220204-061242.jfif'
+                    trial_days: 0
+                    updated_at: '2020-05-27T12:04:04Z'
+                graduated:
+                  value:
+                    id: 6
+                    is_letter_destination: false
+                    name: ''
+                    priority: 0
+                    state: closed
+                    tags: []
+                    thumbnail: ''
+                    updated_at: '2020-03-26T03:41:38Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - unauthorized
+                  message:
+                    type: string
+                    enum:
+                      - 認証情報エラー
+              examples:
+                example:
+                  value:
+                    code: unauthorized
+                    message: 認証情報エラー
+  '/v2/groups/{id}/timeline':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: '/v2/groups/{id}/timeline?created_from=%Y-%m-%dT%H:%M:%SZ&updated_from=%Y-%m-%dT%H:%M:%SZ&count=num&order=asc'
+      operationId: get-v2-group-id-timeline
+      description: 特定IDのメンバー取得
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+        - schema:
+            type: string
+            pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+          in: query
+          name: created_from
+          required: true
+        - schema:
+            type: string
+            pattern: '20[0-9]{2}-(02-(0[1-9]|1[0-9]|[2][0-8])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])Z'
+          in: query
+          name: updated_from
+          required: true
+        - schema:
+            type: integer
+            minimum: 0
+          in: query
+          name: count
+          required: true
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+          required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: './components/schemas/Timeline.yaml'
+                  - $ref: './components/schemas/TimelineLetter.yaml'
+              examples:
+                text:
+                  value:
+                    comments: []
+                    letters: []
+                    messages:
+                      - group_id: 12
+                        id: 158213
+                        is_favorite: false
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-14T02:10:07Z'
+                        state: published
+                        text: "こんにちは☀︎\r\n昨日からサントリーさんの緑茶「伊右衛門」のWebCMにほのすと出演させて頂いていますが‪\uD83C\uDF75‬悪魔のおにぎりと一緒に楽しんでくださいな☺︎"
+                        type: text
+                        updated_at: '2020-04-14T02:11:27Z'
+                    queried_at: '2020-06-14T05:07:09Z'
+                picture:
+                  value:
+                    comments: []
+                    letters: []
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/18b0a4b59e215d1e891ad16bc278390907c9026b4bead5f89af1487d39dec366.jpg?Expires=1592113752&Signature=PIjm0GhyD1yYUR~4XIWZZxLY8fi9BexKbY0Rd37SNxdgK7vf5u5~QKKiHUGiQ66iOAW01G1Vb85DKlJAoPFAfyMGEE0wVtpCVTKE84J4c3dKZ35u4-aZN3a5Vh8q36iu5opkUEwj3mW2Lg8~9F2gqkAUKYL086~v6EdJ3zaV~LkE19Br3POhBcp3SQ8qekEraFxivTgHrc7KGWDkrFU~v~~tKyw4KUH02K37ryRfMOdUzzvOFglHn~EZWoHcEpjFMUgmUcajBCGYKGwH3Jj9Q-mVeUyI9~Sft4afX4QljuXTBEDfZIOQRycxB9Pwxc-T~fLF7nrByAsWBCCSq5uXvQ__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 157690
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-11T08:53:33Z'
+                        state: published
+                        text: 米粉蒸しパンを作ってみたら大きく膨れすぎました（笑）
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/18b0a4b59e215d1e891ad16bc278390907c9026b4bead5f89af1487d39dec366.jpg-00001.jpg?Expires=1592113752&Signature=P~Vsv2OE1hFWF5FVMmWcTe3nclxOFjhHn0gQvKHpFMIjk6YQUZn-wwuk3wNtkLGqi9QrbRAGa9tshoQmtYMVq11BWlAwVbRhmEBFc3pMx~CJONpPwuKKUBq13wQP9tdbnGOiRoJjezs4cJMvVwP0OmXLBZ~cCd6k0PCkCW59lKFjwgTHntLD8mJwqGuAK9JVRXb5p5raly6QbYo4V7G-M6Q7-En90ZM0bJz~EmUBQl3TNhdQkTWw-Wc0f3BO90xA~0bU6y9CA14NwVRVzYptnUPKZQzidzYvez~TqI0-KlqVVkFk4-CRz6GyIIWDFFyzFahLeLa9nO9kNPyvwuOEdA__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 170
+                        thumbnail_width: 240
+                        type: picture
+                        updated_at: '2020-04-11T08:54:55Z'
+                    queried_at: '2020-06-14T05:07:09Z'
+                video:
+                  value:
+                    comments: []
+                    letters: []
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/050888aa9c14b5eb54212440528856dc5e5afc2773ee8dc83a721a5ecd2ef617.mp4?Expires=1592113752&Signature=wHrXBz1gsCG2FJdfPdTSA713bL8r6kHRgwPDMBrnL6HBzRTiD7CVOct-H3-zVBBwEOMODRElw92LrymcFJjArSzVG5xZPb2Y1GgPrhaau5PnaVUmQDxqPxRkczczH~YurlnzHB9hDWEXv08Jn0CPFGNjgWvH18T60h3hkbuqM4v0zqJxSaTLBKXvsK6BA-PJFPMlo4BpBisxScWeH0MPB9L6pA0xvrezKTuJwQmt7X64PGSiWhlnlkezoHmC5YaEfdmfwaXl46y~k24Dg2yrXaz7rkNmDFzLuwWpaEiMH931fchJtytrw8moFM51Olqk2EaRXDEsMooybTkaNFqljg__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 158214
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-14T02:15:07Z'
+                        state: published
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/050888aa9c14b5eb54212440528856dc5e5afc2773ee8dc83a721a5ecd2ef617.mp4-00001.jpg?Expires=1592113752&Signature=cd98xaVmPSNhj7Giez-M5-Kp2uVhblLZNO0IqdUAARcxdvH8fCT~7Pc8qGzkU7jinefDlmxKTkRQ7oUAjMxZBmwuCv9eTELpsexgeyDYx~LqJUOdHYMF7QLYRf1DHVmoHtkle9SACoqvuka0dFX3NBcE7Z5vrS7mDPYfZbzarKPvCHMQr-mnafatOcCiPEuhMvqhjY-gv4lgV4cqrPnxUftng3o~gLk8M~WC8~VnBwOAM-X39jAFUKk2hf41aVHqgCs8eApaPvrDwfIzFzsTktNqqkOSZUs8DPddrDs~ohSa8gFEu7d49JiubgbCZ53zwRS12EqfTEPcBPF44RJDIw__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 240
+                        thumbnail_width: 320
+                        type: video
+                        updated_at: '2020-04-14T02:16:26Z'
+                    queried_at: '2020-06-14T05:07:09Z'
+                voice:
+                  value:
+                    comments: []
+                    letters: []
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/245bf6fd021ec120835fc96ffddb446b9e6adfcf2a9c7d004351437c6b7c5fd7.mp4?Expires=1592113752&Signature=lwbG3C1mfQ13oWpHSL8xxaxAG6QTJGmsYdWIkFK3NFQQXPrerOmE1ySaVKVaNOg2eZv9RYpkNOi5xOTUHHm6NhdFvRfs3cogfRsoVNgEJAyLcob6pJKSAXTczoE-q~OOegjpp5n4RkMYi5xB9L5qsUCd6poqAbiIhAE5bbB2BeiAscJ5vUAqJpW9V6PiVSsmTdjE72de9nuG9Lol1GP0cJlh~OXNzBUuYAfMvKxYMOAOiaoFrOXrki9B4Z0OkdNihyZAMYMuMSNLP9RghVP-u9InVol4eaeexORDgjaaO8G7uSkA~PRfcd7m8tPWloVZduc8EeOmJwkL0~dm8q4wsw__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 157764
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-11T10:48:40Z'
+                        state: published
+                        type: voice
+                        updated_at: '2020-04-11T10:50:03Z'
+                    queried_at: '2020-06-14T05:07:09Z'
+                letter:
+                  value:
+                    comments: []
+                    letters:
+                      - client_token: VI4PoKp9EeqI1wahea/0DFSOD6mqfRHqiNcGoXmv9Aw=
+                        created_at: '2020-04-06T10:42:54Z'
+                        file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/fanletter/93e47dac-533c-437a-83b3-2b4a85f39398/9bb6ec3aa999f7e9d7d52c5ac8b9e4926604049dcf17e1adbf0e224b523f5063.jpg?Expires=1592113752&Signature=IN8Fb8mOYsoDQcMijdn4xn7PS92-oRbJerxOE7KaK6B7LWi-ejkM9GXZqWQxy13rB0hQH~dsewfFYa-K4OJd3sZZjt97fP0UJoYRFmlaslGfPRyDaxO8CXJvYfpug3RUUS9Hbx0tt-MWxkJqbWxRqihpvRW64XAt47nkOJkmaj-SHMJK3q6grJDYwej4XJQgtc6VIGl3-DKAIUH22l5ztohftkrrckIdj1xOBcvNBBG-gpXFYZGtdi3OsbG9vHjBppIXua5FowiCJ0Jk19IQo5ktlQBhtd96goSNsFNZzfsfJSeVyuXtil79Mb0I2AeZloXR8ni3bKXWLT~W1JW78w__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 1030494
+                        is_favorite: false
+                        member_id: 12
+                        opened_at: '2020-04-07T03:57:08Z'
+                        text: "はじめでレター送ります！"
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/fanletter/93e47dac-533c-437a-83b3-2b4a85f39398/9bb6ec3aa999f7e9d7d52c5ac8b9e4926604049dcf17e1adbf0e224b523f5063.jpg-00001.jpg?Expires=1592113752&Signature=Dftz~blkdErkR16UetMcj1fB0Qpap9PoXFmXvnqDPq-qYqhkLe1qNVnO6HGPwCqrIhGZ95Vaw6jJxrQoDycQH8tYXJn9Vy3kT6DBSAp1pxr0lSF9Isx1NHLav0xIlxM8YC4e4BbqbW9AbtQPsiPp4XIIQ080TmSfkkRSX~IDyGoJVtIvHZIRkJ9fv7v-y-SV1knfLtmuLqLvd8Gkb~RP1qbwWXmznGm3XUDXTwcQy6bCKGi~3frgtX9QWv83VHtIiAkfO3eb47cvcQtSec4CBURZnBy7nbU9CZyBtBOSoukn5D9oHo1w352Jd6lb-7RB3a-CthbUQdKEhNdgWRQKjA__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 480
+                        thumbnail_width: 320
+                        updated_at: '2020-04-07T03:57:08Z'
+                    messages: []
+                    queried_at: '2020-06-14T05:07:09Z'
+                canceled:
+                  value:
+                    comments: []
+                    letters: []
+                    messages:
+                      - group_id: 48
+                        id: 118504
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 84
+                        published_at: '2019-06-24T04:50:31Z'
+                        state: canceled
+                        type: picture
+                        updated_at: '2019-06-24T04:53:29Z'
+                    queried_at: '2020-06-14T05:07:09Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - unauthorized
+                  message:
+                    type: string
+                    enum:
+                      - 認証情報エラー
+              examples:
+                example:
+                  value:
+                    code: unauthorized
+                    message: 認証情報エラー
+  '/v2/groups/{id}/past_messages':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: '/v2/groups/{id}/past_messages?order=asc'
+      operationId: get-v2-group-id-past_messages
+      description: 特定メンバーの購読前のメッセージを取得
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+          required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: './components/schemas/PastMessages.yaml'
+              examples:
+                text:
+                  value:
+                    messages:
+                      - group_id: 12
+                        id: 158213
+                        is_favorite: false
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-14T02:10:07Z'
+                        state: published
+                        text: "こんにちは☀︎\r\n昨日からサントリーさんの緑茶「伊右衛門」のWebCMにほのすと出演させて頂いていますが‪\uD83C\uDF75‬悪魔のおにぎりと一緒に楽しんでくださいな☺︎"
+                        type: text
+                        updated_at: '2020-04-14T02:11:27Z'
+                picture:
+                  value:
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/18b0a4b59e215d1e891ad16bc278390907c9026b4bead5f89af1487d39dec366.jpg?Expires=1592113752&Signature=PIjm0GhyD1yYUR~4XIWZZxLY8fi9BexKbY0Rd37SNxdgK7vf5u5~QKKiHUGiQ66iOAW01G1Vb85DKlJAoPFAfyMGEE0wVtpCVTKE84J4c3dKZ35u4-aZN3a5Vh8q36iu5opkUEwj3mW2Lg8~9F2gqkAUKYL086~v6EdJ3zaV~LkE19Br3POhBcp3SQ8qekEraFxivTgHrc7KGWDkrFU~v~~tKyw4KUH02K37ryRfMOdUzzvOFglHn~EZWoHcEpjFMUgmUcajBCGYKGwH3Jj9Q-mVeUyI9~Sft4afX4QljuXTBEDfZIOQRycxB9Pwxc-T~fLF7nrByAsWBCCSq5uXvQ__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 157690
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-11T08:53:33Z'
+                        state: published
+                        text: 米粉蒸しパンを作ってみたら大きく膨れすぎました（笑）
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/18b0a4b59e215d1e891ad16bc278390907c9026b4bead5f89af1487d39dec366.jpg-00001.jpg?Expires=1592113752&Signature=P~Vsv2OE1hFWF5FVMmWcTe3nclxOFjhHn0gQvKHpFMIjk6YQUZn-wwuk3wNtkLGqi9QrbRAGa9tshoQmtYMVq11BWlAwVbRhmEBFc3pMx~CJONpPwuKKUBq13wQP9tdbnGOiRoJjezs4cJMvVwP0OmXLBZ~cCd6k0PCkCW59lKFjwgTHntLD8mJwqGuAK9JVRXb5p5raly6QbYo4V7G-M6Q7-En90ZM0bJz~EmUBQl3TNhdQkTWw-Wc0f3BO90xA~0bU6y9CA14NwVRVzYptnUPKZQzidzYvez~TqI0-KlqVVkFk4-CRz6GyIIWDFFyzFahLeLa9nO9kNPyvwuOEdA__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 170
+                        thumbnail_width: 240
+                        type: picture
+                        updated_at: '2020-04-11T08:54:55Z'
+                video:
+                  value:
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/050888aa9c14b5eb54212440528856dc5e5afc2773ee8dc83a721a5ecd2ef617.mp4?Expires=1592113752&Signature=wHrXBz1gsCG2FJdfPdTSA713bL8r6kHRgwPDMBrnL6HBzRTiD7CVOct-H3-zVBBwEOMODRElw92LrymcFJjArSzVG5xZPb2Y1GgPrhaau5PnaVUmQDxqPxRkczczH~YurlnzHB9hDWEXv08Jn0CPFGNjgWvH18T60h3hkbuqM4v0zqJxSaTLBKXvsK6BA-PJFPMlo4BpBisxScWeH0MPB9L6pA0xvrezKTuJwQmt7X64PGSiWhlnlkezoHmC5YaEfdmfwaXl46y~k24Dg2yrXaz7rkNmDFzLuwWpaEiMH931fchJtytrw8moFM51Olqk2EaRXDEsMooybTkaNFqljg__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 158214
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-14T02:15:07Z'
+                        state: published
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/050888aa9c14b5eb54212440528856dc5e5afc2773ee8dc83a721a5ecd2ef617.mp4-00001.jpg?Expires=1592113752&Signature=cd98xaVmPSNhj7Giez-M5-Kp2uVhblLZNO0IqdUAARcxdvH8fCT~7Pc8qGzkU7jinefDlmxKTkRQ7oUAjMxZBmwuCv9eTELpsexgeyDYx~LqJUOdHYMF7QLYRf1DHVmoHtkle9SACoqvuka0dFX3NBcE7Z5vrS7mDPYfZbzarKPvCHMQr-mnafatOcCiPEuhMvqhjY-gv4lgV4cqrPnxUftng3o~gLk8M~WC8~VnBwOAM-X39jAFUKk2hf41aVHqgCs8eApaPvrDwfIzFzsTktNqqkOSZUs8DPddrDs~ohSa8gFEu7d49JiubgbCZ53zwRS12EqfTEPcBPF44RJDIw__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 240
+                        thumbnail_width: 320
+                        type: video
+                        updated_at: '2020-04-14T02:16:26Z'
+                voice:
+                  value:
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/245bf6fd021ec120835fc96ffddb446b9e6adfcf2a9c7d004351437c6b7c5fd7.mp4?Expires=1592113752&Signature=lwbG3C1mfQ13oWpHSL8xxaxAG6QTJGmsYdWIkFK3NFQQXPrerOmE1ySaVKVaNOg2eZv9RYpkNOi5xOTUHHm6NhdFvRfs3cogfRsoVNgEJAyLcob6pJKSAXTczoE-q~OOegjpp5n4RkMYi5xB9L5qsUCd6poqAbiIhAE5bbB2BeiAscJ5vUAqJpW9V6PiVSsmTdjE72de9nuG9Lol1GP0cJlh~OXNzBUuYAfMvKxYMOAOiaoFrOXrki9B4Z0OkdNihyZAMYMuMSNLP9RghVP-u9InVol4eaeexORDgjaaO8G7uSkA~PRfcd7m8tPWloVZduc8EeOmJwkL0~dm8q4wsw__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 157764
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-11T10:48:40Z'
+                        state: published
+                        type: voice
+                        updated_at: '2020-04-11T10:50:03Z'
+                letter:
+                  value:
+                    letters:
+                      - client_token: VI4PoKp9EeqI1wahea/0DFSOD6mqfRHqiNcGoXmv9Aw=
+                        created_at: '2020-04-06T10:42:54Z'
+                        file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/fanletter/93e47dac-533c-437a-83b3-2b4a85f39398/9bb6ec3aa999f7e9d7d52c5ac8b9e4926604049dcf17e1adbf0e224b523f5063.jpg?Expires=1592113752&Signature=IN8Fb8mOYsoDQcMijdn4xn7PS92-oRbJerxOE7KaK6B7LWi-ejkM9GXZqWQxy13rB0hQH~dsewfFYa-K4OJd3sZZjt97fP0UJoYRFmlaslGfPRyDaxO8CXJvYfpug3RUUS9Hbx0tt-MWxkJqbWxRqihpvRW64XAt47nkOJkmaj-SHMJK3q6grJDYwej4XJQgtc6VIGl3-DKAIUH22l5ztohftkrrckIdj1xOBcvNBBG-gpXFYZGtdi3OsbG9vHjBppIXua5FowiCJ0Jk19IQo5ktlQBhtd96goSNsFNZzfsfJSeVyuXtil79Mb0I2AeZloXR8ni3bKXWLT~W1JW78w__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 1030494
+                        is_favorite: false
+                        member_id: 12
+                        opened_at: '2020-04-07T03:57:08Z'
+                        text: "はじめでレター送ります！"
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/fanletter/93e47dac-533c-437a-83b3-2b4a85f39398/9bb6ec3aa999f7e9d7d52c5ac8b9e4926604049dcf17e1adbf0e224b523f5063.jpg-00001.jpg?Expires=1592113752&Signature=Dftz~blkdErkR16UetMcj1fB0Qpap9PoXFmXvnqDPq-qYqhkLe1qNVnO6HGPwCqrIhGZ95Vaw6jJxrQoDycQH8tYXJn9Vy3kT6DBSAp1pxr0lSF9Isx1NHLav0xIlxM8YC4e4BbqbW9AbtQPsiPp4XIIQ080TmSfkkRSX~IDyGoJVtIvHZIRkJ9fv7v-y-SV1knfLtmuLqLvd8Gkb~RP1qbwWXmznGm3XUDXTwcQy6bCKGi~3frgtX9QWv83VHtIiAkfO3eb47cvcQtSec4CBURZnBy7nbU9CZyBtBOSoukn5D9oHo1w352Jd6lb-7RB3a-CthbUQdKEhNdgWRQKjA__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 480
+                        thumbnail_width: 320
+                        updated_at: '2020-04-07T03:57:08Z'
+                canceled:
+                  value:
+                    messages:
+                      - group_id: 48
+                        id: 118504
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 84
+                        published_at: '2019-06-24T04:50:31Z'
+                        state: canceled
+                        type: picture
+                        updated_at: '2019-06-24T04:53:29Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - unauthorized
+                  message:
+                    type: string
+                    enum:
+                      - 認証情報エラー
+              examples:
+                example:
+                  value:
+                    code: unauthorized
+                    message: 認証情報エラー
+components:
+  schemas:
+    MembersEnum:
+      enum:
+        - 乃木坂46
+        - 秋元 真夏
+        - 伊藤 理々杏
+        - 岩本 蓮加
+        - 梅澤 美波
+        - 遠藤 さくら
+        - 賀喜 遥香
+        - 掛橋 沙耶香
+        - 金川 紗耶
+        - 北川 悠理
+        - 北野 日奈子
+        - 久保 史緒里
+        - 黒見 明香
+        - 齋藤 飛鳥
+        - 阪口 珠美
+        - 佐藤 楓
+        - 佐藤 璃果
+        - 柴田 柚菜
+        - 鈴木 絢音
+        - 清宮 レイ
+        - 田村 真佑
+        - 筒井 あやめ
+        - 中村 麗乃
+        - 早川 聖来
+        - 林 瑠奈
+        - 樋口 日奈
+        - 松尾 美佑
+        - 向井 葉月
+        - 矢久保 美緒
+        - 山崎 怜奈
+        - 山下 美月
+        - 弓木 奈於
+        - 吉田 綾乃ｸﾘｽﾃｨｰ
+        - 与田 祐希
+        - 和田 まあや
+        - 生田 絵梨花
+        - 高山 一実
+        - 星野 みなみ
+        - 松村 沙友理
+        - 伊藤 純奈
+        - 新内 眞衣
+        - 寺田 蘭世
+        - 堀 未央奈
+        - 渡辺 みり愛
+        - 大園 桃子
+        - ''
+    TagsEnum:
+      enum:
+        - - nogizaka46.com
+          - nogizaka46-announcements
+        - - nogizaka46.com
+          - nogizaka46-1
+  parameters: 
+    RequestHeaderX-Talk-App-ID:
+      schema:
+        type: string
+        default: jp.co.sonymusic.communication.nogizaka 2.2
+      in: header
+      name: X-Talk-App-ID
+      required: true      
+    RequestHeaderHost:
+      schema:
+        type: string
+        default: api.n46.glastonr.net
+      in: header
+      name: Host
+      required: true

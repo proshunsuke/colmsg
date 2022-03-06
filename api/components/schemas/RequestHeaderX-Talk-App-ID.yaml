@@ -1,6 +1,0 @@
-schema:
-  type: string
-  default: jp.co.sonymusic.communication.keyakizaka 2.0
-in: header
-name: X-Talk-App-ID
-required: true

@@ -9,6 +9,9 @@ info:
     email: shunsuke0901@gmail.com
 servers:
   - url: 'https://api.kh.glastonr.net'
+    description: Production server (uses live data)
+  - url: 'http://localhost:8003'
+    description: Sandbox server (uses test data)
 paths:
   /v2/update_token:
     post:
@@ -18,11 +21,11 @@ paths:
       parameters:
         - $ref: './components/schemas/RequestHeaderAccept.yaml'
         - $ref: './components/schemas/RequestHeaderContent-type.yaml'
-        - $ref: './components/schemas/RequestHeaderX-Talk-App-ID.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
         - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
         - $ref: './components/schemas/RequestHeaderTE.yaml'
         - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
-        - $ref: './components/schemas/RequestHeaderHost.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
         - $ref: './components/schemas/RequestHeaderConnection.yaml'
         - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
         - $ref: './components/schemas/RequestHeaderContent-Length.yaml'
@@ -132,11 +135,11 @@ paths:
       parameters:
         - $ref: './components/schemas/RequestHeaderAccept.yaml'
         - $ref: './components/schemas/RequestHeaderContent-type.yaml'
-        - $ref: './components/schemas/RequestHeaderX-Talk-App-ID.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
         - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
         - $ref: './components/schemas/RequestHeaderTE.yaml'
         - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
-        - $ref: './components/schemas/RequestHeaderHost.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
         - $ref: './components/schemas/RequestHeaderConnection.yaml'
         - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
         - $ref: './components/schemas/RequestHeaderContent-Length.yaml'
@@ -232,11 +235,11 @@ paths:
       parameters:
         - $ref: './components/schemas/RequestHeaderAccept.yaml'
         - $ref: './components/schemas/RequestHeaderContent-type.yaml'
-        - $ref: './components/schemas/RequestHeaderX-Talk-App-ID.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
         - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
         - $ref: './components/schemas/RequestHeaderTE.yaml'
         - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
-        - $ref: './components/schemas/RequestHeaderHost.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
         - $ref: './components/schemas/RequestHeaderConnection.yaml'
         - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
         - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
@@ -1005,11 +1008,11 @@ paths:
       parameters:
         - $ref: './components/schemas/RequestHeaderAccept.yaml'
         - $ref: './components/schemas/RequestHeaderContent-type.yaml'
-        - $ref: './components/schemas/RequestHeaderX-Talk-App-ID.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
         - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
         - $ref: './components/schemas/RequestHeaderTE.yaml'
         - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
-        - $ref: './components/schemas/RequestHeaderHost.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
         - $ref: './components/schemas/RequestHeaderConnection.yaml'
         - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
         - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
@@ -1182,11 +1185,11 @@ paths:
       parameters:
         - $ref: './components/schemas/RequestHeaderAccept.yaml'
         - $ref: './components/schemas/RequestHeaderContent-type.yaml'
-        - $ref: './components/schemas/RequestHeaderX-Talk-App-ID.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
         - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
         - $ref: './components/schemas/RequestHeaderTE.yaml'
         - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
-        - $ref: './components/schemas/RequestHeaderHost.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
         - $ref: './components/schemas/RequestHeaderConnection.yaml'
         - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
         - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
@@ -1342,11 +1345,11 @@ paths:
       parameters:
         - $ref: './components/schemas/RequestHeaderAccept.yaml'
         - $ref: './components/schemas/RequestHeaderContent-type.yaml'
-        - $ref: './components/schemas/RequestHeaderX-Talk-App-ID.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
         - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
         - $ref: './components/schemas/RequestHeaderTE.yaml'
         - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
-        - $ref: './components/schemas/RequestHeaderHost.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
         - $ref: './components/schemas/RequestHeaderConnection.yaml'
         - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
         - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
@@ -1589,3 +1592,18 @@ components:
           - hinatazaka46.com
         - - hinatazaka46-3
           - hinatazaka46.com
+  parameters:
+    RequestHeaderX-Talk-App-ID:
+      schema:
+        type: string
+        default: jp.co.sonymusic.communication.keyakizaka 2.0
+      in: header
+      name: X-Talk-App-ID
+      required: true
+    RequestHeaderHost:
+      schema:
+        type: string
+        default: api.kh.glastonr.net
+      in: header
+      name: Host
+      required: true

@@ -1,6 +1,0 @@
-schema:
-  type: string
-  default: api.kh.glastonr.net
-in: header
-name: Host
-required: true
