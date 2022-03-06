@@ -43,6 +43,30 @@ open/editor/kh:
 open/ui/kh:
 	$(OPEN) http://localhost:8002/
 
+server/n46:
+	docker-compose up swagger-api-n46
+
+stop/server/n46:
+	docker-compose stop swagger-api-n46
+
+restart/server/n46:
+	docker-compose restart swagger-api-n46
+
+start/ui-editor/n46:
+	docker-compose up -d swagger-editor-n46 swagger-ui-n46
+
+stop/ui-editor/n46:
+	docker-compose stop swagger-editor-n46 swagger-ui-n46
+
+restart/ui-editor/n46:
+	docker-compose restart swagger-editor-n46 swagger-ui-n46
+
+open/editor/n46:
+	$(OPEN) http://localhost:8004/
+
+open/ui/n46:
+	$(OPEN) http://localhost:8005/
+
 down:
 	docker-compose down --rmi all --volumes --remove-orphans
 
