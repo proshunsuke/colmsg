@@ -1,19 +1,22 @@
-# <img src="https://user-images.githubusercontent.com/3148511/158018437-09822a33-8767-4e03-ba90-e0f69594c493.jpeg" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018441-dd7cb9eb-bf31-4938-830d-1ef293a2afba.jpg" width="32px" alt="日向坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018442-ae54e926-760d-4b47-b0a0-7255485e1f28.jpg" width="32px" alt="乃木坂46メッセージのロゴ"> colmsg
+<div align="center">
+  <h1><strong>colmsg</strong></h1>
+  <img src="https://user-images.githubusercontent.com/3148511/158018437-09822a33-8767-4e03-ba90-e0f69594c493.jpeg" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018441-dd7cb9eb-bf31-4938-830d-1ef293a2afba.jpg" width="32px" alt="日向坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018442-ae54e926-760d-4b47-b0a0-7255485e1f28.jpg" width="32px" alt="乃木坂46メッセージのロゴ">
 
-「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」アプリのメッセージをPCに保存します。
+  「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」アプリのメッセージをPCに保存します。
 
-![sample.png](https://user-images.githubusercontent.com/3148511/85219015-fef60580-b3da-11ea-8b99-51666d27abe3.png)
+  ![demo](https://user-images.githubusercontent.com/3148511/158026220-90735546-2401-40ca-a9e6-89d2176ad3b4.gif)
+</div>
 
 ## 概要
 
 `colmsg` のインストール方法は[こちら](#インストール)を参照してください。
 
-**まず初めに**refresh_tokenを取得してください。  
-取得方法は[こちら](doc/how_to_get_refresh_token.md)を参照してください。
+**まず初めに**refresh_tokenを取得してください。取得方法は[こちら](doc/how_to_get_refresh_token.md)を参照してください。
 
 取得出来たら以下を実行してください。  
 `<s_refresh_token>` , `<h_refresh_token>` , `<n_refresh_token>` に「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」それぞれで取得してきたrefresh_tokenを入れてください。  
 ※ 指定するのは購読しているアプリのみで問題ありません。  
+
 購読しているメンバー全員の全期間のメッセージが保存されます。  
 
 ```shell script
@@ -134,7 +137,7 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 --n_refresh_token n_refresh_token
 
 # メディアファイルだけ保存するように設定
--k image -k video -k voice
+-k picture -k video -k voice
 ```
 
 ## インストール
