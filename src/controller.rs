@@ -1,10 +1,10 @@
-use crate::{errors::*, Config, message::saver::Saver, http::client::SHClient};
+use crate::{errors::*, Config, message::saver::Saver, http::client::SHNClient};
 
-pub struct Controller<'a, C: SHClient> {
+pub struct Controller<'a, C: SHNClient> {
     config: &'a Config<'a, C>
 }
 
-impl<'b, C: SHClient> Controller<'b, C> {
+impl<'b, C: SHNClient> Controller<'b, C> {
     pub fn new<'a>(config: &'a Config<C>) -> Controller<'a, C> {
         Controller { config }
     }

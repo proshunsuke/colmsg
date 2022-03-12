@@ -10,7 +10,7 @@ use colmsg::{
     errors::*,
     Config,
     Kind,
-    http::client::{SClient, SHClient, HClient}
+    http::client::{SClient, SHNClient, HClient, NClient}
 };
 
 use crate::{
@@ -52,7 +52,12 @@ impl App {
         self.config("h_refresh_token", client)
     }
 
-    fn config<S: AsRef<str>, C: SHClient>(&self, refresh_token_str: S, client: C) -> Result<Config<C>> {
+    pub fn nogizaka_config(&self) -> Result<Config<NClient>> {
+        let client = NClient::new();
+        self.config("n_refresh_token", client)
+    }
+
+    fn config<S: AsRef<str>, C: SHNClient>(&self, refresh_token_str: S, client: C) -> Result<Config<C>> {
         let name = match self.matches.values_of("name") {
             Some(names) => {
                 names

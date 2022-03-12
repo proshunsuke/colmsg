@@ -130,7 +130,7 @@ impl Client {
     }
 }
 
-pub trait SHClient: Clone {
+pub trait SHNClient: Clone {
     fn new() -> Self where Self: Sized;
 
     fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
@@ -151,7 +151,7 @@ pub struct SClient {
     client: Client,
 }
 
-impl SHClient for SClient {
+impl SHNClient for SClient {
     fn new() -> SClient {
         SClient {
             client: Client::new(
@@ -189,7 +189,7 @@ pub struct HClient {
     client: Client,
 }
 
-impl SHClient for HClient {
+impl SHNClient for HClient {
     fn new() -> HClient {
         HClient {
             client: Client::new(
@@ -220,4 +220,42 @@ fn h_base_url() -> String {
     env::var("H_BASE_URL")
         .ok()
         .unwrap_or_else(|| "https://api.kh.glastonr.net".to_string())
+}
+
+#[derive(Debug, Clone)]
+pub struct NClient {
+    client: Client,
+}
+
+impl SHNClient for NClient {
+    fn new() -> NClient {
+        NClient {
+            client: Client::new(
+                n_base_url(),
+                "jp.co.sonymusic.communication.nogizaka 2.2".to_string(),
+            ),
+        }
+    }
+
+    fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
+        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+        self.client.post_request(path, json, is_dynamic)
+    }
+
+    fn get_request<RT>(
+        &self,
+        path: &str,
+        access_token: &str,
+        parameters: Option<Vec<(&str, &str)>>,
+        is_dynamic: bool
+    ) -> Result<RT>
+        where RT: DeserializeOwned {
+        self.client.get_request(path, access_token, parameters, is_dynamic)
+    }
+}
+
+fn n_base_url() -> String {
+    env::var("N_BASE_URL")
+        .ok()
+        .unwrap_or_else(|| "https://api.n46.glastonr.net".to_string())
 }

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: api.kh.glastonr.net
-  version: '2.0'
+  version: '2.2'
   description: '"櫻坂46メッセージ", "日向坂46メッセージ" ver2.00'
   contact:
     name: pro_shunsuke
@@ -1531,6 +1531,169 @@ paths:
                   value:
                     code: unauthorized
                     message: 認証情報エラー
+  '/v2/groups/{id}/past_messages':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: '/v2/groups/{id}/past_messages?order=asc'
+      operationId: get-v2-group-id-past_messages
+      description: 特定メンバーの購読前のメッセージを取得
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+          required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              $ref: './components/schemas/ResponseHeaderCache-Control.yaml'
+            Content-Type:
+              $ref: './components/schemas/ResponseHeaderContent-Type.yaml'
+            Date:
+              $ref: './components/schemas/ResponseHeaderDate.yaml'
+            Pragma:
+              $ref: './components/schemas/ResponseHeaderPragma.yaml'
+            Content-Length:
+              $ref: './components/schemas/ResponseHeaderContent-Length.yaml'
+            Connection:
+              $ref: './components/schemas/ResponseHeaderConnection.yaml'
+            Vary:
+              $ref: './components/schemas/ResponseHeaderVary.yaml'
+            X-Request-Id:
+              $ref: './components/schemas/ResponseHeaderX-Request-Id.yaml'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: './components/schemas/PastMessages.yaml'
+              examples:
+                text:
+                  value:
+                    messages:
+                      - group_id: 12
+                        id: 158213
+                        is_favorite: false
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-14T02:10:07Z'
+                        state: published
+                        text: "こんにちは☀︎\r\n昨日からサントリーさんの緑茶「伊右衛門」のWebCMにほのすと出演させて頂いていますが‪\uD83C\uDF75‬悪魔のおにぎりと一緒に楽しんでくださいな☺︎"
+                        type: text
+                        updated_at: '2020-04-14T02:11:27Z'
+                picture:
+                  value:
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/18b0a4b59e215d1e891ad16bc278390907c9026b4bead5f89af1487d39dec366.jpg?Expires=1592113752&Signature=PIjm0GhyD1yYUR~4XIWZZxLY8fi9BexKbY0Rd37SNxdgK7vf5u5~QKKiHUGiQ66iOAW01G1Vb85DKlJAoPFAfyMGEE0wVtpCVTKE84J4c3dKZ35u4-aZN3a5Vh8q36iu5opkUEwj3mW2Lg8~9F2gqkAUKYL086~v6EdJ3zaV~LkE19Br3POhBcp3SQ8qekEraFxivTgHrc7KGWDkrFU~v~~tKyw4KUH02K37ryRfMOdUzzvOFglHn~EZWoHcEpjFMUgmUcajBCGYKGwH3Jj9Q-mVeUyI9~Sft4afX4QljuXTBEDfZIOQRycxB9Pwxc-T~fLF7nrByAsWBCCSq5uXvQ__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 157690
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-11T08:53:33Z'
+                        state: published
+                        text: 米粉蒸しパンを作ってみたら大きく膨れすぎました（笑）
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/18b0a4b59e215d1e891ad16bc278390907c9026b4bead5f89af1487d39dec366.jpg-00001.jpg?Expires=1592113752&Signature=P~Vsv2OE1hFWF5FVMmWcTe3nclxOFjhHn0gQvKHpFMIjk6YQUZn-wwuk3wNtkLGqi9QrbRAGa9tshoQmtYMVq11BWlAwVbRhmEBFc3pMx~CJONpPwuKKUBq13wQP9tdbnGOiRoJjezs4cJMvVwP0OmXLBZ~cCd6k0PCkCW59lKFjwgTHntLD8mJwqGuAK9JVRXb5p5raly6QbYo4V7G-M6Q7-En90ZM0bJz~EmUBQl3TNhdQkTWw-Wc0f3BO90xA~0bU6y9CA14NwVRVzYptnUPKZQzidzYvez~TqI0-KlqVVkFk4-CRz6GyIIWDFFyzFahLeLa9nO9kNPyvwuOEdA__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 170
+                        thumbnail_width: 240
+                        type: picture
+                        updated_at: '2020-04-11T08:54:55Z'
+                video:
+                  value:
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/050888aa9c14b5eb54212440528856dc5e5afc2773ee8dc83a721a5ecd2ef617.mp4?Expires=1592113752&Signature=wHrXBz1gsCG2FJdfPdTSA713bL8r6kHRgwPDMBrnL6HBzRTiD7CVOct-H3-zVBBwEOMODRElw92LrymcFJjArSzVG5xZPb2Y1GgPrhaau5PnaVUmQDxqPxRkczczH~YurlnzHB9hDWEXv08Jn0CPFGNjgWvH18T60h3hkbuqM4v0zqJxSaTLBKXvsK6BA-PJFPMlo4BpBisxScWeH0MPB9L6pA0xvrezKTuJwQmt7X64PGSiWhlnlkezoHmC5YaEfdmfwaXl46y~k24Dg2yrXaz7rkNmDFzLuwWpaEiMH931fchJtytrw8moFM51Olqk2EaRXDEsMooybTkaNFqljg__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 158214
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-14T02:15:07Z'
+                        state: published
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/050888aa9c14b5eb54212440528856dc5e5afc2773ee8dc83a721a5ecd2ef617.mp4-00001.jpg?Expires=1592113752&Signature=cd98xaVmPSNhj7Giez-M5-Kp2uVhblLZNO0IqdUAARcxdvH8fCT~7Pc8qGzkU7jinefDlmxKTkRQ7oUAjMxZBmwuCv9eTELpsexgeyDYx~LqJUOdHYMF7QLYRf1DHVmoHtkle9SACoqvuka0dFX3NBcE7Z5vrS7mDPYfZbzarKPvCHMQr-mnafatOcCiPEuhMvqhjY-gv4lgV4cqrPnxUftng3o~gLk8M~WC8~VnBwOAM-X39jAFUKk2hf41aVHqgCs8eApaPvrDwfIzFzsTktNqqkOSZUs8DPddrDs~ohSa8gFEu7d49JiubgbCZ53zwRS12EqfTEPcBPF44RJDIw__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 240
+                        thumbnail_width: 320
+                        type: video
+                        updated_at: '2020-04-14T02:16:26Z'
+                voice:
+                  value:
+                    messages:
+                      - file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/contents/202004/245bf6fd021ec120835fc96ffddb446b9e6adfcf2a9c7d004351437c6b7c5fd7.mp4?Expires=1592113752&Signature=lwbG3C1mfQ13oWpHSL8xxaxAG6QTJGmsYdWIkFK3NFQQXPrerOmE1ySaVKVaNOg2eZv9RYpkNOi5xOTUHHm6NhdFvRfs3cogfRsoVNgEJAyLcob6pJKSAXTczoE-q~OOegjpp5n4RkMYi5xB9L5qsUCd6poqAbiIhAE5bbB2BeiAscJ5vUAqJpW9V6PiVSsmTdjE72de9nuG9Lol1GP0cJlh~OXNzBUuYAfMvKxYMOAOiaoFrOXrki9B4Z0OkdNihyZAMYMuMSNLP9RghVP-u9InVol4eaeexORDgjaaO8G7uSkA~PRfcd7m8tPWloVZduc8EeOmJwkL0~dm8q4wsw__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 157764
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 12
+                        published_at: '2020-04-11T10:48:40Z'
+                        state: published
+                        type: voice
+                        updated_at: '2020-04-11T10:50:03Z'
+                letter:
+                  value:
+                    letters:
+                      - client_token: VI4PoKp9EeqI1wahea/0DFSOD6mqfRHqiNcGoXmv9Aw=
+                        created_at: '2020-04-06T10:42:54Z'
+                        file: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/fanletter/93e47dac-533c-437a-83b3-2b4a85f39398/9bb6ec3aa999f7e9d7d52c5ac8b9e4926604049dcf17e1adbf0e224b523f5063.jpg?Expires=1592113752&Signature=IN8Fb8mOYsoDQcMijdn4xn7PS92-oRbJerxOE7KaK6B7LWi-ejkM9GXZqWQxy13rB0hQH~dsewfFYa-K4OJd3sZZjt97fP0UJoYRFmlaslGfPRyDaxO8CXJvYfpug3RUUS9Hbx0tt-MWxkJqbWxRqihpvRW64XAt47nkOJkmaj-SHMJK3q6grJDYwej4XJQgtc6VIGl3-DKAIUH22l5ztohftkrrckIdj1xOBcvNBBG-gpXFYZGtdi3OsbG9vHjBppIXua5FowiCJ0Jk19IQo5ktlQBhtd96goSNsFNZzfsfJSeVyuXtil79Mb0I2AeZloXR8ni3bKXWLT~W1JW78w__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        group_id: 12
+                        id: 1030494
+                        is_favorite: false
+                        member_id: 12
+                        opened_at: '2020-04-07T03:57:08Z'
+                        text: "はじめでレター送ります！"
+                        thumbnail: 'https://d3ux740zhdvrpf.cloudfront.net/private/legacy-K/fanletter/93e47dac-533c-437a-83b3-2b4a85f39398/9bb6ec3aa999f7e9d7d52c5ac8b9e4926604049dcf17e1adbf0e224b523f5063.jpg-00001.jpg?Expires=1592113752&Signature=Dftz~blkdErkR16UetMcj1fB0Qpap9PoXFmXvnqDPq-qYqhkLe1qNVnO6HGPwCqrIhGZ95Vaw6jJxrQoDycQH8tYXJn9Vy3kT6DBSAp1pxr0lSF9Isx1NHLav0xIlxM8YC4e4BbqbW9AbtQPsiPp4XIIQ080TmSfkkRSX~IDyGoJVtIvHZIRkJ9fv7v-y-SV1knfLtmuLqLvd8Gkb~RP1qbwWXmznGm3XUDXTwcQy6bCKGi~3frgtX9QWv83VHtIiAkfO3eb47cvcQtSec4CBURZnBy7nbU9CZyBtBOSoukn5D9oHo1w352Jd6lb-7RB3a-CthbUQdKEhNdgWRQKjA__&Key-Pair-Id=APKAJUMGZKQSY7SBEKVQ'
+                        thumbnail_height: 480
+                        thumbnail_width: 320
+                        updated_at: '2020-04-07T03:57:08Z'
+                canceled:
+                  value:
+                    messages:
+                      - group_id: 48
+                        id: 118504
+                        is_favorite: true
+                        is_silent: false
+                        member_id: 84
+                        published_at: '2019-06-24T04:50:31Z'
+                        state: canceled
+                        type: picture
+                        updated_at: '2019-06-24T04:53:29Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - unauthorized
+                  message:
+                    type: string
+                    enum:
+                      - 認証情報エラー
+              examples:
+                example:
+                  value:
+                    code: unauthorized
+                    message: 認証情報エラー
 components:
   schemas:
     MembersEnum:
@@ -1596,7 +1759,7 @@ components:
     RequestHeaderX-Talk-App-ID:
       schema:
         type: string
-        default: jp.co.sonymusic.communication.keyakizaka 2.0
+        default: jp.co.sonymusic.communication.keyakizaka 2.2
       in: header
       name: X-Talk-App-ID
       required: true
