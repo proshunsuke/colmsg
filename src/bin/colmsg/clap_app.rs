@@ -5,15 +5,15 @@ pub fn build_app() -> ClapApp<'static, 'static> {
         .version(crate_version!())
         .global_setting(AppSettings::ColoredHelp)
         .about(
-            "A CLI tool for '櫻坂46メッセージ' and '日向坂46メッセージ' app.\n\n\
+            "A CLI tool for '櫻坂46メッセージ', '日向坂46メッセージ', and '乃木坂46メッセージ' app.\n\n\
              Use '--help' instead of '-h' to see a more detailed version of the help text.",
         )
-        .long_about("A CLI tool for saving messages of '櫻坂46メッセージ' and '日向坂46メッセージ' app locally.")
+        .long_about("A CLI tool for saving messages of '櫻坂46メッセージ', '日向坂46メッセージ' and '乃木坂46メッセージ' app locally.")
         .arg(
             Arg::with_name("group")
                 .long("group")
                 .short("g")
-                .possible_values(&["sakurazaka", "hinatazaka"])
+                .possible_values(&["sakurazaka", "hinatazaka", "nogizaka"])
                 .help("Save messages of specific group.")
                 .long_help("Save messages of specific group.
 If not specified, save messages both of groups")
@@ -24,11 +24,11 @@ If not specified, save messages both of groups")
             Arg::with_name("name")
                 .long("name")
                 .short("n")
-                .help("Save messages of specific members (菅井友香,佐々木久美,..)")
-                .long_help("Save messages of specific members (菅井友香,佐々木久美,..)
+                .help("Save messages of specific members (菅井友香, 佐々木久美, 秋元真夏..)")
+                .long_help("Save messages of specific members (菅井友香, 佐々木久美, 秋元真夏..)
 Name must be a valid full name of kanji.
 If not specified, save messages of all members.
-e.g. -n 菅井友香 -n 佐々木久美.")
+e.g. -n 菅井友香 -n 佐々木久美 -n 秋元真夏.")
                 .multiple(true)
                 .takes_value(true),
         )
@@ -75,6 +75,13 @@ Use '--download-dir' to confirm the default directory.")
                 .long("h_refresh_token")
                 .help("Set the hinatazaka refresh token.")
                 .long_help("Set the hinatazaka refresh token.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("n_refresh_token")
+                .long("n_refresh_token")
+                .help("Set the nogizaka refresh token.")
+                .long_help("Set the nogizaka refresh token.")
                 .takes_value(true),
         )
         .arg(
