@@ -5,6 +5,17 @@
 ## BREAKING CHANGES
 
 * support "乃木坂46メッセージ"
+* save past messages which delivered up to 24 hours before subscription start
+* `-g` option allow multiple
+* do not save if a refresh token is not specified for a group
+
+## Changes
+
+* improve development
+  * create OpenAPI specifications
+  * create docker environment to launch mock servers
+* fix README for "乃木坂46メッセージ"
+* fix doc for "乃木坂46メッセージ"
 
 # v2.0.4
 
