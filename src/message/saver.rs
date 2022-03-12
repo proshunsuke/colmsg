@@ -78,6 +78,12 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             None => self.latest_date(&id_dates)?
         };
 
+        // 購読開始から24時間前までに配信されたメッセージを保存する
+        let past_messages = http::past_messages::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id)?;
+        for message in &past_messages.messages {
+            self.save_message(&message, &id_dates, &member_dir_buf)?
+        };
+
         // 購読しているメンバーのメッセージを取得するAPIを複数回叩くためのループ
         loop {
             let timeline = http::timeline::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id, &fromdate)?;
