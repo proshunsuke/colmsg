@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: api.n46.glastonr.net
-  version: '2.0'
+  version: '2.2'
   description: '"乃木坂46メッセージ" ver2.00'
   contact:
     name: pro_shunsuke

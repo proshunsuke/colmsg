@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: api.kh.glastonr.net
-  version: '2.0'
+  version: '2.2'
   description: '"櫻坂46メッセージ", "日向坂46メッセージ" ver2.00'
   contact:
     name: pro_shunsuke
@@ -1596,7 +1596,7 @@ components:
     RequestHeaderX-Talk-App-ID:
       schema:
         type: string
-        default: jp.co.sonymusic.communication.keyakizaka 2.0
+        default: jp.co.sonymusic.communication.keyakizaka 2.2
       in: header
       name: X-Talk-App-ID
       required: true
