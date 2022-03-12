@@ -43,6 +43,16 @@ fn run_hinatazaka(app: &App) -> Result<bool> {
     let config: Config<HClient> = app.hinatazaka_config()?;
     run_controller(&config)
 }
+
+fn run_nogizaka(app: &App) -> Result<bool> {
+    if let None = app.matches.value_of("n_refresh_token") { return Ok(true) };
+    let is_run_by_group = match app.matches.values_of("group") {
+        Some(k) => k.clone().any(|v| v == "nogizaka"),
+        None => true
+    };
+    if !is_run_by_group { return Ok(true) };
+    let config: Config<NClient> = app.nogizaka_config()?;
+    run_controller(&config)
 }
 
 fn run() -> Result<bool> {
@@ -76,6 +86,20 @@ fn run() -> Result<bool> {
                 if Some(StatusCode::UNAUTHORIZED) != re.status() { break; };
                 delete_access_token_file()?;
                 result = run_hinatazaka(&app);
+            }
+            _ => { break; }
+        }
+    }
+
+    if let Err(_e) = &result { return result; }
+
+    let mut result = run_nogizaka(&app);
+    loop {
+        match &result {
+            Err(Error(ReqwestError(re), _)) => {
+                if Some(StatusCode::UNAUTHORIZED) != re.status() { break; };
+                delete_access_token_file()?;
+                result = run_nogizaka(&app);
             }
             _ => { break; }
         }

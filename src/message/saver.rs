@@ -51,9 +51,11 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             let mut group = "".to_string();
             let mut gen = "".to_string();
             tags.iter().for_each(|t| {
-                if g.tags.contains(&t.uuid) && t.meta.dimension.is_some() { group = t.name.clone(); }
-                if g.tags.contains(&t.uuid) && t.meta.dimension.is_none() { gen = t.name.clone(); }
+                let dimension = t.meta.as_ref().and_then(|meta| meta.dimension.as_ref());
+                if g.tags.contains(&t.uuid) && dimension.is_some() { group = t.name.clone(); }
+                if g.tags.contains(&t.uuid) && dimension.is_none() { gen = t.name.clone(); }
             });
+            // 乃木坂の場合はg.tagsに世代情報(1期, 2期)が存在しないため全員乃木坂ディレクトリ以下に保存される
             member_identifier_vec.push(MemberIdentifier::new(
                 g.id, self.trim(&g.name), group, gen, g.subscription.is_some(),
             ));
