@@ -13,6 +13,7 @@ pub fn build_app() -> ClapApp<'static, 'static> {
             Arg::with_name("group")
                 .long("group")
                 .short("g")
+                .multiple(true)
                 .possible_values(&["sakurazaka", "hinatazaka", "nogizaka"])
                 .help("Save messages of specific group.")
                 .long_help("Save messages of specific group.
