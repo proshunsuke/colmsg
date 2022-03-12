@@ -1,0 +1,6 @@
+schema:
+  type: string
+  default: '173'
+in: header
+name: Content-Length
+required: true

@@ -1,0 +1,10 @@
+type: object
+properties:
+  messages:
+    type: array
+    items:
+      - $ref: './TimelineTextObject.yaml'
+      - $ref: './TimelinePictureObject.yaml'
+      - $ref: './TimelineVideoObject.yaml'
+      - $ref: './TimelineVoiceObject.yaml'
+      - $ref: './TimelineCanceledObject.yaml'

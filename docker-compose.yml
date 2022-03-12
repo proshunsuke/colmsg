@@ -1,0 +1,66 @@
+version: '3.9'
+
+services:
+  swagger-editor-kh:
+    image: swaggerapi/swagger-editor
+    container_name: "swagger-editor-kh"
+    ports:
+      - "8001:8080"
+    volumes:
+      - ./api/api-kh-glastonr-net.yaml:/api-kh-glastonr-net.yaml
+      - ./api/components:/components
+    environment:
+      SWAGGER_FILE: /api-kh-glastonr-net.yaml
+
+  swagger-ui-kh:
+    image: swaggerapi/swagger-ui
+    container_name: "swagger-ui-kh"
+    ports:
+      - "8002:8080"
+    volumes:
+      - ./api/api-kh-glastonr-net.yaml:/api-kh-glastonr-net.yaml
+      - ./api/components:/components
+    environment:
+      SWAGGER_JSON: /api-kh-glastonr-net.yaml
+
+  swagger-api-kh:
+    image: stoplight/prism:3
+    container_name: "swagger-api-kh"
+    ports:
+      - "8003:4010"
+    command: mock -h 0.0.0.0 /api-kh-glastonr-net.yaml
+    volumes:
+      - ./api/api-kh-glastonr-net.yaml:/api-kh-glastonr-net.yaml
+      - ./api/components:/components
+
+  swagger-editor-n46:
+    image: swaggerapi/swagger-editor
+    container_name: "swagger-editor-n46"
+    ports:
+      - "8004:8080"
+    volumes:
+      - ./api/api-n46-glastonr-net.yaml:/api-n46-glastonr-net.yaml
+      - ./api/components:/components
+    environment:
+      SWAGGER_FILE: /api-n46-glastonr-net.yaml
+
+  swagger-ui-n46:
+    image: swaggerapi/swagger-ui
+    container_name: "swagger-ui-n46"
+    ports:
+      - "8005:8080"
+    volumes:
+      - ./api/api-n46-glastonr-net.yaml:/api-n46-glastonr-net.yaml
+      - ./api/components:/components
+    environment:
+      SWAGGER_JSON: /api-n46-glastonr-net.yaml
+
+  swagger-api-n46:
+    image: stoplight/prism:3
+    container_name: "swagger-api-n46"
+    ports:
+      - "8006:4010"
+    command: mock -h 0.0.0.0 /api-n46-glastonr-net.yaml
+    volumes:
+      - ./api/api-n46-glastonr-net.yaml:/api-n46-glastonr-net.yaml
+      - ./api/components:/components

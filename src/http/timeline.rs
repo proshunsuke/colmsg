@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::{errors::*, http::client::SHClient};
+use crate::{errors::*, http::client::SHNClient};
 
 const PATH: &str = "/v2/groups";
 const PATH2: &str = "/timeline";
@@ -53,7 +53,7 @@ pub struct Timeline {
     pub queried_at: String,
 }
 
-pub fn request<C: SHClient>(client: C, access_token: &String, id: &u32, fromdate: &String) -> Result<Timeline> {
+pub fn request<C: SHNClient>(client: C, access_token: &String, id: &u32, fromdate: &String) -> Result<Timeline> {
     let path = format!("{}/{}{}", PATH, id, PATH2);
     let access_token = String::from(access_token);
     let parameters = vec![
@@ -63,5 +63,5 @@ pub fn request<C: SHClient>(client: C, access_token: &String, id: &u32, fromdate
         ("order", ORDER)
     ];
 
-    client.get_request::<Timeline>(path.as_str(), &access_token, Some(parameters))
+    client.get_request::<Timeline>(path.as_str(), &access_token, Some(parameters), true)
 }

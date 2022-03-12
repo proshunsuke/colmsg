@@ -15,31 +15,44 @@ use colmsg::dirs::PROJECT_DIRS;
 use colmsg::{errors::*, Config};
 use colmsg::errors::ErrorKind::ReqwestError;
 use colmsg::controller::Controller;
-use colmsg::http::client::{SClient, SHClient, HClient};
+use colmsg::http::client::{SClient, SHNClient, HClient, NClient};
 
-fn run_controller<C: SHClient>(config: &Config<C>) -> Result<bool> {
+fn run_controller<C: SHNClient>(config: &Config<C>) -> Result<bool> {
     let controller = Controller::new(config);
     controller.run()
 }
 
 fn run_sakurazaka(app: &App) -> Result<bool> {
-    match app.matches.value_of("group") {
-        Some("hinatazaka") => Ok(true),
-        _ => {
-            let config: Config<SClient> = app.sakurazaka_config()?;
-            run_controller(&config)
-        }
-    }
+    if let None = app.matches.value_of("s_refresh_token") { return Ok(true) };
+    let is_run_by_group = match app.matches.values_of("group") {
+        Some(k) => k.clone().any(|v| v == "sakurazaka"),
+        None => true
+    };
+    if !is_run_by_group { return Ok(true) };
+    let config: Config<SClient> = app.sakurazaka_config()?;
+    run_controller(&config)
 }
 
 fn run_hinatazaka(app: &App) -> Result<bool> {
-    match app.matches.value_of("group") {
-        Some("sakurazaka") => Ok(true),
-        _ => {
-            let config: Config<HClient> = app.hinatazaka_config()?;
-            run_controller(&config)
-        }
-    }
+    if let None = app.matches.value_of("h_refresh_token") { return Ok(true) };
+    let is_run_by_group = match app.matches.values_of("group") {
+        Some(k) => k.clone().any(|v| v == "hinatazaka"),
+        None => true
+    };
+    if !is_run_by_group { return Ok(true) };
+    let config: Config<HClient> = app.hinatazaka_config()?;
+    run_controller(&config)
+}
+
+fn run_nogizaka(app: &App) -> Result<bool> {
+    if let None = app.matches.value_of("n_refresh_token") { return Ok(true) };
+    let is_run_by_group = match app.matches.values_of("group") {
+        Some(k) => k.clone().any(|v| v == "nogizaka"),
+        None => true
+    };
+    if !is_run_by_group { return Ok(true) };
+    let config: Config<NClient> = app.nogizaka_config()?;
+    run_controller(&config)
 }
 
 fn run() -> Result<bool> {
@@ -73,6 +86,20 @@ fn run() -> Result<bool> {
                 if Some(StatusCode::UNAUTHORIZED) != re.status() { break; };
                 delete_access_token_file()?;
                 result = run_hinatazaka(&app);
+            }
+            _ => { break; }
+        }
+    }
+
+    if let Err(_e) = &result { return result; }
+
+    let mut result = run_nogizaka(&app);
+    loop {
+        match &result {
+            Err(Error(ReqwestError(re), _)) => {
+                if Some(StatusCode::UNAUTHORIZED) != re.status() { break; };
+                delete_access_token_file()?;
+                result = run_nogizaka(&app);
             }
             _ => { break; }
         }

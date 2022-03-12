@@ -1,0 +1,4 @@
+schema:
+  type: string
+  default: no-cache
+required: true

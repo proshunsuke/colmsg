@@ -1,0 +1,4 @@
+schema:
+  type: string
+  default: 56
+required: true

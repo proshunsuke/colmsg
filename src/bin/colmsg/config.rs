@@ -2,7 +2,7 @@ use std::{env, ffi::OsString, fs, fs::File, io::Write, path::PathBuf};
 
 use shell_words;
 
-use colmsg::{errors::*, http, dirs::PROJECT_DIRS, http::client::SHClient};
+use colmsg::{errors::*, http, dirs::PROJECT_DIRS, http::client::SHNClient};
 
 pub fn config_file() -> PathBuf {
     env::var("COLMSG_CONFIG_PATH")
@@ -36,7 +36,7 @@ fn get_args_from_str(content: &str) -> Result<Vec<OsString>> {
         .collect::<Vec<_>>())
 }
 
-pub fn get_access_token_from_file<C: SHClient>(refresh_token: &String, client: C) -> Result<String> {
+pub fn get_access_token_from_file<C: SHNClient>(refresh_token: &String, client: C) -> Result<String> {
     let dir = PROJECT_DIRS.config_dir().to_path_buf();
     if !dir.is_dir() { fs::create_dir_all(&dir)? };
     let file = dir.join("access_token");

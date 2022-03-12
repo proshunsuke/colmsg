@@ -7,15 +7,15 @@ use chrono::NaiveDateTime;
 
 use crate::{
     errors::*, Config, message, Kind,
-    http::{self, groups::Groups, tags::Tags, timeline::TimelineMessages, client::SHClient},
+    http::{self, groups::Groups, tags::Tags, timeline::TimelineMessages, client::SHNClient},
     message::file::{Text, Picture, SaveToFile, Video, Voice},
 };
 
-pub struct Saver<'a, C: SHClient> {
-    config: &'a Config<'a, C>
+pub struct Saver<'a, C: SHNClient> {
+    config: &'a Config<'a, C>,
 }
 
-impl<'b, C: SHClient> Saver<'b, C> {
+impl<'b, C: SHNClient> Saver<'b, C> {
     pub fn new<'a>(config: &'a Config<C>) -> Saver<'a, C> {
         Saver { config }
     }
@@ -51,9 +51,11 @@ impl<'b, C: SHClient> Saver<'b, C> {
             let mut group = "".to_string();
             let mut gen = "".to_string();
             tags.iter().for_each(|t| {
-                if g.tags.contains(&t.uuid) && t.meta.dimension.is_some() { group = t.name.clone(); }
-                if g.tags.contains(&t.uuid) && t.meta.dimension.is_none() { gen = t.name.clone(); }
+                let dimension = t.meta.as_ref().and_then(|meta| meta.dimension.as_ref());
+                if g.tags.contains(&t.uuid) && dimension.is_some() { group = t.name.clone(); }
+                if g.tags.contains(&t.uuid) && dimension.is_none() { gen = t.name.clone(); }
             });
+            // 乃木坂の場合はg.tagsに世代情報(1期, 2期)が存在しないため全員乃木坂ディレクトリ以下に保存される
             member_identifier_vec.push(MemberIdentifier::new(
                 g.id, self.trim(&g.name), group, gen, g.subscription.is_some(),
             ));
@@ -74,6 +76,12 @@ impl<'b, C: SHClient> Saver<'b, C> {
         let mut fromdate = match self.config.from {
             Some(f) => f.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
             None => self.latest_date(&id_dates)?
+        };
+
+        // 購読開始から24時間前までに配信されたメッセージを保存する
+        let past_messages = http::past_messages::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id)?;
+        for message in &past_messages.messages {
+            self.save_message(&message, &id_dates, &member_dir_buf)?
         };
 
         // 購読しているメンバーのメッセージを取得するAPIを複数回叩くためのループ

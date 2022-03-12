@@ -1,5 +1,11 @@
 ## Packaging
 
+# v3.0.0
+
+## BREAKING CHANGES
+
+* support "乃木坂46メッセージ"
+
 # v2.0.4
 
 https://github.com/proshunsuke/colmsg/pull/57

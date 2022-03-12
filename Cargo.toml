@@ -1,9 +1,9 @@
 [package]
 name = "colmsg"
-version = "2.0.4"
+version = "3.0.0"
 authors = ["proshunsuke <shunsuke0901@gmail.com>"]
 categories = ["command-line-utilities"]
-description="「櫻坂46メッセージ」「日向坂46メッセージ」アプリのメッセージをPCに保存します."
+description="Save the messages of '櫻坂46メッセージ', '日向坂46メッセージ' and '乃木坂46メッセージ' apps to the local."
 homepage = "https://github.com/proshunsuke/colmsg"
 license = "MIT"
 readme = "README.md"

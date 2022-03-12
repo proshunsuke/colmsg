@@ -1,0 +1,4 @@
+schema:
+  type: string
+  default: 'private, no-cache, no-store, must-revalidate'
+required: true

@@ -1,0 +1,6 @@
+schema:
+  type: string
+  default: Keep-Alive
+in: header
+name: Connection
+required: true
