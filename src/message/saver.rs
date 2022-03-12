@@ -7,15 +7,15 @@ use chrono::NaiveDateTime;
 
 use crate::{
     errors::*, Config, message, Kind,
-    http::{self, groups::Groups, tags::Tags, timeline::TimelineMessages, client::SHClient},
+    http::{self, groups::Groups, tags::Tags, timeline::TimelineMessages, client::SHNClient},
     message::file::{Text, Picture, SaveToFile, Video, Voice},
 };
 
-pub struct Saver<'a, C: SHClient> {
-    config: &'a Config<'a, C>
+pub struct Saver<'a, C: SHNClient> {
+    config: &'a Config<'a, C>,
 }
 
-impl<'b, C: SHClient> Saver<'b, C> {
+impl<'b, C: SHNClient> Saver<'b, C> {
     pub fn new<'a>(config: &'a Config<C>) -> Saver<'a, C> {
         Saver { config }
     }

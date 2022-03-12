@@ -15,9 +15,9 @@ use colmsg::dirs::PROJECT_DIRS;
 use colmsg::{errors::*, Config};
 use colmsg::errors::ErrorKind::ReqwestError;
 use colmsg::controller::Controller;
-use colmsg::http::client::{SClient, SHClient, HClient};
+use colmsg::http::client::{SClient, SHNClient, HClient, NClient};
 
-fn run_controller<C: SHClient>(config: &Config<C>) -> Result<bool> {
+fn run_controller<C: SHNClient>(config: &Config<C>) -> Result<bool> {
     let controller = Controller::new(config);
     controller.run()
 }

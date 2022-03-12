@@ -46,7 +46,7 @@ pub mod errors {
 use std::path::PathBuf;
 
 use chrono::{NaiveDateTime};
-use crate::http::client::SHClient;
+use crate::http::client::SHNClient;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Kind {
@@ -56,7 +56,7 @@ pub enum Kind {
     Voice,
 }
 
-pub struct Config<'a, C: SHClient> {
+pub struct Config<'a, C: SHNClient> {
     pub name: Vec<&'a str>,
     pub from: Option<NaiveDateTime>,
     pub kind: Vec<Kind>,
