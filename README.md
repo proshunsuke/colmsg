@@ -1,8 +1,6 @@
-# <img src="https://user-images.githubusercontent.com/3148511/99256532-e3433e00-2858-11eb-9dce-c5941574224e.png" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/99256580-f6eea480-2858-11eb-848e-3351c3d8159b.png" width="32px" alt="日向坂46メッセージのロゴ"> colmsg
+# <img src="https://user-images.githubusercontent.com/3148511/158018437-09822a33-8767-4e03-ba90-e0f69594c493.jpeg" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018441-dd7cb9eb-bf31-4938-830d-1ef293a2afba.jpg" width="32px" alt="日向坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018442-ae54e926-760d-4b47-b0a0-7255485e1f28.jpg" width="32px" alt="乃木坂46メッセージのロゴ"> colmsg
 
-[「欅坂46/日向坂46 メッセージ」アプリを使用していた方へ](doc/changes_about_sakurazaka_and_hinatazaka_app.md)
-
-「櫻坂46メッセージ」「日向坂46メッセージ」アプリのメッセージをPCに保存します。
+「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」アプリのメッセージをPCに保存します。
 
 ![sample.png](https://user-images.githubusercontent.com/3148511/85219015-fef60580-b3da-11ea-8b99-51666d27abe3.png)
 
@@ -10,16 +8,16 @@
 
 `colmsg` のインストール方法は[こちら](#インストール)を参照してください。
 
-**まず初めに**「櫻坂46メッセージ」「日向坂46メッセージ」アプリそれぞれのrefresh_tokenを取得してください。  
+**まず初めに**refresh_tokenを取得してください。  
 取得方法は[こちら](doc/how_to_get_refresh_token.md)を参照してください。
 
 取得出来たら以下を実行してください。  
-`<s_refresh_token>` , `<h_refresh_token>` に「櫻坂46メッセージ」「日向坂46メッセージ」それぞれで取得してきたrefresh_tokenを入れてください。  
-※片方のアプリのみ購読している方は片方のみを指定してください。  
+`<s_refresh_token>` , `<h_refresh_token>` , `<n_refresh_token>` に「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」それぞれで取得してきたrefresh_tokenを入れてください。  
+※ 指定するのは購読しているアプリのみで問題ありません。  
 購読しているメンバー全員の全期間のメッセージが保存されます。  
 
 ```shell script
-colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token>
+colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token> --n_refresh_token <n_refresh_token>
 ```
 
 Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
@@ -30,9 +28,10 @@ Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてく�
 * ✅ Android, iosアプリどちらにも対応しています
 * ✅ Windows, macos, Linuxで実行できます
 * ✅ 様々な保存方法が選べます
-* ✅ 2020年10月14日のアプリアップデート後のバージョンに対応しています
-  * 「櫻坂46メッセージ」: バージョン1.0.00.65
-  * 「日向坂46メッセージ」: バージョン2.1.00.10020.68
+* ✅ 以下のアプリのバージョンに対応しています
+  * 「櫻坂46メッセージ」: バージョン1.3.00.120
+  * 「日向坂46メッセージ」: バージョン2.4.00.120
+  * 「乃木坂46メッセージ」: バージョン1.0.02.121
 
 ## 使い方
 
@@ -79,15 +78,17 @@ colmsg --help
 * 既にいくつかメッセージが保存されている場合にコマンドを実行すると、最後に保存したメッセージ以降のメッセージを取得して保存します  
 * 保存されるメッセージは次のディレクトリ構造で保存されます
   * ```shell script
-        colmsg/
-        ├── 日向坂46 一期生
-        │   └── 佐々木久美
-        │       ├── 1_0_20191231235959.txt
-        │       └── 2_1_20200101000000.jpg
-        └── 櫻坂46 一期生
-            └── 菅井友香
-                ├── 3_2_20200101000001.mp4
-                └── 4_3_20200101000002.mp4
+    colmsg/
+    ├── 日向坂46 一期生
+    │   └── 佐々木久美
+    │       └── 1_0_20191231235959.txt
+    ├── 乃木坂46
+    │   └── 秋元真夏
+    │       └── 2_1_20200101000000.jpg
+    └── 櫻坂46 一期生
+        └── 菅井友香
+            ├── 3_2_20200101000001.mp4
+            └── 4_3_20200101000002.mp4
     ```
 * ファイル名の形式は `<シーケンス番号>_<種類>_<日付>.<拡張子>` となっています
   * シーケンス番号はメッセージの時系列を表す番号になっています。若い数字程昔のメッセージです。ファイルブラウザで辞書順に並べると保存したメッセージが時系列通りに並びます
@@ -129,6 +130,9 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 # h_refresh_tokenを指定
 --h_refresh_token h_refresh_token
 
+# n_refresh_tokenを指定
+--n_refresh_token n_refresh_token
+
 # メディアファイルだけ保存するように設定
 -k image -k video -k voice
 ```
@@ -169,17 +173,17 @@ yay -S colmsg
 
 ```shell
 make server/kh
+make server/n46
 ```
 
-モックサーバのbase urlを環境変数 `S_BASE_URL` , `H_BASE_URL` で指定することが出来ます。
+環境変数 `S_BASE_URL` , `H_BASE_URL` , `N_BASE_URL` を指定することでモックサーバーへリクエストすることが出来ます。
 
 ```shell script
-S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 cargo run -- -d ~/Downloads/temp/ --help
+S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
 
 ## TODO
 
-* [ ] deleteの実装
 * [ ] CIによる自動テスト
 * [ ] examplesの用意
 * [ ] メッセージ保存処理の並列化
