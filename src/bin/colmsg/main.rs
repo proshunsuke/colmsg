@@ -23,23 +23,26 @@ fn run_controller<C: SHNClient>(config: &Config<C>) -> Result<bool> {
 }
 
 fn run_sakurazaka(app: &App) -> Result<bool> {
-    match app.matches.value_of("group") {
-        Some("hinatazaka") => Ok(true),
-        _ => {
-            let config: Config<SClient> = app.sakurazaka_config()?;
-            run_controller(&config)
-        }
-    }
+    if let None = app.matches.value_of("s_refresh_token") { return Ok(true) };
+    let is_run_by_group = match app.matches.values_of("group") {
+        Some(k) => k.clone().any(|v| v == "sakurazaka"),
+        None => true
+    };
+    if !is_run_by_group { return Ok(true) };
+    let config: Config<SClient> = app.sakurazaka_config()?;
+    run_controller(&config)
 }
 
 fn run_hinatazaka(app: &App) -> Result<bool> {
-    match app.matches.value_of("group") {
-        Some("sakurazaka") => Ok(true),
-        _ => {
-            let config: Config<HClient> = app.hinatazaka_config()?;
-            run_controller(&config)
-        }
-    }
+    if let None = app.matches.value_of("h_refresh_token") { return Ok(true) };
+    let is_run_by_group = match app.matches.values_of("group") {
+        Some(k) => k.clone().any(|v| v == "hinatazaka"),
+        None => true
+    };
+    if !is_run_by_group { return Ok(true) };
+    let config: Config<HClient> = app.hinatazaka_config()?;
+    run_controller(&config)
+}
 }
 
 fn run() -> Result<bool> {
