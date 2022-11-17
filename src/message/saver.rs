@@ -57,7 +57,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             });
             // 乃木坂の場合はg.tagsに世代情報(1期, 2期)が存在しないため全員乃木坂ディレクトリ以下に保存される
             member_identifier_vec.push(MemberIdentifier::new(
-                g.id, self.trim(&g.name), group, gen, g.subscription.is_some(),
+                g.id, self.trim(&g.name), gen, g.subscription.is_some(),
             ));
         });
 
@@ -198,14 +198,13 @@ impl<'b, C: SHNClient> Saver<'b, C> {
 pub struct MemberIdentifier {
     id: u32,
     name: String,
-    group: String,
     gen: String,
     subscription: bool,
 }
 
 impl MemberIdentifier {
-    pub fn new(id: u32, name: String, group: String, gen: String, subscription: bool) -> MemberIdentifier {
-        MemberIdentifier { id, name, group, gen, subscription }
+    pub fn new(id: u32, name: String, gen: String, subscription: bool) -> MemberIdentifier {
+        MemberIdentifier { id, name, gen, subscription }
     }
 }
 
