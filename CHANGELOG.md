@@ -1,6 +1,16 @@
 ## Packaging
 
+# v3.0.1
+
+https://github.com/proshunsuke/colmsg/pull/80
+
+## Fix bugs
+
+* support OpenSSL 3
+
 # v3.0.0
+
+https://github.com/proshunsuke/colmsg/pull/68
 
 ## BREAKING CHANGES
 
