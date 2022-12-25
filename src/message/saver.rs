@@ -216,17 +216,9 @@ struct IdDate {
 
 fn dir_entry_to_id_date(filename: &DirEntry) -> Option<IdDate> {
     let re = Regex::new(r"(?x)(?P<id>\d+)_\d_(?P<date>\d+)").unwrap();
-    let caps = &re.captures(filename.file_name().to_str().unwrap());
-
-    match caps {
-        None => {
-            None
-        }
-        Some(cap) => {
-            Some(IdDate {
-                id: cap["id"].parse::<u32>().unwrap(),
-                date: cap["date"].to_string()
-            })
-        }
-    }
+    re.captures(filename.file_name().to_str().unwrap())
+        .and_then(|cap|Some(IdDate {
+            id: cap["id"].parse::<u32>().unwrap(),
+            date: cap["date"].to_string()
+        }))
 }
