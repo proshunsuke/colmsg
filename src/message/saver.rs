@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::{PathBuf};
 
+use rayon::prelude::*;
 use regex::Regex;
 use walkdir::{WalkDir, DirEntry};
 use chrono::NaiveDateTime;
@@ -175,6 +176,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     fn id_dates(&self, dir_buf: &PathBuf) -> Vec<IdDate> {
         let mut result = WalkDir::new(dir_buf)
             .into_iter()
+            .par_bridge()
             .filter(|r| !r.as_ref().unwrap().path().is_dir())
             .map(|r| {
                 let dir_entry = r.unwrap();
