@@ -173,17 +173,17 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     }
 
     fn id_dates(&self, dir_buf: &PathBuf) -> Vec<IdDate> {
-        WalkDir::new(dir_buf)
-            .sort_by(move |a, b| {
-                id_by_filename_format(&a).cmp(&id_by_filename_format(&b))
-            })
+        let mut result = WalkDir::new(dir_buf)
             .into_iter()
             .filter(|r| !r.as_ref().unwrap().path().is_dir())
             .map(|r| {
                 let dir_entry = r.unwrap();
-                IdDate { id: id_by_filename_format(&dir_entry), date: date_by_filename_format(&dir_entry) }
+                dir_entry_to_id_date(&dir_entry)
             })
-            .collect::<Vec<_>>()
+            .flatten()
+            .collect::<Vec<_>>();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+        result
     }
 
     fn latest_date(&self, id_dates: &Vec<IdDate>) -> Result<String> {
@@ -214,14 +214,11 @@ struct IdDate {
     date: String,
 }
 
-fn id_by_filename_format(filename: &DirEntry) -> u32 {
-    let re = Regex::new(r"(?x)(?P<id>\d+)_*").unwrap();
-    let caps = &re.captures(filename.file_name().to_str().unwrap()).unwrap();
-    caps["id"].parse::<u32>().unwrap()
-}
-
-fn date_by_filename_format(filename: &DirEntry) -> String {
-    let re = Regex::new(r"(?x)\d+_\d_(?P<date>\d+)").unwrap();
-    let caps = &re.captures(filename.file_name().to_str().unwrap()).unwrap();
-    caps["date"].to_string()
+fn dir_entry_to_id_date(filename: &DirEntry) -> Option<IdDate> {
+    let re = Regex::new(r"(?x)(?P<id>\d+)_\d_(?P<date>\d+)").unwrap();
+    re.captures(filename.file_name().to_str().unwrap())
+        .and_then(|cap|Some(IdDate {
+            id: cap["id"].parse::<u32>().unwrap(),
+            date: cap["date"].to_string()
+        }))
 }
