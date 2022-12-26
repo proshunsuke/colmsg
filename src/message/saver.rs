@@ -51,7 +51,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     }
 
     fn create_member_identifier_list(&self, group: &Vec<Groups>, tags: &Vec<Tags>) -> Vec<MemberIdentifier> {
-        let mut member_identifier_vec = Vec::new();
+        let mut member_identifier_vec = Vec::with_capacity(group.len());
         group.iter().for_each(|g| { // もっといい書き方があるはず
             let mut group = "".to_string();
             let mut gen = "".to_string();
