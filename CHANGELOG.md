@@ -1,5 +1,13 @@
 ## Packaging
 
+# v3.0.2
+
+https://github.com/proshunsuke/colmsg/pull/86
+
+## Fix bugs
+
+* fixed error when files other than message files exist in the download directory
+
 # v3.0.1
 
 https://github.com/proshunsuke/colmsg/pull/80
