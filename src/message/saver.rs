@@ -12,6 +12,10 @@ use crate::{
     message::file::{Text, Picture, SaveToFile, Video, Voice},
 };
 
+lazy_static! {
+    static ref ID_DATE_REGEX: Regex = Regex::new(r"(?x)(?P<id>\d+)_\d_(?P<date>\d+)").unwrap();
+}
+
 pub struct Saver<'a, C: SHNClient> {
     config: &'a Config<'a, C>,
 }
@@ -217,7 +221,7 @@ struct IdDate {
 }
 
 fn dir_entry_to_id_date(filename: &DirEntry) -> Option<IdDate> {
-    let re = Regex::new(r"(?x)(?P<id>\d+)_\d_(?P<date>\d+)").unwrap();
+    let re = ID_DATE_REGEX.clone();
     re.captures(filename.file_name().to_str().unwrap())
         .and_then(|cap|Some(IdDate {
             id: cap["id"].parse::<u32>().unwrap(),
