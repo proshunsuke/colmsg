@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::{PathBuf};
 
+use rayon::prelude::*;
 use regex::Regex;
 use walkdir::{WalkDir, DirEntry};
 use chrono::NaiveDateTime;
@@ -10,6 +11,10 @@ use crate::{
     http::{self, groups::Groups, tags::Tags, timeline::TimelineMessages, client::SHNClient},
     message::file::{Text, Picture, SaveToFile, Video, Voice},
 };
+
+lazy_static! {
+    static ref ID_DATE_REGEX: Regex = Regex::new(r"(?x)(?P<id>\d+)_\d_(?P<date>\d+)").unwrap();
+}
 
 pub struct Saver<'a, C: SHNClient> {
     config: &'a Config<'a, C>,
@@ -46,7 +51,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     }
 
     fn create_member_identifier_list(&self, group: &Vec<Groups>, tags: &Vec<Tags>) -> Vec<MemberIdentifier> {
-        let mut member_identifier_vec = Vec::new();
+        let mut member_identifier_vec = Vec::with_capacity(group.len());
         group.iter().for_each(|g| { // もっといい書き方があるはず
             let mut group = "".to_string();
             let mut gen = "".to_string();
@@ -175,6 +180,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     fn id_dates(&self, dir_buf: &PathBuf) -> Vec<IdDate> {
         let mut result = WalkDir::new(dir_buf)
             .into_iter()
+            .par_bridge()
             .filter(|r| !r.as_ref().unwrap().path().is_dir())
             .map(|r| {
                 let dir_entry = r.unwrap();
@@ -215,7 +221,7 @@ struct IdDate {
 }
 
 fn dir_entry_to_id_date(filename: &DirEntry) -> Option<IdDate> {
-    let re = Regex::new(r"(?x)(?P<id>\d+)_\d_(?P<date>\d+)").unwrap();
+    let re = ID_DATE_REGEX.clone();
     re.captures(filename.file_name().to_str().unwrap())
         .and_then(|cap|Some(IdDate {
             id: cap["id"].parse::<u32>().unwrap(),
