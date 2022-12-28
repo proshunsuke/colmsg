@@ -1,5 +1,13 @@
 ## Packaging
 
+# v3.0.3
+
+https://github.com/proshunsuke/colmsg/pull/88
+
+## Fix
+
+* Use [rayon](https://crates.io/crates/rayon) to speed up internal processing
+
 # v3.0.2
 
 https://github.com/proshunsuke/colmsg/pull/86
