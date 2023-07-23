@@ -1,6 +1,6 @@
 [package]
 name = "colmsg"
-version = "3.0.3"
+version = "3.1.0"
 authors = ["proshunsuke <shunsuke0901@gmail.com>"]
 categories = ["command-line-utilities"]
 description="Save the messages of '櫻坂46メッセージ', '日向坂46メッセージ' and '乃木坂46メッセージ' apps to the local."
