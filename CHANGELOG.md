@@ -2,7 +2,13 @@
 
 # v3.1.0
 
+## Changes
 
+* add basic support for Saito Asuka Message app
+
+## Fix
+
+- fix default Download folder cause panic on Linux
 
 # v3.0.3
 
