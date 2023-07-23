@@ -259,3 +259,41 @@ fn n_base_url() -> String {
         .ok()
         .unwrap_or_else(|| "https://api.n46.glastonr.net".to_string())
 }
+
+#[derive(Debug, Clone)]
+pub struct AClient {
+    client: Client,
+}
+
+impl SHNClient for AClient {
+    fn new() -> AClient {
+        AClient {
+            client: Client::new(
+                a_base_url(),
+                "jp.co.sonymusic.communication.asukasaito 2.2".to_string(),
+            ),
+        }
+    }
+
+    fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
+        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+        self.client.post_request(path, json, is_dynamic)
+    }
+
+    fn get_request<RT>(
+        &self,
+        path: &str,
+        access_token: &str,
+        parameters: Option<Vec<(&str, &str)>>,
+        is_dynamic: bool
+    ) -> Result<RT>
+        where RT: DeserializeOwned {
+        self.client.get_request(path, access_token, parameters, is_dynamic)
+    }
+}
+
+fn a_base_url() -> String {
+    env::var("A_BASE_URL")
+        .ok()
+        .unwrap_or_else(|| "https://api.asukasaito.glastonr.net".to_string())
+}
