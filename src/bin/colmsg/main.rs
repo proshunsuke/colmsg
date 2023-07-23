@@ -15,7 +15,7 @@ use colmsg::dirs::PROJECT_DIRS;
 use colmsg::{errors::*, Config};
 use colmsg::errors::ErrorKind::ReqwestError;
 use colmsg::controller::Controller;
-use colmsg::http::client::{SClient, SHNClient, HClient, NClient};
+use colmsg::http::client::{SClient, SHNClient, HClient, NClient, AClient};
 
 fn run_controller<C: SHNClient>(config: &Config<C>) -> Result<bool> {
     let controller = Controller::new(config);
@@ -52,6 +52,17 @@ fn run_nogizaka(app: &App) -> Result<bool> {
     };
     if !is_run_by_group { return Ok(true) };
     let config: Config<NClient> = app.nogizaka_config()?;
+    run_controller(&config)
+}
+
+fn run_asukasaito(app: &App) -> Result<bool> {
+    if let None = app.matches.value_of("a_refresh_token") { return Ok(true) };
+    let is_run_by_group = match app.matches.values_of("group") {
+        Some(k) => k.clone().any(|v| v == "asukasaito"),
+        None => true
+    };
+    if !is_run_by_group { return Ok(true) };
+    let config: Config<AClient> = app.asukasaito_config()?;
     run_controller(&config)
 }
 
@@ -100,6 +111,20 @@ fn run() -> Result<bool> {
                 if Some(StatusCode::UNAUTHORIZED) != re.status() { break; };
                 delete_access_token_file()?;
                 result = run_nogizaka(&app);
+            }
+            _ => { break; }
+        }
+    }
+
+    if let Err(_e) = &result { return result; }
+
+    let mut result = run_asukasaito(&app);
+    loop {
+        match &result {
+            Err(Error(ReqwestError(re), _)) => {
+                if Some(StatusCode::UNAUTHORIZED) != re.status() { break; };
+                delete_access_token_file()?;
+                result = run_asukasaito(&app);
             }
             _ => { break; }
         }
