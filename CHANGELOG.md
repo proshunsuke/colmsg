@@ -1,5 +1,11 @@
 ## Packaging
 
+# v3.1.1
+
+## Fix
+
+- fix x-talk-app-id version
+
 # v3.1.0
 
 ## Changes
