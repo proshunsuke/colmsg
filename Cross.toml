@@ -1,0 +1,5 @@
+[target.x86_64-apple-darwin]
+image = "criticalstack/cross:x86_64-apple-darwin"
+
+[target.aarch64-apple-darwin]
+image = "wasmcloud/cross:aarch64-apple-darwin"

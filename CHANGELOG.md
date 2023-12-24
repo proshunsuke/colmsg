@@ -1,5 +1,15 @@
 ## Packaging
 
+# v3.2.0
+
+## Changes
+
+- add support for Apple Silicon(M1/M2)
+
+## Fix
+
+- saving messages when updated_at are identical in all retrieved messages
+
 # v3.1.1
 
 ## Fix
