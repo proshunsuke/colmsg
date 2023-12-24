@@ -3,7 +3,7 @@ use crate::{errors::*, http::client::SHNClient};
 
 const PATH: &str = "/v2/groups";
 const PATH2: &str = "/timeline";
-pub const COUNT: &str = "100";
+pub const DEFAULT_COUNT: usize = 100;
 const ORDER: &str = "asc";
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -53,13 +53,13 @@ pub struct Timeline {
     pub queried_at: String,
 }
 
-pub fn request<C: SHNClient>(client: C, access_token: &String, id: &u32, fromdate: &String) -> Result<Timeline> {
+pub fn request<C: SHNClient>(client: C, access_token: &String, id: &u32, fromdate: &String, count: &String) -> Result<Timeline> {
     let path = format!("{}/{}{}", PATH, id, PATH2);
     let access_token = String::from(access_token);
     let parameters = vec![
         ("created_from", "2000-01-01T00:00:00Z"),
         ("updated_from", fromdate),
-        ("count", COUNT),
+        ("count", count),
         ("order", ORDER)
     ];
 

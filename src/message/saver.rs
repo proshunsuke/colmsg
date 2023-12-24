@@ -11,6 +11,7 @@ use crate::{
     http::{self, groups::Groups, tags::Tags, timeline::TimelineMessages, client::SHNClient},
     message::file::{Text, Picture, SaveToFile, Video, Voice},
 };
+use crate::http::timeline::Timeline;
 
 lazy_static! {
     static ref ID_DATE_REGEX: Regex = Regex::new(r"(?x)(?P<id>\d+)_\d_(?P<date>\d+)").unwrap();
@@ -88,10 +89,23 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         for message in &past_messages.messages {
             self.save_message(&message, &id_dates, &member_dir_buf)?
         };
+        
+        let mut count = http::timeline::DEFAULT_COUNT;
 
         // 購読しているメンバーのメッセージを取得するAPIを複数回叩くためのループ
         loop {
-            let timeline = http::timeline::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id, &fromdate)?;
+            let timeline = http::timeline::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id, &fromdate, &count.to_string())?;
+
+            let message_length = timeline.messages.len();
+
+            // updated_atの値を基準にメッセージを取得している
+            // 取得したメッセージのupdated_atがすべて同じだと基準が判明しない
+            // 最新のメッセージまで取得出来たか、異なるupdated_atの値が現れるまでメッセージ取得数を増やしてメッセージ取得を施行する
+            if message_length >= count && self.are_all_updated_at_same(&timeline)
+            {
+                count += http::timeline::DEFAULT_COUNT;
+                continue;
+            }
 
             // メッセージを取得するAPIを叩くと複数件のメッセージを取得出来る
             // そのメッセージを1件ずつ処理するためのループ
@@ -100,9 +114,12 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             };
 
             // 最新のメッセージまで保存し終わったら終了する
-            if timeline.messages.len() < http::timeline::COUNT.parse().unwrap() { break; };
+            if message_length < http::timeline::DEFAULT_COUNT { break; };
             let id_dates = self.id_dates(&member_dir_buf);
             fromdate = self.latest_date(&id_dates)?;
+            
+            // 保存し終わったらメッセージ取得数をデフォルトに戻す
+            count = http::timeline::DEFAULT_COUNT;
         }
         println!("complete saving messages of {}!", &member_identifier.name);
 
@@ -197,6 +214,11 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         let date = id_dates.last().unwrap().clone().date;
         let date = NaiveDateTime::parse_from_str(&date, "%Y%m%d%H%M%S");
         Ok(date?.format("%Y-%m-%dT%H:%M:%SZ").to_string())
+    }
+
+    fn are_all_updated_at_same(&self, timeline: &Timeline) -> bool {
+        let first_updated_at = &timeline.messages[0].updated_at;
+        timeline.messages.iter().all(|message| &message.updated_at == first_updated_at)
     }
 }
 
