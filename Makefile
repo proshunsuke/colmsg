@@ -15,6 +15,10 @@ release/x86_64-darwin:
 	PATH="${HOME}/Documents/osxcross/target/bin:${PATH}" cargo build --release --target x86_64-apple-darwin
 	tar -C target/x86_64-apple-darwin/release -czvf target/x86_64-apple-darwin/release/colmsg-v${VERSION}-x86_64-apple-darwin.tar.gz colmsg
 
+release/aarch64-darwin:
+	cross build --release --target aarch64-apple-darwin
+	tar -C target/aarch64-apple-darwin/release -czvf target/aarch64-apple-darwin/release/colmsg-v${VERSION}-aarch64-apple-darwin.tar.gz colmsg
+
 release/x86_64-win:
 	cross build --release --target x86_64-pc-windows-gnu
 	@cd target/x86_64-pc-windows-gnu/release/ && zip colmsg-v${VERSION}-x86_64-pc-windows-gnu.zip colmsg.exe
