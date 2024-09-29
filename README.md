@@ -1,3 +1,6 @@
+> [!WARNING]
+> 現在iOSでは`refresh_token`が取得できない問題が発生しています。これは`colmsg`の問題ではなくメッセージアプリ側のアップデートによる影響です。現状この問題についての完全な解決策はありません。Androidの場合は引き続き[こちら](https://github.com/proshunsuke/colmsg/blob/main/doc/how_to_get_refresh_token.md#android%E3%82%A2%E3%83%97%E3%83%AA%E3%81%AE%E5%A0%B4%E5%90%88)を参考にしてください。
+
 <div align="center">
   <h1><strong>colmsg</strong></h1>
   <img src="https://user-images.githubusercontent.com/3148511/158018437-09822a33-8767-4e03-ba90-e0f69594c493.jpeg" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018441-dd7cb9eb-bf31-4938-830d-1ef293a2afba.jpg" width="32px" alt="日向坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018442-ae54e926-760d-4b47-b0a0-7255485e1f28.jpg" width="32px" alt="乃木坂46メッセージのロゴ">
