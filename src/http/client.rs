@@ -156,7 +156,7 @@ impl SHNClient for SClient {
         SClient {
             client: Client::new(
                 s_base_url(),
-                "jp.co.sonymusic.communication.sakurazaka 2.3".to_string(),
+                "jp.co.sonymusic.communication.sakurazaka 2.4".to_string(),
             ),
         }
     }
@@ -194,7 +194,7 @@ impl SHNClient for HClient {
         HClient {
             client: Client::new(
                 h_base_url(),
-                "jp.co.sonymusic.communication.keyakizaka 2.3".to_string(),
+                "jp.co.sonymusic.communication.keyakizaka 2.4".to_string(),
             ),
         }
     }
@@ -232,7 +232,7 @@ impl SHNClient for NClient {
         NClient {
             client: Client::new(
                 n_base_url(),
-                "jp.co.sonymusic.communication.nogizaka 2.3".to_string(),
+                "jp.co.sonymusic.communication.nogizaka 2.4".to_string(),
             ),
         }
     }
@@ -270,7 +270,7 @@ impl SHNClient for AClient {
         AClient {
             client: Client::new(
                 a_base_url(),
-                "jp.co.sonymusic.communication.asukasaito 2.3".to_string(),
+                "jp.co.sonymusic.communication.asukasaito 2.4".to_string(),
             ),
         }
     }
