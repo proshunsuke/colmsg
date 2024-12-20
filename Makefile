@@ -12,15 +12,25 @@ release/x86_64-linux:
 	tar -C target/release -czvf target/release/colmsg-v${VERSION}-x86_64-unknown-linux-gnu.tar.gz colmsg
 
 release/x86_64-darwin:
-	cross build --release --target x86_64-apple-darwin
+	make -p target/x86_64-apple-darwin/release
+	docker run --rm \
+	--volume .:/root/src \
+	--workdir /root/src \
+	joseluisq/rust-linux-darwin-builder:1.68.1 \
+	sh -c "cargo build --release --target x86_64-apple-darwin"
 	tar -C target/x86_64-apple-darwin/release -czvf target/x86_64-apple-darwin/release/colmsg-v${VERSION}-x86_64-apple-darwin.tar.gz colmsg
 
 release/aarch64-darwin:
-	cross build --release --target aarch64-apple-darwin
+	mkdir -p target/aarch64-apple-darwin/release
+	docker run --rm \
+	--volume .:/root/src \
+	--workdir /root/src \
+	joseluisq/rust-linux-darwin-builder:1.68.1 \
+	sh -c "cargo build --release --target aarch64-apple-darwin"
 	tar -C target/aarch64-apple-darwin/release -czvf target/aarch64-apple-darwin/release/colmsg-v${VERSION}-aarch64-apple-darwin.tar.gz colmsg
 
 release/x86_64-win:
-	cross build --release --target x86_64-pc-windows-gnu
+	cargo build --release --target x86_64-pc-windows-gnu
 	@cd target/x86_64-pc-windows-gnu/release/ && zip colmsg-v${VERSION}-x86_64-pc-windows-gnu.zip colmsg.exe
 
 server/kh:
