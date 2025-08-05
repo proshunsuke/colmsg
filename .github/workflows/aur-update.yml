@@ -45,10 +45,6 @@ jobs:
       
       - name: Clone AUR package
         run: |
-          # SSH設定を確認
-          cat ~/.ssh/config
-          ls -la ~/.ssh/
-          # GIT_SSH_COMMANDを使用して明示的にSSH設定を指定
           GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o StrictHostKeyChecking=no" git clone ssh://aur@aur.archlinux.org/colmsg.git aur-colmsg
       
       - name: Update PKGBUILD
