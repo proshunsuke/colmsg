@@ -40,6 +40,8 @@ jobs:
             User aur
             IdentityFile ~/.ssh/aur
             StrictHostKeyChecking no" > ~/.ssh/config
+          # AURのホストキーを追加
+          ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts
       
       - name: Clone AUR package
         run: |
