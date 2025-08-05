@@ -121,7 +121,7 @@ jobs:
           echo "アーカイブ: ${{ env.ARCHIVE_PATH }}"
 
   create-release:
-    needs: build-binaries
+    needs: [get-version, build-binaries]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
