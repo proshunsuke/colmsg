@@ -1,0 +1,123 @@
+name: Update Homebrew
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'ドライラン実行（Homebrewを更新せず確認のみ）'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  update-homebrew:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: proshunsuke/homebrew-colmsg
+          token: ${{ secrets.HOMEBREW_TOKEN }}
+      
+      - name: Set version
+        id: version
+        run: |
+          # タグからバージョンを取得
+          VERSION=${GITHUB_REF#refs/tags/}
+          if [[ -z "$VERSION" || "$VERSION" == "$GITHUB_REF" ]]; then
+            echo "❌ エラー: バージョンタグが見つかりません"
+            echo "このワークフローはタグ付きで実行する必要があります"
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+      
+      - name: Update formula
+        run: |
+          cd Formula
+          VERSION=${{ steps.version.outputs.version }}
+          
+          echo "=== Current Formula ==="
+          cat colmsg.rb
+          echo "======================"
+          
+          # x86_64とaarch64のSHA256を計算
+          X86_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/colmsg-$VERSION-x86_64-apple-darwin.tar.gz"
+          ARM_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/colmsg-$VERSION-aarch64-apple-darwin.tar.gz"
+          
+          # SHA256の計算
+          echo "📋 SHA256の計算"
+          X86_SHA=$(curl -sL "$X86_URL" | shasum -a 256 | awk '{print $1}')
+          ARM_SHA=$(curl -sL "$ARM_URL" | shasum -a 256 | awk '{print $1}')
+          
+          echo "✅ Intel版のSHA256: $X86_SHA"
+          echo "✅ ARM版のSHA256: $ARM_SHA"
+          
+          echo ""
+          echo "VERSION: $VERSION"
+          echo "X86_URL: $X86_URL"
+          echo "X86_SHA: $X86_SHA"
+          echo "ARM_URL: $ARM_URL"
+          echo "ARM_SHA: $ARM_SHA"
+          
+          # Formulaファイルを更新
+          # URLとバージョンの更新（v3.2.0/colmsg-v3.2.0 → v3.2.1/colmsg-v3.2.1）
+          sed -i "s|/v[0-9.]\+/colmsg-v[0-9.]\+|/${VERSION}/colmsg-${VERSION}|g" colmsg.rb
+          
+          # Intel用SHA256の更新
+          sed -i "/Hardware::CPU.intel?/,/sha256/ s/sha256 \".*\"/sha256 \"$X86_SHA\"/" colmsg.rb
+          
+          # ARM用SHA256の更新
+          sed -i "/Hardware::CPU.arm?/,/sha256/ s/sha256 \".*\"/sha256 \"$ARM_SHA\"/" colmsg.rb
+          
+          echo -e "\n=== Updated Formula ==="
+          cat colmsg.rb
+          echo "======================"
+      
+      - name: Validate Ruby syntax
+        run: |
+          cd Formula
+          echo "📋 Rubyファイルの構文チェック"
+          ruby -c colmsg.rb && echo "✅ Formulaの構文は正常です" || {
+            echo "❌ Formulaに構文エラーがあります"
+            exit 1
+          }
+      
+      - name: Show git diff
+        run: |
+          echo "📝 Git差分"
+          git diff --color=always
+          
+          # 差分がない場合の警告
+          if [[ -z "$(git diff)" ]]; then
+            echo "⚠️  警告: 変更がありません。バージョンが既に更新済みの可能性があります。"
+          fi
+      
+      - name: Show final summary
+        run: |
+          echo "========================================="
+          echo "📊 最終確認サマリー"
+          echo "========================================="
+          echo "バージョン: ${{ steps.version.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${VERSION#v}"  # v prefix を削除
+          echo "コミットメッセージ: colmsg version${VERSION}"
+          echo ""
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "🔍 ドライラン: 以下の操作はスキップされました"
+            echo "  - Gitへのコミット"
+            echo "  - GitHubへのプッシュ"
+          else
+            echo "✅ 実際のHomebrew更新を実行します"
+          fi
+          echo "========================================="
+      
+      - name: Commit and push
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${VERSION#v}"  # v prefix を削除
+          git commit -m "colmsg version${VERSION}"
+          git push
