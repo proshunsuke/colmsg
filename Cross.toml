@@ -3,3 +3,9 @@ image = "criticalstack/cross:x86_64-apple-darwin"
 
 [target.aarch64-apple-darwin]
 image = "wasmcloud/cross:aarch64-apple-darwin"
+
+[target.aarch64-unknown-linux-gnu]
+pre-build = [
+    "dpkg --add-architecture arm64",
+    "apt-get update && apt-get install -y libssl-dev:arm64"
+]
