@@ -1,5 +1,13 @@
 ## Packaging
 
+# v3.2.2
+
+### Changes
+
+- Add automated release workflows for GitHub Actions
+- Add automated AUR package update workflow
+- Add automated Homebrew formula update workflow
+
 # v3.2.1
 
 ### Fix
