@@ -17,7 +17,7 @@ jobs:
       - name: Install required packages
         run: |
           pacman -Syu --noconfirm
-          pacman -S --noconfirm git namcap
+          pacman -S --noconfirm git namcap openssh
       
       - name: Set version
         id: version
