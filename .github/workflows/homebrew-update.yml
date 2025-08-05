@@ -21,11 +21,10 @@ jobs:
       - name: Set version
         id: version
         run: |
-          # タグからバージョンを取得
-          VERSION=${GITHUB_REF#refs/tags/}
-          if [[ -z "$VERSION" || "$VERSION" == "$GITHUB_REF" ]]; then
-            echo "❌ エラー: バージョンタグが見つかりません"
-            echo "このワークフローはタグ付きで実行する必要があります"
+          # 最新リリースからバージョンを取得
+          VERSION=$(curl -s https://api.github.com/repos/proshunsuke/colmsg/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+          if [[ -z "$VERSION" ]]; then
+            echo "❌ エラー: 最新リリースが見つかりません"
             exit 1
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
