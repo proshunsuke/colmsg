@@ -1,0 +1,169 @@
+name: Update AUR
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'ドライラン実行（AURを更新せず確認のみ）'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  update-aur:
+    runs-on: ubuntu-latest
+    container: archlinux/archlinux:base-devel
+    steps:
+      - name: Install required packages
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm git namcap
+      
+      - name: Set version
+        id: version
+        run: |
+          # タグからバージョンを取得
+          VERSION=${GITHUB_REF#refs/tags/}
+          if [[ -z "$VERSION" || "$VERSION" == "$GITHUB_REF" ]]; then
+            echo "❌ エラー: バージョンタグが見つかりません"
+            echo "このワークフローはタグ付きで実行する必要があります"
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          echo "Host aur.archlinux.org
+            User aur
+            IdentityFile ~/.ssh/aur
+            StrictHostKeyChecking no" > ~/.ssh/config
+      
+      - name: Clone AUR package
+        run: |
+          git clone ssh://aur@aur.archlinux.org/colmsg.git aur-colmsg
+      
+      - name: Update PKGBUILD
+        run: |
+          cd aur-colmsg
+          VERSION=${{ steps.version.outputs.version }}
+          VERSION=${VERSION#v}  # v prefix を削除
+          
+          echo "=== Current PKGBUILD ==="
+          cat PKGBUILD
+          echo "======================="
+          
+          # PKGBUILDのバージョンを更新
+          sed -i "s/pkgver=.*/pkgver=$VERSION/" PKGBUILD
+          
+          # ソースのコミットハッシュを更新
+          COMMIT_HASH=$(git ls-remote https://github.com/${{ github.repository }}.git refs/tags/v$VERSION | cut -f1)
+          if [[ -z "$COMMIT_HASH" ]]; then
+            echo "❌ エラー: タグ v$VERSION が見つかりません"
+            exit 1
+          fi
+          echo "✅ コミットハッシュ: $COMMIT_HASH"
+          sed -i "s/source=.*/source=(\"git+https:\/\/github.com\/${{ github.repository }}.git#commit=$COMMIT_HASH\")/" PKGBUILD
+          
+          echo -e "\n=== Updated PKGBUILD ==="
+          cat PKGBUILD
+          echo "======================="
+      
+      - name: Validate PKGBUILD syntax
+        run: |
+          cd aur-colmsg
+          echo "📋 PKGBUILDの構文チェック"
+          bash -n PKGBUILD && echo "✅ PKGBUILDの構文は正常です" || {
+            echo "❌ PKGBUILDに構文エラーがあります"
+            exit 1
+          }
+      
+      - name: Generate .SRCINFO
+        run: |
+          cd aur-colmsg
+          echo "📋 .SRCINFOの生成"
+          makepkg --printsrcinfo > .SRCINFO
+          echo "=== Generated .SRCINFO ==="
+          cat .SRCINFO
+          echo "========================="
+      
+      - name: Run namcap checks
+        run: |
+          cd aur-colmsg
+          echo "🔍 namcapによるPKGBUILDの検証"
+          namcap PKGBUILD || true
+          echo ""
+      
+      - name: Build package verification
+        run: |
+          cd aur-colmsg
+          echo "🏗️  パッケージのビルドテスト"
+          
+          # 非rootユーザーでビルド
+          useradd -m builder
+          chown -R builder:builder .
+          
+          # ビルドの実行
+          su builder -c "makepkg -sf --noconfirm" || {
+            echo "❌ ビルドに失敗しました"
+            exit 1
+          }
+          
+          echo "✅ ビルドが成功しました"
+          
+          # ビルドされたパッケージの情報表示
+          echo -e "\n=== ビルドされたパッケージ ==="
+          ls -la *.pkg.tar.*
+          
+          # パッケージの内容確認
+          echo -e "\n=== パッケージの内容 ==="
+          tar -tvf *.pkg.tar.* | head -20
+          
+          # namcapでパッケージをチェック
+          echo -e "\n🔍 namcapによるパッケージの検証"
+          namcap *.pkg.tar.* || true
+      
+      - name: Show git diff
+        run: |
+          cd aur-colmsg
+          echo "📝 Git差分"
+          git diff --color=always || echo "（新規ファイルの場合は差分なし）"
+          
+          # 新規ファイルの場合
+          git add -N PKGBUILD .SRCINFO 2>/dev/null || true
+          git diff --cached --color=always
+      
+      - name: Show final summary
+        run: |
+          cd aur-colmsg
+          echo "========================================="
+          echo "📊 最終確認サマリー"
+          echo "========================================="
+          echo "バージョン: ${{ steps.version.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${VERSION#v}"  # v prefix を削除
+          echo "コミットメッセージ: colmsg version${VERSION}"
+          echo ""
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "🔍 ドライラン: 以下の操作はスキップされました"
+            echo "  - Gitへのコミット"
+            echo "  - AURへのプッシュ"
+          else
+            echo "✅ 実際のAUR更新を実行します"
+          fi
+          echo "========================================="
+      
+      - name: Commit and push
+        if: ${{ !inputs.dry_run }}
+        run: |
+          cd aur-colmsg
+          git config user.name "${{ secrets.AUR_USERNAME }}"
+          git config user.email "${{ secrets.AUR_EMAIL }}"
+          git add PKGBUILD .SRCINFO
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${VERSION#v}"  # v prefix を削除
+          git commit -m "colmsg version${VERSION}"
+          git push
