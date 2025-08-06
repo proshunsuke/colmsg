@@ -82,11 +82,17 @@ jobs:
             exit 1
           }
       
+      - name: Create non-root user for makepkg
+        run: |
+          useradd -m builder
+      
       - name: Generate .SRCINFO
         run: |
           cd aur-colmsg
+          # builderユーザーに権限を付与
+          chown -R builder:builder .
           echo "📋 .SRCINFOの生成"
-          makepkg --printsrcinfo > .SRCINFO
+          su builder -c "makepkg --printsrcinfo > .SRCINFO"
           echo "=== Generated .SRCINFO ==="
           cat .SRCINFO
           echo "========================="
@@ -103,8 +109,7 @@ jobs:
           cd aur-colmsg
           echo "🏗️  パッケージのビルドテスト"
           
-          # 非rootユーザーでビルド
-          useradd -m builder
+          # 権限を再設定（.SRCINFOが生成されているため）
           chown -R builder:builder .
           
           # ビルドの実行
