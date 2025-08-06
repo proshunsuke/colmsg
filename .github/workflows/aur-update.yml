@@ -17,7 +17,7 @@ jobs:
       - name: Install required packages
         run: |
           pacman -Syu --noconfirm
-          pacman -S --noconfirm git namcap openssh
+          pacman -S --noconfirm git namcap openssh clang cmake rust
       
       - name: Set version
         id: version
@@ -112,8 +112,8 @@ jobs:
           # 権限を再設定（.SRCINFOが生成されているため）
           chown -R builder:builder .
           
-          # ビルドの実行
-          su builder -c "makepkg -sf --noconfirm" || {
+          # ビルドの実行（-dオプションで依存関係チェックをスキップ）
+          su builder -c "makepkg -sfd --noconfirm" || {
             echo "❌ ビルドに失敗しました"
             exit 1
           }
