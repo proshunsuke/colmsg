@@ -85,6 +85,8 @@ jobs:
       - name: Create non-root user for makepkg
         run: |
           useradd -m builder
+          # builderユーザーにパスワードなしでsudo実行を許可
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
       
       - name: Generate .SRCINFO
         run: |
@@ -112,8 +114,8 @@ jobs:
           # 権限を再設定（.SRCINFOが生成されているため）
           chown -R builder:builder .
           
-          # ビルドの実行（-dオプションで依存関係チェックをスキップ）
-          su builder -c "makepkg -sfd --noconfirm" || {
+          # ビルドの実行
+          su builder -c "makepkg -sf --noconfirm" || {
             echo "❌ ビルドに失敗しました"
             exit 1
           }
