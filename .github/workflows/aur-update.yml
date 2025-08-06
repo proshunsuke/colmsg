@@ -67,7 +67,7 @@ jobs:
             exit 1
           fi
           echo "✅ コミットハッシュ: $COMMIT_HASH"
-          sed -i "s|^source=(.*)$|source=(\"git+\$url#commit=$COMMIT_HASH\") # tag: v$VERSION|" PKGBUILD
+          sed -i "s|^source=.*$|source=(\"git+\$url#commit=$COMMIT_HASH\") # tag: v$VERSION|" PKGBUILD
           
           echo -e "\n=== Updated PKGBUILD ==="
           cat PKGBUILD
