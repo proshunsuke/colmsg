@@ -1,5 +1,13 @@
 ## Packaging
 
+# v3.3.0
+
+## Changes
+
+- Add basic support for Mai Shiraishi Message app (#118)
+  - New command-line option: `--m_refresh_token` for Mai Shiraishi messages
+  - Support for downloading messages and media from the Mai Shiraishi Message app
+
 # v3.2.2
 
 ### Changes
