@@ -67,7 +67,9 @@ jobs:
             exit 1
           fi
           echo "✅ コミットハッシュ: $COMMIT_HASH"
-          sed -i "s|source=(.*)|source=(\"git+\$url#commit=$COMMIT_HASH\") # tag: v$VERSION|" PKGBUILD
+          # 正しい形式: source=("git+$url#commit=...") # tag: vX.X.X
+          # 行全体を置換して古いコメントを確実に削除
+          sed -i "s|^source=(.*)$|source=(\"git+\$url#commit=$COMMIT_HASH\") # tag: v$VERSION|" PKGBUILD
           
           echo -e "\n=== Updated PKGBUILD ==="
           cat PKGBUILD
