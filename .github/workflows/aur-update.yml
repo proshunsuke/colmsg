@@ -92,7 +92,8 @@ jobs:
         run: |
           cd aur-colmsg
           # builderユーザーに権限を付与
-          chown -R builder:builder .
+          # .gitディレクトリを除外して権限変更
+          find . -name .git -prune -o -print0 | xargs -0 chown builder:builder
           echo "📋 .SRCINFOの生成"
           su builder -c "makepkg --printsrcinfo > .SRCINFO"
           echo "=== Generated .SRCINFO ==="
@@ -112,7 +113,8 @@ jobs:
           echo "🏗️  パッケージのビルドテスト"
           
           # 権限を再設定（.SRCINFOが生成されているため）
-          chown -R builder:builder .
+          # .gitディレクトリを除外して権限変更
+          find . -name .git -prune -o -print0 | xargs -0 chown builder:builder
           
           # ビルドの実行
           su builder -c "makepkg -sf --noconfirm" || {
@@ -138,11 +140,15 @@ jobs:
         run: |
           cd aur-colmsg
           echo "📝 Git差分"
-          git diff --color=always || echo "（新規ファイルの場合は差分なし）"
           
-          # 新規ファイルの場合
-          git add -N PKGBUILD .SRCINFO 2>/dev/null || true
-          git diff --cached --color=always
+          # rootユーザーで実行（.gitディレクトリの権限を維持）
+          git config --global --add safe.directory $(pwd)
+          git diff --color=always
+          
+          # 差分がない場合の警告
+          if [[ -z "$(git diff)" ]]; then
+            echo "⚠️  警告: 変更がありません。バージョンが既に更新済みの可能性があります。"
+          fi
       
       - name: Show final summary
         run: |
@@ -168,10 +174,14 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: |
           cd aur-colmsg
+          
+          # PKGBUILD と .SRCINFO の所有者をrootに戻す（git addのため）
+          chown root:root PKGBUILD .SRCINFO
+          
           git config user.name "${{ secrets.AUR_USERNAME }}"
           git config user.email "${{ secrets.AUR_EMAIL }}"
           git add PKGBUILD .SRCINFO
           VERSION="${{ steps.version.outputs.version }}"
           VERSION="${VERSION#v}"  # v prefix を削除
           git commit -m "colmsg version${VERSION}"
-          git push
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o StrictHostKeyChecking=no" git push
