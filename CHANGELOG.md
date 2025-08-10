@@ -1,5 +1,13 @@
 ## Packaging
 
+# v3.4.0
+
+## Changes
+
+- Add basic support for yodel app (#122)
+  - New command-line option: `--y_refresh_token` for yodel messages
+  - Support for downloading messages and media from the yodel app
+
 # v3.3.0
 
 ## Changes
