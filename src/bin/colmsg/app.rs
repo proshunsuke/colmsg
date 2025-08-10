@@ -10,7 +10,7 @@ use colmsg::{
     errors::*,
     Config,
     Kind,
-    http::client::{SClient, SHNClient, HClient, NClient, AClient, MClient}
+    http::client::{SClient, SHNClient, HClient, NClient, AClient, MClient, YClient}
 };
 
 use crate::{
@@ -65,6 +65,11 @@ impl App {
     pub fn maishiraishi_config(&self) -> Result<Config<MClient>> {
         let client = MClient::new();
         self.config("m_refresh_token", client)
+    }
+
+    pub fn yodel_config(&self) -> Result<Config<YClient>> {
+        let client = YClient::new();
+        self.config("y_refresh_token", client)
     }
 
     fn config<S: AsRef<str>, C: SHNClient>(&self, refresh_token_str: S, client: C) -> Result<Config<C>> {

@@ -5,7 +5,7 @@
   <h1><strong>colmsg</strong></h1>
   <img src="https://user-images.githubusercontent.com/3148511/158018437-09822a33-8767-4e03-ba90-e0f69594c493.jpeg" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018441-dd7cb9eb-bf31-4938-830d-1ef293a2afba.jpg" width="32px" alt="日向坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018442-ae54e926-760d-4b47-b0a0-7255485e1f28.jpg" width="32px" alt="乃木坂46メッセージのロゴ">
 
-  「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」「齋藤飛鳥メッセージ」「白石麻衣メッセージ」アプリのメッセージをPCに保存します。
+  「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」「齋藤飛鳥メッセージ」「白石麻衣メッセージ」「yodel」アプリのメッセージをPCに保存します。
 
   ![demo](https://user-images.githubusercontent.com/3148511/158026220-90735546-2401-40ca-a9e6-89d2176ad3b4.gif)
 </div>
@@ -17,13 +17,13 @@
 **まず初めに**refresh_tokenを取得してください。取得方法は[こちら](doc/how_to_get_refresh_token.md)を参照してください。
 
 取得出来たら以下を実行してください。  
-`<s_refresh_token>` , `<h_refresh_token>` , `<n_refresh_token>` , `<a_refresh_token>` , `<m_refresh_token>` に「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」「齋藤飛鳥メッセージ」「白石麻衣メッセージ」それぞれで取得してきたrefresh_tokenを入れてください。  
+`<s_refresh_token>` , `<h_refresh_token>` , `<n_refresh_token>` , `<a_refresh_token>` , `<m_refresh_token>` , `<y_refresh_token>` に「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」「齋藤飛鳥メッセージ」「白石麻衣メッセージ」「yodel」それぞれで取得してきたrefresh_tokenを入れてください。  
 ※ 指定するのは購読しているアプリのみで問題ありません。  
 
 購読しているメンバー全員の全期間のメッセージが保存されます。  
 
 ```shell script
-colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token> --n_refresh_token <n_refresh_token> --a_refresh_token <a_refresh_token> --m_refresh_token <m_refresh_token>
+colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token> --n_refresh_token <n_refresh_token> --a_refresh_token <a_refresh_token> --m_refresh_token <m_refresh_token> --y_refresh_token <y_refresh_token>
 ```
 
 Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
@@ -40,6 +40,7 @@ Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてく�
   * 「乃木坂46メッセージ」: バージョン1.8.01.169
   * 「齋藤飛鳥メッセージ」: バージョン1.1.01.169
   * 「白石麻衣メッセージ」: バージョン3.4.3.426
+  * 「yodel」: バージョン4.1.1.455
 
 ## 使い方
 
@@ -146,6 +147,9 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 
 # m_refresh_tokenを指定
 --m_refresh_token m_refresh_token
+
+# y_refresh_tokenを指定
+--y_refresh_token y_refresh_token
 
 # メディアファイルだけ保存するように設定
 -k picture -k video -k voice
