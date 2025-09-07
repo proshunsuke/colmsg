@@ -48,7 +48,7 @@ e.g. -F '2020/01/01 00:00:00'")
                 .long("kind")
                 .short("k")
                 .multiple(true)
-                .possible_values(&["text", "picture", "video", "voice"])
+                .possible_values(&["text", "picture", "video", "voice", "link"])
                 .help("Save specific kind of messages.")
                 .long_help("Save specific kind of messages.
 If not specified, save all kinds of messages.
