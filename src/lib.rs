@@ -54,6 +54,7 @@ pub enum Kind {
     Picture,
     Video,
     Voice,
+    Link,
 }
 
 pub struct Config<'a, C: SHNClient> {

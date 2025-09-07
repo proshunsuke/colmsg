@@ -185,6 +185,16 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 );
                 message_file_voice.save()?
             }
+            "link" => {
+                // リンク型はテキストファイルとして保存するが、種別は Link として扱う
+                if !self.config.kind.contains(&Kind::Link) { return Ok(()); }
+                let message_file_text = Text::new(
+                    member_dir_buf,
+                    message::file::file_name(&message.id, &4, &message.updated_at)?,
+                    &message.text,
+                );
+                message_file_text.save()?
+            }
             _ => {
                 let err = format!("unknown type: {}", message.messages_type.as_str());
                 return Err(err.into());

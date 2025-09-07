@@ -16,16 +16,29 @@ pub struct TimelineMessages {
     pub is_favorite: bool,
     pub is_silent: bool,
     pub member_id: Option<u32>,
+    pub publish_type: Option<String>,
     pub published_at: String,
     pub state: String,
     pub text: Option<String>,
     #[serde(rename = "type")]
     pub messages_type: String,
+    // link 型でのみ出現する追加パラメータ
+    pub link_params: Option<LinkParams>,
     pub updated_at: String,
     pub file: Option<String>,
     pub thumbnail: Option<String>,
     pub thumbnail_height: Option<u32>,
     pub thumbnail_width: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LinkParams {
+    pub url: String,
+    pub method: String,
+    #[serde(rename = "sendid")]
+    pub send_id: Option<u32>,
+    // 仕様が不定のため汎用型で受ける
+    pub parameters: Vec<serde_json::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

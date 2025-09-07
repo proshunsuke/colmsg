@@ -98,11 +98,13 @@ impl App {
                         "text" => Kind::Text,
                         "picture" => Kind::Picture,
                         "video" => Kind::Video,
-                        "voice" | _ => Kind::Voice, // _ はあり得ないはずだが怒られるのでとりあえずVoiceにする
+                        "voice" => Kind::Voice,
+                        "link" => Kind::Link,
+                        _ => Kind::Link, // _ はあり得ないはずだが怒られるのでとりあえずLinkにする
                     }
                 }).collect::<Vec<_>>()
             }
-            None => vec![Kind::Text, Kind::Picture, Kind::Video, Kind::Voice]
+            None => vec![Kind::Text, Kind::Picture, Kind::Video, Kind::Voice, Kind::Link]
         };
 
         let dir = self.matches
