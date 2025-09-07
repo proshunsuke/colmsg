@@ -106,6 +106,7 @@ colmsg --help
     * 1: 画像
     * 2: 動画
     * 3: ボイス
+    * 4: リンク
 * 各環境毎のデフォルトの保存先は以下を実行することで確認することが出来ます
   * ```shell script
     colmsg --download-dir
