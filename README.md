@@ -1,3 +1,35 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="center">
+        <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=en">English</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=zh-CN">简体中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=zh-TW">繁體中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=ja">日本語</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=ko">한국어</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=hi">हिन्दी</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=th">ไทย</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=fr">Français</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=de">Deutsch</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=es">Español</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=it">Italiano</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=ru">Русский</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=pt">Português</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=nl">Nederlands</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=pl">Polski</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=ar">العربية</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=fa">فارسی</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=tr">Türkçe</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=vi">Tiếng Việt</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=id">Bahasa Indonesia</a>
+        | <a href="https://openaitx.github.io/view.html?user=proshunsuke&project=colmsg&lang=as">অসমীয়া</
+      </div>
+    </div>
+  </details>
+</div>
+
 > [!WARNING]
 > 現在iOSで`refresh_token`が取得できない問題が発生しています。これは`colmsg`の問題ではなくメッセージアプリ側のアップデートによる影響です。現状この問題に対する完全な解決策はありません。Androidの場合は引き続き[こちら](https://github.com/proshunsuke/colmsg/blob/main/doc/how_to_get_refresh_token.md#android%E3%82%A2%E3%83%97%E3%83%AA%E3%81%AE%E5%A0%B4%E5%90%88)を参考にしてください。
 
