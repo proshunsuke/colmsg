@@ -42,37 +42,37 @@ impl App {
         Ok(clap_app::build_app().get_matches_from(args))
     }
 
-    pub fn sakurazaka_config(&self) -> Result<Config<SClient>> {
+    pub fn sakurazaka_config(&self) -> Result<Config<'_, SClient>> {
         let client = SClient::new();
         self.config("s_refresh_token", client)
     }
 
-    pub fn hinatazaka_config(&self) -> Result<Config<HClient>> {
+    pub fn hinatazaka_config(&self) -> Result<Config<'_, HClient>> {
         let client = HClient::new();
         self.config("h_refresh_token", client)
     }
 
-    pub fn nogizaka_config(&self) -> Result<Config<NClient>> {
+    pub fn nogizaka_config(&self) -> Result<Config<'_, NClient>> {
         let client = NClient::new();
         self.config("n_refresh_token", client)
     }
 
-    pub fn asukasaito_config(&self) -> Result<Config<AClient>> {
+    pub fn asukasaito_config(&self) -> Result<Config<'_, AClient>> {
         let client = AClient::new();
         self.config("a_refresh_token", client)
     }
 
-    pub fn maishiraishi_config(&self) -> Result<Config<MClient>> {
+    pub fn maishiraishi_config(&self) -> Result<Config<'_, MClient>> {
         let client = MClient::new();
         self.config("m_refresh_token", client)
     }
 
-    pub fn yodel_config(&self) -> Result<Config<YClient>> {
+    pub fn yodel_config(&self) -> Result<Config<'_, YClient>> {
         let client = YClient::new();
         self.config("y_refresh_token", client)
     }
 
-    fn config<S: AsRef<str>, C: SHNClient>(&self, refresh_token_str: S, client: C) -> Result<Config<C>> {
+    fn config<S: AsRef<str>, C: SHNClient>(&self, refresh_token_str: S, client: C) -> Result<Config<'_, C>> {
         let name = match self.matches.values_of("name") {
             Some(names) => {
                 names
