@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::{PathBuf};
+use std::collections::HashMap;
 
 use rayon::prelude::*;
 use regex::Regex;
@@ -84,10 +85,14 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             None => self.latest_date(&id_dates)?
         };
 
+        // メンバー一覧を取得し、IDと名前のマップを作成
+        let members = http::members::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id)?;
+        let members_map: HashMap<u32, String> = members.into_iter().map(|m| (m.id, m.name)).collect();
+
         // 購読開始から24時間前までに配信されたメッセージを保存する
         let past_messages = http::past_messages::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id)?;
         for message in &past_messages.messages {
-            self.save_message(&message, &id_dates, &member_dir_buf)?
+            self.save_message(&message, &id_dates, &member_dir_buf, &members_map)?
         };
         
         let mut count = http::timeline::DEFAULT_COUNT;
@@ -110,7 +115,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             // メッセージを取得するAPIを叩くと複数件のメッセージを取得出来る
             // そのメッセージを1件ずつ処理するためのループ
             for message in &timeline.messages {
-                self.save_message(&message, &id_dates, &member_dir_buf)?
+                self.save_message(&message, &id_dates, &member_dir_buf, &members_map)?
             };
 
             // 最新のメッセージまで保存し終わったら終了する
@@ -142,17 +147,24 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         message: &TimelineMessages,
         id_dates: &Vec<IdDate>,
         member_dir_buf: &PathBuf,
+        members_map: &HashMap<u32, String>,
     ) -> Result<()> {
         // 既に保存済のファイルはAPIリクエストしない&上書き保存せずスルー
         if id_dates.iter().map(|id_date| id_date.id).collect::<Vec<u32>>().contains(&message.id) {
             return Ok(());
         }
+
+        let poster_name = match message.member_id {
+            Some(id) => members_map.get(&id).map(|s| s.as_str()).unwrap_or(""),
+            None => ""
+        };
+
         match message.messages_type.as_str() {
             "text" => {
                 if !self.config.kind.contains(&Kind::Text) { return Ok(()); }
                 let message_file_text = Text::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &0, &message.updated_at)?,
+                    message::file::file_name(&message.id, &0, &message.updated_at, poster_name)?,
                     &message.text,
                 );
                 message_file_text.save()?
@@ -161,7 +173,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 if !self.config.kind.contains(&Kind::Picture) { return Ok(()); }
                 let message_file_picture = Picture::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &1, &message.updated_at)?,
+                    message::file::file_name(&message.id, &1, &message.updated_at, poster_name)?,
                     &message.text,
                     &message.file,
                 );
@@ -171,7 +183,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 if !self.config.kind.contains(&Kind::Video) { return Ok(()); }
                 let message_file_video = Video::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &2, &message.updated_at)?,
+                    message::file::file_name(&message.id, &2, &message.updated_at, poster_name)?,
                     &message.file,
                 );
                 message_file_video.save()?
@@ -180,7 +192,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 if !self.config.kind.contains(&Kind::Voice) { return Ok(()); }
                 let message_file_voice = Voice::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &3, &message.updated_at)?,
+                    message::file::file_name(&message.id, &3, &message.updated_at, poster_name)?,
                     &message.file,
                 );
                 message_file_voice.save()?
@@ -190,7 +202,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 if !self.config.kind.contains(&Kind::Link) { return Ok(()); }
                 let message_file_text = Text::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &4, &message.updated_at)?,
+                    message::file::file_name(&message.id, &4, &message.updated_at, poster_name)?,
                     &message.text,
                 );
                 message_file_text.save()?

@@ -4,3 +4,4 @@ pub mod groups;
 pub mod tags;
 pub mod timeline;
 pub mod past_messages;
+pub mod members;
