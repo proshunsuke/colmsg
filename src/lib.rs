@@ -16,6 +16,7 @@ pub mod http;
 mod message;
 
 pub mod errors {
+    #![allow(unexpected_cfgs)]
     error_chain! {
         foreign_links {
             ShellWordsParseError(::shell_words::ParseError);
