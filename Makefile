@@ -1,6 +1,6 @@
 CONTAINER_NAME=swagger-api-kh
 
-.PHONY: build-release fmt fmt-check test test-all-features coverage
+.PHONY: build-release smoke-release fmt fmt-check test test-all-features coverage
 
 ifeq ($(shell uname),Linux)
   OPEN=xdg-open
@@ -17,6 +17,17 @@ build-release:
 else
 build-release:
 	cargo build --locked --release --target $(TARGET)
+endif
+
+ifeq ($(strip $(TARGET)),)
+smoke-release:
+	$(error TARGET must be set to a Rust target triple)
+else ifeq ($(TARGET),x86_64-pc-windows-msvc)
+smoke-release:
+	target/$(TARGET)/release/colmsg.exe -V
+else
+smoke-release:
+	target/$(TARGET)/release/colmsg -V
 endif
 
 server/kh:

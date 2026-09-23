@@ -53,3 +53,11 @@ jobs:
         with:
           name: coverage
           path: target/llvm-cov/
+
+  release-validation:
+    name: Verify release binaries
+    uses: ./.github/workflows/release-build.yml
+    with:
+      package: false
+    permissions:
+      contents: read
