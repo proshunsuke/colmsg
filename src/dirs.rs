@@ -1,7 +1,6 @@
 use crate::dirs_rs;
 use std::path::{Path, PathBuf};
 
-#[cfg(target_os = "macos")]
 use std::env;
 
 pub struct ColmsgProjectDirs {
@@ -19,7 +18,9 @@ impl ColmsgProjectDirs {
 
         #[cfg(not(target_os = "macos"))]
         let config_dir_op = dirs_rs::config_dir();
-        let config_dir = config_dir_op.map(|d| d.join("colmsg"))?;
+        let config_dir = env::var_os("COLMSG_CONFIG_DIR")
+            .map(PathBuf::from)
+            .or_else(|| config_dir_op.map(|d| d.join("colmsg")))?;
 
         #[cfg(not(target_os = "linux"))]
         let download_dir_op = dirs_rs::download_dir();

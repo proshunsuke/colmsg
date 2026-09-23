@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::{errors::*, http::client::SHNClient};
+use serde::{Deserialize, Serialize};
 
 const PATH: &str = "/v2/groups";
 const PATH2: &str = "/timeline";
@@ -66,15 +66,60 @@ pub struct Timeline {
     pub queried_at: String,
 }
 
-pub fn request<C: SHNClient>(client: C, access_token: &String, id: &u32, fromdate: &String, count: &String) -> Result<Timeline> {
+pub fn request<C: SHNClient>(
+    client: C,
+    access_token: &String,
+    id: &u32,
+    fromdate: &String,
+    count: &String,
+) -> Result<Timeline> {
     let path = format!("{}/{}{}", PATH, id, PATH2);
     let access_token = String::from(access_token);
     let parameters = vec![
         ("created_from", "2000-01-01T00:00:00Z"),
         ("updated_from", fromdate),
         ("count", count),
-        ("order", ORDER)
+        ("order", ORDER),
     ];
 
     client.get_request::<Timeline>(path.as_str(), &access_token, Some(parameters), true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::request;
+    use crate::http::test_support::{Call, Client};
+    use serde_json::json;
+
+    #[test]
+    fn request_returns_timeline_and_uses_requested_member_and_pagination() {
+        let client = Client::new(json!({"comments":[], "letters":[], "messages":[],
+            "queried_at":"2026-09-23T01:02:03Z"}));
+
+        let timeline = request(
+            client.clone(),
+            &"access-token".to_owned(),
+            &42,
+            &"2026-09-20T12:34:56Z".to_owned(),
+            &"250".to_owned(),
+        )
+        .unwrap();
+
+        assert!(timeline.messages.is_empty());
+        assert_eq!(timeline.queried_at, "2026-09-23T01:02:03Z");
+        assert_eq!(
+            client.calls(),
+            vec![Call::Get {
+                path: "/v2/groups/42/timeline".to_owned(),
+                access_token: "access-token".to_owned(),
+                parameters: Some(vec![
+                    ("created_from".to_owned(), "2000-01-01T00:00:00Z".to_owned()),
+                    ("updated_from".to_owned(), "2026-09-20T12:34:56Z".to_owned()),
+                    ("count".to_owned(), "250".to_owned()),
+                    ("order".to_owned(), "asc".to_owned()),
+                ]),
+                is_dynamic: true,
+            }]
+        );
+    }
 }

@@ -1,6 +1,8 @@
 VERSION=`$(shell pwd)/target/release/colmsg -V | cut -b 8-`
 CONTAINER_NAME=swagger-api-kh
 
+.PHONY: fmt fmt-check test test-all-features coverage
+
 ifeq ($(shell uname),Linux)
   OPEN=xdg-open
 else
@@ -86,3 +88,19 @@ down:
 
 ssh:
 	docker exec -it $(CONTAINER_NAME) /bin/sh
+
+fmt:
+	cargo fmt --all
+
+fmt-check:
+	cargo fmt --all -- --check
+
+test:
+	cargo test --locked
+
+test-all-features:
+	cargo test --locked --all-features
+
+coverage:
+	cargo llvm-cov --locked --ignore-filename-regex '(^|/)tests/' --html --fail-under-lines 98
+	cargo llvm-cov report --ignore-filename-regex '(^|/)tests/' --json --output-path target/llvm-cov/coverage.json

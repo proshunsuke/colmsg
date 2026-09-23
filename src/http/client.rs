@@ -1,10 +1,14 @@
 use std::env;
 
 use reqwest::{
-    blocking::Client as reqwest_client, blocking::Response,
-    header::{HeaderMap, CONTENT_TYPE, ACCEPT_LANGUAGE, USER_AGENT, CONNECTION, ACCEPT_ENCODING, TE, AUTHORIZATION, ACCEPT},
+    blocking::Client as reqwest_client,
+    blocking::Response,
+    header::{
+        HeaderMap, ACCEPT, ACCEPT_ENCODING, ACCEPT_LANGUAGE, AUTHORIZATION, CONNECTION,
+        CONTENT_TYPE, TE, USER_AGENT,
+    },
 };
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
 use url::Url;
 
 #[cfg(feature = "401")]
@@ -30,12 +34,16 @@ impl Client {
     }
 
     pub fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
-        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+    where
+        RT: DeserializeOwned,
+        JT: Serialize + ?Sized,
+    {
         let mut header = self.insert_headers(HeaderMap::new())?;
         header = self.insert_dynamic_header(header, is_dynamic)?;
         let url = Url::parse(&self.base_url)?.join(&path)?;
         let request_url = url.as_ref().to_string();
-        let response: Response = self.client
+        let response: Response = self
+            .client
             .post(url)
             .headers(header)
             .json(json)
@@ -49,22 +57,25 @@ impl Client {
         path: &str,
         access_token: &str,
         parameters: Option<Vec<(&str, &str)>>,
-        is_dynamic: bool
+        is_dynamic: bool,
     ) -> Result<RT>
-        where RT: DeserializeOwned {
+    where
+        RT: DeserializeOwned,
+    {
         let mut header = self.insert_headers(HeaderMap::new())?;
         header = self.insert_optional_headers(header, access_token)?;
         header = self.insert_dynamic_header(header, is_dynamic)?;
 
         let iter = match parameters {
             Some(v) => v,
-            None => vec![]
+            None => vec![],
         };
 
         let url = Url::parse(&self.base_url)?.join(&path)?;
         let url = Url::parse_with_params(url.as_str(), &iter)?;
         let request_url = url.as_ref().to_string();
-        let response: Response = self.client
+        let response: Response = self
+            .client
             .get(url)
             .headers(header)
             .send()?
@@ -73,14 +84,19 @@ impl Client {
     }
 
     fn handle_response<RT>(&self, response: Response, request_url: &String) -> Result<RT>
-        where RT: DeserializeOwned {
+    where
+        RT: DeserializeOwned,
+    {
         let body = response.text()?;
         let result = serde_json::from_str::<RT>(&body);
         match result {
             Ok(t) => Ok(t),
             Err(e) => {
                 let error_message = format!(
-                    "error: {}, request url: {}, response body: {}", e.to_string(), request_url, &body
+                    "error: {}, request url: {}, response body: {}",
+                    e.to_string(),
+                    request_url,
+                    &body
                 );
                 Err(error_message.into())
             }
@@ -99,7 +115,11 @@ impl Client {
         Ok(header)
     }
 
-    fn insert_optional_headers(&self, mut header: HeaderMap, access_token: &str) -> Result<HeaderMap> {
+    fn insert_optional_headers(
+        &self,
+        mut header: HeaderMap,
+        access_token: &str,
+    ) -> Result<HeaderMap> {
         let authorization = format!("Bearer {}", access_token);
         header.insert(AUTHORIZATION, authorization.parse()?);
         header = self.insert_401_header(header)?;
@@ -115,7 +135,9 @@ impl Client {
     }
 
     #[cfg(not(feature = "401"))]
-    fn insert_401_header(&self, header: HeaderMap) -> Result<HeaderMap> { Ok(header) }
+    fn insert_401_header(&self, header: HeaderMap) -> Result<HeaderMap> {
+        Ok(header)
+    }
 
     fn insert_dynamic_header(&self, mut header: HeaderMap, is_dynamic: bool) -> Result<HeaderMap> {
         // 開発時はmockサーバーがOpenApiで定義された動的なデータを返すようにする
@@ -131,19 +153,24 @@ impl Client {
 }
 
 pub trait SHNClient: Clone {
-    fn new() -> Self where Self: Sized;
+    fn new() -> Self
+    where
+        Self: Sized;
 
     fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
-        where RT: DeserializeOwned, JT: Serialize + ?Sized;
+    where
+        RT: DeserializeOwned,
+        JT: Serialize + ?Sized;
 
     fn get_request<RT>(
         &self,
         path: &str,
         access_token: &str,
         parameters: Option<Vec<(&str, &str)>>,
-        is_dynamic: bool
+        is_dynamic: bool,
     ) -> Result<RT>
-        where RT: DeserializeOwned;
+    where
+        RT: DeserializeOwned;
 }
 
 #[derive(Debug, Clone)]
@@ -162,7 +189,10 @@ impl SHNClient for SClient {
     }
 
     fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
-        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+    where
+        RT: DeserializeOwned,
+        JT: Serialize + ?Sized,
+    {
         self.client.post_request(path, json, is_dynamic)
     }
 
@@ -171,10 +201,13 @@ impl SHNClient for SClient {
         path: &str,
         access_token: &str,
         parameters: Option<Vec<(&str, &str)>>,
-        is_dynamic: bool
+        is_dynamic: bool,
     ) -> Result<RT>
-        where RT: DeserializeOwned {
-        self.client.get_request(path, access_token, parameters, is_dynamic)
+    where
+        RT: DeserializeOwned,
+    {
+        self.client
+            .get_request(path, access_token, parameters, is_dynamic)
     }
 }
 
@@ -200,7 +233,10 @@ impl SHNClient for HClient {
     }
 
     fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
-        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+    where
+        RT: DeserializeOwned,
+        JT: Serialize + ?Sized,
+    {
         self.client.post_request(path, json, is_dynamic)
     }
 
@@ -209,10 +245,13 @@ impl SHNClient for HClient {
         path: &str,
         access_token: &str,
         parameters: Option<Vec<(&str, &str)>>,
-        is_dynamic: bool
+        is_dynamic: bool,
     ) -> Result<RT>
-        where RT: DeserializeOwned {
-        self.client.get_request(path, access_token, parameters, is_dynamic)
+    where
+        RT: DeserializeOwned,
+    {
+        self.client
+            .get_request(path, access_token, parameters, is_dynamic)
     }
 }
 
@@ -238,7 +277,10 @@ impl SHNClient for NClient {
     }
 
     fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
-        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+    where
+        RT: DeserializeOwned,
+        JT: Serialize + ?Sized,
+    {
         self.client.post_request(path, json, is_dynamic)
     }
 
@@ -247,10 +289,13 @@ impl SHNClient for NClient {
         path: &str,
         access_token: &str,
         parameters: Option<Vec<(&str, &str)>>,
-        is_dynamic: bool
+        is_dynamic: bool,
     ) -> Result<RT>
-        where RT: DeserializeOwned {
-        self.client.get_request(path, access_token, parameters, is_dynamic)
+    where
+        RT: DeserializeOwned,
+    {
+        self.client
+            .get_request(path, access_token, parameters, is_dynamic)
     }
 }
 
@@ -276,7 +321,10 @@ impl SHNClient for AClient {
     }
 
     fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
-        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+    where
+        RT: DeserializeOwned,
+        JT: Serialize + ?Sized,
+    {
         self.client.post_request(path, json, is_dynamic)
     }
 
@@ -285,10 +333,13 @@ impl SHNClient for AClient {
         path: &str,
         access_token: &str,
         parameters: Option<Vec<(&str, &str)>>,
-        is_dynamic: bool
+        is_dynamic: bool,
     ) -> Result<RT>
-        where RT: DeserializeOwned {
-        self.client.get_request(path, access_token, parameters, is_dynamic)
+    where
+        RT: DeserializeOwned,
+    {
+        self.client
+            .get_request(path, access_token, parameters, is_dynamic)
     }
 }
 
@@ -314,7 +365,10 @@ impl SHNClient for MClient {
     }
 
     fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
-        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+    where
+        RT: DeserializeOwned,
+        JT: Serialize + ?Sized,
+    {
         self.client.post_request(path, json, is_dynamic)
     }
 
@@ -323,10 +377,13 @@ impl SHNClient for MClient {
         path: &str,
         access_token: &str,
         parameters: Option<Vec<(&str, &str)>>,
-        is_dynamic: bool
+        is_dynamic: bool,
     ) -> Result<RT>
-        where RT: DeserializeOwned {
-        self.client.get_request(path, access_token, parameters, is_dynamic)
+    where
+        RT: DeserializeOwned,
+    {
+        self.client
+            .get_request(path, access_token, parameters, is_dynamic)
     }
 }
 
@@ -352,7 +409,10 @@ impl SHNClient for YClient {
     }
 
     fn post_request<RT, JT>(&self, path: &str, json: &JT, is_dynamic: bool) -> Result<RT>
-        where RT: DeserializeOwned, JT: Serialize + ?Sized {
+    where
+        RT: DeserializeOwned,
+        JT: Serialize + ?Sized,
+    {
         self.client.post_request(path, json, is_dynamic)
     }
 
@@ -361,10 +421,13 @@ impl SHNClient for YClient {
         path: &str,
         access_token: &str,
         parameters: Option<Vec<(&str, &str)>>,
-        is_dynamic: bool
+        is_dynamic: bool,
     ) -> Result<RT>
-        where RT: DeserializeOwned {
-        self.client.get_request(path, access_token, parameters, is_dynamic)
+    where
+        RT: DeserializeOwned,
+    {
+        self.client
+            .get_request(path, access_token, parameters, is_dynamic)
     }
 }
 

@@ -31,10 +31,10 @@ pub mod errors {
     pub fn handle_error(error: &Error) {
         match error {
             Error(ErrorKind::Io(ref io_error), _)
-            if io_error.kind() == ::std::io::ErrorKind::BrokenPipe =>
-                {
-                    ::std::process::exit(0);
-                }
+                if io_error.kind() == ::std::io::ErrorKind::BrokenPipe =>
+            {
+                ::std::process::exit(0);
+            }
             _ => {
                 use ansi_term::Colour::Red;
                 eprintln!("{}: {}", Red.paint("[colmsg error]"), error);
@@ -45,8 +45,8 @@ pub mod errors {
 
 use std::path::PathBuf;
 
-use chrono::{NaiveDateTime};
 use crate::http::client::SHNClient;
+use chrono::NaiveDateTime;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Kind {
