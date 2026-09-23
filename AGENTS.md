@@ -12,3 +12,13 @@
 - テストは `make test`、全featureのテストは `make test-all-features`、カバレッジは `make coverage` で実行する。
 - Rustコードを自動整形する場合は `make fmt`、整形確認には `make fmt-check` を使う。
 - CIに含まれるチェックを追加・変更した場合は、対応するMakeターゲットを使ってローカルでも確認する。
+
+## Rustツールチェーンの更新
+
+- Rustを更新するときは、[Rust公式リリース](https://blog.rust-lang.org/releases/latest/)で最新stableのバージョンを確認する。
+- 確認したバージョンを次の設定に同じ値で反映する。
+  - `rust-toolchain.toml` の `channel`
+  - `Cargo.toml` の `package.rust-version`
+  - `.github/workflows/test.yml` と `.github/workflows/release-build.yml` の `dtolnay/rust-toolchain` 指定
+- `rust-version` は最低対応バージョンを表すため、プロジェクトのサポート方針に従ってツールチェーンの固定値と揃える。
+- 更新後は設定値に不一致がないことを確認し、`make fmt-check`、`make test`、`make test-all-features` を実行する。リリース用ビルドはGitHub Actionsのリリース検証ワークフローで確認する。
