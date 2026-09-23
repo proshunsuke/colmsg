@@ -13,7 +13,6 @@ use crate::{app::App, config::delete_access_token_file};
 
 use colmsg::controller::Controller;
 use colmsg::dirs::PROJECT_DIRS;
-use colmsg::errors::ErrorKind::ReqwestError;
 use colmsg::http::client::{AClient, HClient, MClient, NClient, SClient, SHNClient, YClient};
 use colmsg::{errors::*, Config};
 
@@ -137,7 +136,7 @@ fn run() -> Result<()> {
         return Ok(());
     }
     let mut result = run_sakurazaka(&app);
-    if let Err(Error(ReqwestError(re), _)) = &result {
+    if let Err(Error::ReqwestError(re)) = &result {
         if Some(StatusCode::UNAUTHORIZED) == re.status() {
             delete_access_token_file("s_access_token")?;
             result = run_sakurazaka(&app);
@@ -149,7 +148,7 @@ fn run() -> Result<()> {
     }
 
     result = run_hinatazaka(&app);
-    if let Err(Error(ReqwestError(re), _)) = &result {
+    if let Err(Error::ReqwestError(re)) = &result {
         if Some(StatusCode::UNAUTHORIZED) == re.status() {
             delete_access_token_file("h_access_token")?;
             result = run_hinatazaka(&app);
@@ -161,7 +160,7 @@ fn run() -> Result<()> {
     }
 
     let mut result = run_nogizaka(&app);
-    if let Err(Error(ReqwestError(re), _)) = &result {
+    if let Err(Error::ReqwestError(re)) = &result {
         if Some(StatusCode::UNAUTHORIZED) == re.status() {
             delete_access_token_file("n_access_token")?;
             result = run_nogizaka(&app);
@@ -173,7 +172,7 @@ fn run() -> Result<()> {
     }
 
     let mut result = run_asukasaito(&app);
-    if let Err(Error(ReqwestError(re), _)) = &result {
+    if let Err(Error::ReqwestError(re)) = &result {
         if Some(StatusCode::UNAUTHORIZED) == re.status() {
             delete_access_token_file("a_access_token")?;
             result = run_asukasaito(&app);
@@ -185,7 +184,7 @@ fn run() -> Result<()> {
     }
 
     let mut result = run_maishiraishi(&app);
-    if let Err(Error(ReqwestError(re), _)) = &result {
+    if let Err(Error::ReqwestError(re)) = &result {
         if Some(StatusCode::UNAUTHORIZED) == re.status() {
             delete_access_token_file("m_access_token")?;
             result = run_maishiraishi(&app);
@@ -197,7 +196,7 @@ fn run() -> Result<()> {
     }
 
     let mut result = run_yodel(&app);
-    if let Err(Error(ReqwestError(re), _)) = &result {
+    if let Err(Error::ReqwestError(re)) = &result {
         if Some(StatusCode::UNAUTHORIZED) == re.status() {
             delete_access_token_file("y_access_token")?;
             result = run_yodel(&app);
