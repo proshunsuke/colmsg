@@ -1,6 +1,7 @@
 name: Release
 
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       dry_run:
@@ -10,7 +11,7 @@ on:
         type: boolean
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   get-version:
@@ -27,6 +28,7 @@ jobs:
           echo "version=v$VERSION" >> $GITHUB_OUTPUT
       
       - name: Check if tag already exists
+        if: github.event_name == 'workflow_dispatch'
         run: |
           if git ls-remote --tags origin | grep -q "refs/tags/${{ steps.version.outputs.version }}"; then
             echo "::warning::Tag ${{ steps.version.outputs.version }} already exists"
@@ -58,10 +60,10 @@ jobs:
             os: ubuntu-latest
             archive: tar.gz
           - target: x86_64-apple-darwin
-            os: macos-13
+            os: macos-15-intel
             archive: tar.gz
           - target: aarch64-apple-darwin
-            os: macos-14
+            os: macos-15
             archive: tar.gz
           - target: x86_64-pc-windows-msvc
             os: windows-latest
@@ -79,17 +81,17 @@ jobs:
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
           cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Install GNU Make on Windows
+        if: runner.os == 'Windows'
+        run: choco install make --version=4.4.1 --yes --no-progress
       
       - name: Build binary
-        run: |
-          if [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
-            cross build --release --target ${{ matrix.target }}
-          else
-            cargo build --release --target ${{ matrix.target }}
-          fi
+        run: make build-release TARGET=${{ matrix.target }}
         shell: bash
       
       - name: Create archive
+        if: github.event_name == 'workflow_dispatch'
         run: |
           VERSION=${{ needs.get-version.outputs.version }}
           ARCHIVE_NAME="colmsg-${VERSION}-${{ matrix.target }}"
@@ -108,6 +110,7 @@ jobs:
         shell: bash
       
       - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: colmsg-${{ matrix.target }}
@@ -115,14 +118,18 @@ jobs:
           retention-days: 7
       
       - name: Show build info
+        if: github.event_name == 'workflow_dispatch'
         run: |
           echo "✅ ビルド完了"
           echo "ターゲット: ${{ matrix.target }}"
           echo "アーカイブ: ${{ env.ARCHIVE_PATH }}"
 
   create-release:
+    if: github.event_name == 'workflow_dispatch'
     needs: [get-version, build-binaries]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       

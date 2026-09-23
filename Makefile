@@ -1,7 +1,6 @@
-VERSION=`$(shell pwd)/target/release/colmsg -V | cut -b 8-`
 CONTAINER_NAME=swagger-api-kh
 
-.PHONY: fmt fmt-check test test-all-features coverage
+.PHONY: build-release fmt fmt-check test test-all-features coverage
 
 ifeq ($(shell uname),Linux)
   OPEN=xdg-open
@@ -9,31 +8,16 @@ else
   OPEN=open
 endif
 
-release/x86_64-linux:
-	cargo build --release
-	tar -C target/release -czvf target/release/colmsg-v${VERSION}-x86_64-unknown-linux-gnu.tar.gz colmsg
-
-release/x86_64-darwin:
-	make -p target/x86_64-apple-darwin/release
-	docker run --rm \
-	--volume .:/root/src \
-	--workdir /root/src \
-	joseluisq/rust-linux-darwin-builder:1.68.1 \
-	sh -c "cargo build --release --target x86_64-apple-darwin"
-	tar -C target/x86_64-apple-darwin/release -czvf target/x86_64-apple-darwin/release/colmsg-v${VERSION}-x86_64-apple-darwin.tar.gz colmsg
-
-release/aarch64-darwin:
-	mkdir -p target/aarch64-apple-darwin/release
-	docker run --rm \
-	--volume .:/root/src \
-	--workdir /root/src \
-	joseluisq/rust-linux-darwin-builder:1.68.1 \
-	sh -c "cargo build --release --target aarch64-apple-darwin"
-	tar -C target/aarch64-apple-darwin/release -czvf target/aarch64-apple-darwin/release/colmsg-v${VERSION}-aarch64-apple-darwin.tar.gz colmsg
-
-release/x86_64-win:
-	cargo build --release --target x86_64-pc-windows-gnu
-	@cd target/x86_64-pc-windows-gnu/release/ && zip colmsg-v${VERSION}-x86_64-pc-windows-gnu.zip colmsg.exe
+ifeq ($(strip $(TARGET)),)
+build-release:
+	$(error TARGET must be set to a Rust target triple)
+else ifeq ($(TARGET),aarch64-unknown-linux-gnu)
+build-release:
+	cross build --locked --release --target $(TARGET)
+else
+build-release:
+	cargo build --locked --release --target $(TARGET)
+endif
 
 server/kh:
 	docker-compose up swagger-api-kh
