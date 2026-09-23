@@ -1,7 +1,4 @@
 #[macro_use]
-extern crate error_chain;
-
-#[macro_use]
 extern crate lazy_static;
 
 extern crate ansi_term;
@@ -16,23 +13,43 @@ pub mod http;
 mod message;
 
 pub mod errors {
-    error_chain! {
-        foreign_links {
-            ShellWordsParseError(::shell_words::ParseError);
-            Clap(::clap::Error);
-            Io(::std::io::Error);
-            ParseError(::chrono::format::ParseError);
-            UrlParseError(::url::ParseError);
-            ReqwestError(::reqwest::Error);
-            InvalidHeaderValue(::reqwest::header::InvalidHeaderValue);
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        ShellWordsParseError(#[from] ::shell_words::ParseError),
+        #[error(transparent)]
+        Clap(#[from] ::clap::Error),
+        #[error(transparent)]
+        Io(#[from] ::std::io::Error),
+        #[error(transparent)]
+        ParseError(#[from] ::chrono::format::ParseError),
+        #[error(transparent)]
+        UrlParseError(#[from] ::url::ParseError),
+        #[error(transparent)]
+        ReqwestError(#[from] ::reqwest::Error),
+        #[error(transparent)]
+        InvalidHeaderValue(#[from] ::reqwest::header::InvalidHeaderValue),
+        #[error("{0}")]
+        Msg(String),
+    }
+
+    impl From<String> for Error {
+        fn from(message: String) -> Self {
+            Self::Msg(message)
         }
     }
 
+    impl From<&str> for Error {
+        fn from(message: &str) -> Self {
+            Self::Msg(message.to_owned())
+        }
+    }
+
+    pub type Result<T> = ::std::result::Result<T, Error>;
+
     pub fn handle_error(error: &Error) {
         match error {
-            Error(ErrorKind::Io(ref io_error), _)
-                if io_error.kind() == ::std::io::ErrorKind::BrokenPipe =>
-            {
+            Error::Io(io_error) if io_error.kind() == ::std::io::ErrorKind::BrokenPipe => {
                 ::std::process::exit(0);
             }
             _ => {

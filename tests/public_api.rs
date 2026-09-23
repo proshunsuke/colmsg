@@ -1,7 +1,7 @@
 use std::{io, process::Command};
 
 use colmsg::{
-    errors::{handle_error, Error, ErrorKind},
+    errors::{handle_error, Error},
     http::{
         client::{AClient, HClient, MClient, NClient, SClient, SHNClient, YClient},
         timeline::{Timeline, TimelineMessages},
@@ -12,10 +12,7 @@ use serde_json::{json, Value};
 fn rejects_invalid_authorization<C: SHNClient>() {
     // Header validation happens before sending: no external request is made.
     let result = C::new().get_request::<Value>("/v2/groups", "invalid\r\ntoken", None, false);
-    assert!(matches!(
-        result.unwrap_err().kind(),
-        ErrorKind::InvalidHeaderValue(_)
-    ));
+    assert!(matches!(result.unwrap_err(), Error::InvalidHeaderValue(_)));
 }
 
 #[test]
