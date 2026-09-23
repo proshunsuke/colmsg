@@ -1,17 +1,19 @@
 use std::fs;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
+use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use regex::Regex;
-use walkdir::{WalkDir, DirEntry};
-use chrono::NaiveDateTime;
+use walkdir::{DirEntry, WalkDir};
 
-use crate::{
-    errors::*, Config, message, Kind,
-    http::{self, groups::Groups, tags::Tags, timeline::TimelineMessages, client::SHNClient},
-    message::file::{Text, Picture, SaveToFile, Video, Voice},
-};
 use crate::http::timeline::Timeline;
+use crate::{
+    errors::*,
+    http::{self, client::SHNClient, groups::Groups, tags::Tags, timeline::TimelineMessages},
+    message,
+    message::file::{Picture, SaveToFile, Text, Video, Voice},
+    Config, Kind,
+};
 
 lazy_static! {
     static ref ID_DATE_REGEX: Regex = Regex::new(r"(?x)(?P<id>\d+)_\d_(?P<date>\d+)").unwrap();
@@ -43,27 +45,41 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         self.create_member_identifier_list(group, tags)
             .iter()
             .cloned()
-            .filter(|m| { m.subscription })
+            .filter(|m| m.subscription)
             .filter(|m| {
-                if self.config.name.is_empty() { return true; } // メンバー指定が無い場合は全メンバーを対象にする
+                if self.config.name.is_empty() {
+                    return true;
+                } // メンバー指定が無い場合は全メンバーを対象にする
                 self.config.name.contains(&&*self.trim(&m.name))
             })
             .collect::<Vec<_>>()
     }
 
-    fn create_member_identifier_list(&self, group: &Vec<Groups>, tags: &Vec<Tags>) -> Vec<MemberIdentifier> {
+    fn create_member_identifier_list(
+        &self,
+        group: &Vec<Groups>,
+        tags: &Vec<Tags>,
+    ) -> Vec<MemberIdentifier> {
         let mut member_identifier_vec = Vec::with_capacity(group.len());
-        group.iter().for_each(|g| { // もっといい書き方があるはず
+        group.iter().for_each(|g| {
+            // もっといい書き方があるはず
             let mut group = "".to_string();
             let mut gen = "".to_string();
             tags.iter().for_each(|t| {
                 let dimension = t.meta.as_ref().and_then(|meta| meta.dimension.as_ref());
-                if g.tags.contains(&t.uuid) && dimension.is_some() { group = t.name.clone(); }
-                if g.tags.contains(&t.uuid) && dimension.is_none() { gen = t.name.clone(); }
+                if g.tags.contains(&t.uuid) && dimension.is_some() {
+                    group = t.name.clone();
+                }
+                if g.tags.contains(&t.uuid) && dimension.is_none() {
+                    gen = t.name.clone();
+                }
             });
             // 乃木坂の場合はg.tagsに世代情報(1期, 2期)が存在しないため全員乃木坂ディレクトリ以下に保存される
             member_identifier_vec.push(MemberIdentifier::new(
-                g.id, self.trim(&g.name), gen, g.subscription.is_some(),
+                g.id,
+                self.trim(&g.name),
+                gen,
+                g.subscription.is_some(),
             ));
         });
 
@@ -71,38 +87,50 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     }
 
     fn trim(&self, str: &String) -> String {
-        str.chars().filter(|c| !c.is_whitespace()).collect::<String>()
+        str.chars()
+            .filter(|c| !c.is_whitespace())
+            .collect::<String>()
     }
 
     fn save_messages(&self, member_identifier: MemberIdentifier) -> Result<()> {
         println!("saving messages of {}...", member_identifier.name);
 
         let member_dir_buf = self.create_member_dir_buf(&member_identifier)?;
-        let id_dates = self.id_dates(&member_dir_buf);
+        let mut id_dates = self.id_dates(&member_dir_buf);
         let mut fromdate = match self.config.from {
             Some(f) => f.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-            None => self.latest_date(&id_dates)?
+            None => self.latest_date(&id_dates)?,
         };
 
         // 購読開始から24時間前までに配信されたメッセージを保存する
-        let past_messages = http::past_messages::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id)?;
+        let past_messages = http::past_messages::request(
+            self.config.client.clone(),
+            &self.config.access_token,
+            &member_identifier.id,
+        )?;
         for message in &past_messages.messages {
             self.save_message(&message, &id_dates, &member_dir_buf)?
-        };
-        
+        }
+        id_dates = self.id_dates(&member_dir_buf);
+
         let mut count = http::timeline::DEFAULT_COUNT;
 
         // 購読しているメンバーのメッセージを取得するAPIを複数回叩くためのループ
         loop {
-            let timeline = http::timeline::request(self.config.client.clone(), &self.config.access_token, &member_identifier.id, &fromdate, &count.to_string())?;
+            let timeline = http::timeline::request(
+                self.config.client.clone(),
+                &self.config.access_token,
+                &member_identifier.id,
+                &fromdate,
+                &count.to_string(),
+            )?;
 
             let message_length = timeline.messages.len();
 
             // updated_atの値を基準にメッセージを取得している
             // 取得したメッセージのupdated_atがすべて同じだと基準が判明しない
             // 最新のメッセージまで取得出来たか、異なるupdated_atの値が現れるまでメッセージ取得数を増やしてメッセージ取得を施行する
-            if message_length >= count && self.are_all_updated_at_same(&timeline)
-            {
+            if message_length >= count && self.are_all_updated_at_same(&timeline) {
                 count += http::timeline::DEFAULT_COUNT;
                 continue;
             }
@@ -111,13 +139,25 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             // そのメッセージを1件ずつ処理するためのループ
             for message in &timeline.messages {
                 self.save_message(&message, &id_dates, &member_dir_buf)?
-            };
+            }
 
             // 最新のメッセージまで保存し終わったら終了する
-            if message_length < http::timeline::DEFAULT_COUNT { break; };
-            let id_dates = self.id_dates(&member_dir_buf);
-            fromdate = self.latest_date(&id_dates)?;
-            
+            if message_length < count {
+                break;
+            };
+            // 保存対象外のメッセージだけのページでも取得位置を進める。
+            let next_date = timeline
+                .messages
+                .iter()
+                .map(|message| &message.updated_at)
+                .max()
+                .unwrap();
+            if next_date <= &fromdate {
+                return Err("timeline did not advance".into());
+            }
+            fromdate = next_date.clone();
+            id_dates = self.id_dates(&member_dir_buf);
+
             // 保存し終わったらメッセージ取得数をデフォルトに戻す
             count = http::timeline::DEFAULT_COUNT;
         }
@@ -144,12 +184,19 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         member_dir_buf: &PathBuf,
     ) -> Result<()> {
         // 既に保存済のファイルはAPIリクエストしない&上書き保存せずスルー
-        if id_dates.iter().map(|id_date| id_date.id).collect::<Vec<u32>>().contains(&message.id) {
+        if id_dates
+            .iter()
+            .map(|id_date| id_date.id)
+            .collect::<Vec<u32>>()
+            .contains(&message.id)
+        {
             return Ok(());
         }
         match message.messages_type.as_str() {
             "text" => {
-                if !self.config.kind.contains(&Kind::Text) { return Ok(()); }
+                if !self.config.kind.contains(&Kind::Text) {
+                    return Ok(());
+                }
                 let message_file_text = Text::new(
                     member_dir_buf,
                     message::file::file_name(&message.id, &0, &message.updated_at)?,
@@ -158,7 +205,9 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 message_file_text.save()?
             }
             "picture" => {
-                if !self.config.kind.contains(&Kind::Picture) { return Ok(()); }
+                if !self.config.kind.contains(&Kind::Picture) {
+                    return Ok(());
+                }
                 let message_file_picture = Picture::new(
                     member_dir_buf,
                     message::file::file_name(&message.id, &1, &message.updated_at)?,
@@ -168,7 +217,9 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 message_file_picture.save()?
             }
             "video" => {
-                if !self.config.kind.contains(&Kind::Video) { return Ok(()); }
+                if !self.config.kind.contains(&Kind::Video) {
+                    return Ok(());
+                }
                 let message_file_video = Video::new(
                     member_dir_buf,
                     message::file::file_name(&message.id, &2, &message.updated_at)?,
@@ -177,7 +228,9 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 message_file_video.save()?
             }
             "voice" => {
-                if !self.config.kind.contains(&Kind::Voice) { return Ok(()); }
+                if !self.config.kind.contains(&Kind::Voice) {
+                    return Ok(());
+                }
                 let message_file_voice = Voice::new(
                     member_dir_buf,
                     message::file::file_name(&message.id, &3, &message.updated_at)?,
@@ -187,7 +240,9 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             }
             "link" => {
                 // リンク型はテキストファイルとして保存するが、種別は Link として扱う
-                if !self.config.kind.contains(&Kind::Link) { return Ok(()); }
+                if !self.config.kind.contains(&Kind::Link) {
+                    return Ok(());
+                }
                 let message_file_text = Text::new(
                     member_dir_buf,
                     message::file::file_name(&message.id, &4, &message.updated_at)?,
@@ -220,7 +275,9 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     }
 
     fn latest_date(&self, id_dates: &Vec<IdDate>) -> Result<String> {
-        if id_dates.is_empty() { return Ok(String::from("2000-01-01T09:00:00Z")); }
+        if id_dates.is_empty() {
+            return Ok(String::from("2000-01-01T09:00:00Z"));
+        }
         let date = id_dates.last().unwrap().clone().date;
         let date = NaiveDateTime::parse_from_str(&date, "%Y%m%d%H%M%S");
         Ok(date?.format("%Y-%m-%dT%H:%M:%SZ").to_string())
@@ -228,7 +285,10 @@ impl<'b, C: SHNClient> Saver<'b, C> {
 
     fn are_all_updated_at_same(&self, timeline: &Timeline) -> bool {
         let first_updated_at = &timeline.messages[0].updated_at;
-        timeline.messages.iter().all(|message| &message.updated_at == first_updated_at)
+        timeline
+            .messages
+            .iter()
+            .all(|message| &message.updated_at == first_updated_at)
     }
 }
 
@@ -242,7 +302,12 @@ pub struct MemberIdentifier {
 
 impl MemberIdentifier {
     pub fn new(id: u32, name: String, gen: String, subscription: bool) -> MemberIdentifier {
-        MemberIdentifier { id, name, gen, subscription }
+        MemberIdentifier {
+            id,
+            name,
+            gen,
+            subscription,
+        }
     }
 }
 
@@ -255,8 +320,10 @@ struct IdDate {
 fn dir_entry_to_id_date(filename: &DirEntry) -> Option<IdDate> {
     let re = ID_DATE_REGEX.clone();
     re.captures(filename.file_name().to_str().unwrap())
-        .and_then(|cap|Some(IdDate {
-            id: cap["id"].parse::<u32>().unwrap(),
-            date: cap["date"].to_string()
-        }))
+        .and_then(|cap| {
+            Some(IdDate {
+                id: cap["id"].parse::<u32>().unwrap(),
+                date: cap["date"].to_string(),
+            })
+        })
 }

@@ -10,150 +10,55 @@ on:
         type: boolean
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  get-version:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Get version from Cargo.toml
-        id: version
-        run: |
-          VERSION=$(grep '^version' Cargo.toml | head -n1 | sed 's/.*"\(.*\)".*/\1/')
-          echo "version=v$VERSION" >> $GITHUB_OUTPUT
-      
-      - name: Check if tag already exists
-        run: |
-          if git ls-remote --tags origin | grep -q "refs/tags/${{ steps.version.outputs.version }}"; then
-            echo "::warning::Tag ${{ steps.version.outputs.version }} already exists"
-            if [[ "${{ inputs.dry_run }}" != "true" ]]; then
-              echo "::error::Cannot create release - tag already exists"
-              exit 1
-            fi
-          fi
-      
-      - name: Show release info
-        run: |
-          echo "📋 リリース情報"
-          echo "バージョン: ${{ steps.version.outputs.version }}"
-          echo "タグ: refs/tags/${{ steps.version.outputs.version }}"
-          echo "CHANGELOG.md の存在: $(test -f CHANGELOG.md && echo '✅' || echo '❌')"
-          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
-            echo "🔍 ドライランモードで実行中"
-          fi
-
-  build-binaries:
-    needs: get-version
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            archive: tar.gz
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-            archive: tar.gz
-          - target: x86_64-apple-darwin
-            os: macos-13
-            archive: tar.gz
-          - target: aarch64-apple-darwin
-            os: macos-14
-            archive: tar.gz
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            archive: zip
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-      
-      - name: Setup Cross for Linux ARM
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        run: |
-          cargo install cross --git https://github.com/cross-rs/cross
-      
-      - name: Build binary
-        run: |
-          if [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
-            cross build --release --target ${{ matrix.target }}
-          else
-            cargo build --release --target ${{ matrix.target }}
-          fi
-        shell: bash
-      
-      - name: Create archive
-        run: |
-          VERSION=${{ needs.get-version.outputs.version }}
-          ARCHIVE_NAME="colmsg-${VERSION}-${{ matrix.target }}"
-          
-          cd target/${{ matrix.target }}/release
-          
-          if [[ "${{ matrix.archive }}" == "zip" ]]; then
-            # Windows
-            7z a "../../../${ARCHIVE_NAME}.zip" colmsg.exe
-            echo "ARCHIVE_PATH=${ARCHIVE_NAME}.zip" >> $GITHUB_ENV
-          else
-            # Unix
-            tar -czf "../../../${ARCHIVE_NAME}.tar.gz" colmsg
-            echo "ARCHIVE_PATH=${ARCHIVE_NAME}.tar.gz" >> $GITHUB_ENV
-          fi
-        shell: bash
-      
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: colmsg-${{ matrix.target }}
-          path: ${{ env.ARCHIVE_PATH }}
-          retention-days: 7
-      
-      - name: Show build info
-        run: |
-          echo "✅ ビルド完了"
-          echo "ターゲット: ${{ matrix.target }}"
-          echo "アーカイブ: ${{ env.ARCHIVE_PATH }}"
+  build_release:
+    name: Build and verify release binaries
+    uses: ./.github/workflows/release-build.yml
+    with:
+      package: true
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
 
   create-release:
-    needs: [get-version, build-binaries]
+    needs: build_release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Download all artifacts
+
+      - name: Download release archives
         uses: actions/download-artifact@v4
         with:
+          pattern: colmsg-*
           path: artifacts
-      
+
       - name: List artifacts
         run: |
           echo "📦 ビルドされたアーティファクト:"
           ls -la artifacts/*
-      
+
       - name: Create Release
         if: ${{ !inputs.dry_run }}
         uses: ncipollo/release-action@v1
         with:
           artifacts: "artifacts/*/*.tar.gz,artifacts/*/*.zip"
-          tag: ${{ needs.get-version.outputs.version }}
-          name: ${{ needs.get-version.outputs.version }}
+          tag: ${{ needs.build_release.outputs.version }}
+          name: ${{ needs.build_release.outputs.version }}
           generateReleaseNotes: true
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Dry run - Show what would be released
         if: ${{ inputs.dry_run }}
         run: |
           echo "🔍 ドライラン: 以下の内容でリリースが作成されます"
-          echo "タグ: ${{ needs.get-version.outputs.version }}"
-          echo "リリース名: ${{ needs.get-version.outputs.version }}"
+          echo "タグ: ${{ needs.build_release.outputs.version }}"
+          echo "リリース名: ${{ needs.build_release.outputs.version }}"
           echo "アーティファクト:"
           find artifacts -name "*.tar.gz" -o -name "*.zip" | while read f; do
             echo "  - $(basename $f)"

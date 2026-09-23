@@ -1,6 +1,8 @@
 use std::{
-    io::{Write, copy},
-    fs::File, io, path::PathBuf,
+    fs::File,
+    io,
+    io::{copy, Write},
+    path::PathBuf,
 };
 
 use chrono::NaiveDateTime;
@@ -19,7 +21,11 @@ impl Text<'_> {
         file_name: String,
         talk: &'a Option<String>,
     ) -> Text<'a> {
-        Text { member_dir_buf, file_name, talk }
+        Text {
+            member_dir_buf,
+            file_name,
+            talk,
+        }
     }
 }
 
@@ -44,7 +50,12 @@ impl Picture<'_> {
         talk: &'a Option<String>,
         file_url: &'a Option<String>,
     ) -> Picture<'a> {
-        Picture { member_dir_buf, file_name, talk, file_url }
+        Picture {
+            member_dir_buf,
+            file_name,
+            talk,
+            file_url,
+        }
     }
 }
 
@@ -68,7 +79,11 @@ impl Video<'_> {
         file_name: String,
         file_url: &'a Option<String>,
     ) -> Video<'a> {
-        Video { member_dir_buf, file_name, file_url }
+        Video {
+            member_dir_buf,
+            file_name,
+            file_url,
+        }
     }
 }
 
@@ -91,7 +106,11 @@ impl Voice<'_> {
         file_name: String,
         file_url: &'a Option<String>,
     ) -> Voice<'a> {
-        Voice { member_dir_buf, file_name, file_url }
+        Voice {
+            member_dir_buf,
+            file_name,
+            file_url,
+        }
     }
 }
 
@@ -108,11 +127,10 @@ pub trait SaveToFile {
 
 pub fn file_name<'a>(seq_id: &u32, media: &u32, date: &str) -> Result<String> {
     let parse_result = NaiveDateTime::parse_from_str(date, "%Y-%m-%dT%H:%M:%SZ");
-    if let Err(_e) = parse_result { return Err(format!("Parse error. date: {}", date).into()); }
-    let date = parse_result
-        .unwrap()
-        .format("%Y%m%d%H%M%S")
-        .to_string();
+    if let Err(_e) = parse_result {
+        return Err(format!("Parse error. date: {}", date).into());
+    }
+    let date = parse_result.unwrap().format("%Y%m%d%H%M%S").to_string();
     Ok(format!("{}_{}_{}", seq_id, media, &date))
 }
 
@@ -127,13 +145,21 @@ fn save_text(member_dir_buf: &PathBuf, filename: &String, talk: &Option<String>)
     Ok(())
 }
 
-fn save_media(member_dir_buf: &PathBuf, filename: &String, file_url: &Option<String>, extension: &str) -> Result<()> {
+fn save_media(
+    member_dir_buf: &PathBuf,
+    filename: &String,
+    file_url: &Option<String>,
+    extension: &str,
+) -> Result<()> {
     if let Some(f) = file_url {
-        let mut response = reqwest::blocking::get(f)?;
-        let mut file = create_file(member_dir_buf, &filename, &extension)?;
+        let mut response = reqwest::blocking::get(f)?.error_for_status()?;
+        let mut file = tempfile::NamedTempFile::new_in(member_dir_buf)?;
         copy(&mut response, &mut file)?;
 
         file.flush()?;
+        let mut path = member_dir_buf.join(filename);
+        path.set_extension(extension);
+        file.persist(path).map_err(|error| error.error)?;
     }
     Ok(())
 }

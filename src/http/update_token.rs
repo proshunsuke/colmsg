@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::{errors::*, http::client::SHNClient};
+use serde::{Deserialize, Serialize};
 
 const PATH: &str = "/v2/update_token";
 
@@ -19,7 +19,7 @@ pub struct UpdateToken {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateTokenReq {
-    pub refresh_token: String
+    pub refresh_token: String,
 }
 
 pub fn request<C: SHNClient>(client: C, refresh_token: &String) -> Result<UpdateToken> {
@@ -27,4 +27,31 @@ pub fn request<C: SHNClient>(client: C, refresh_token: &String) -> Result<Update
 
     let update_token_json = UpdateTokenReq { refresh_token };
     client.post_request::<UpdateToken, UpdateTokenReq>(PATH, &update_token_json, true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::request;
+    use crate::http::test_support::{Call, Client};
+    use serde_json::json;
+
+    #[test]
+    fn request_sends_the_refresh_token_and_returns_rotated_tokens() {
+        let client = Client::new(json!({"access_token":"new-access", "expires_in":3600,
+            "refresh_token":"new-refresh"}));
+
+        let tokens = request(client.clone(), &"old-refresh".to_owned()).unwrap();
+
+        assert_eq!(tokens.access_token, "new-access");
+        assert_eq!(tokens.refresh_token, "new-refresh");
+        assert_eq!(tokens.expires_in, 3600);
+        assert_eq!(
+            client.calls(),
+            vec![Call::Post {
+                path: "/v2/update_token".to_owned(),
+                body: json!({"refresh_token":"old-refresh"}),
+                is_dynamic: true,
+            }]
+        );
+    }
 }

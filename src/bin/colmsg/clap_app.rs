@@ -1,4 +1,4 @@
-use clap::{App as ClapApp, Arg, AppSettings};
+use clap::{App as ClapApp, AppSettings, Arg};
 
 pub fn build_app() -> ClapApp<'static, 'static> {
     ClapApp::new(crate_name!())
