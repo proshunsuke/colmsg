@@ -1,0 +1,156 @@
+name: Release build verification
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: Create release archives for manual releases
+        required: true
+        type: boolean
+      dry_run:
+        description: Allow an existing release tag without publishing
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      version:
+        description: Version read from Cargo.toml
+        value: ${{ jobs.get-version.outputs.version }}
+
+permissions:
+  contents: read
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from Cargo.toml
+        id: version
+        run: |
+          VERSION=$(grep '^version' Cargo.toml | head -n1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists
+        if: inputs.package
+        run: |
+          if git ls-remote --tags origin | grep -q "refs/tags/${{ steps.version.outputs.version }}"; then
+            echo "::warning::Tag ${{ steps.version.outputs.version }} already exists"
+            if [[ "${{ inputs.dry_run }}" != "true" ]]; then
+              echo "::error::Cannot create release - tag already exists"
+              exit 1
+            fi
+          fi
+
+      - name: Show release info
+        run: |
+          echo "📋 リリース情報"
+          echo "バージョン: ${{ steps.version.outputs.version }}"
+          echo "タグ: refs/tags/${{ steps.version.outputs.version }}"
+          echo "CHANGELOG.md の存在: $(test -f CHANGELOG.md && echo '✅' || echo '❌')"
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "🔍 ドライランモードで実行中"
+          fi
+
+  build-binaries:
+    needs: get-version
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            archive: tar.gz
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            archive: tar.gz
+          - target: x86_64-apple-darwin
+            os: macos-15-intel
+            archive: tar.gz
+          - target: aarch64-apple-darwin
+            os: macos-15
+            archive: tar.gz
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            archive: zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Setup Cross for Linux ARM
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Install GNU Make on Windows
+        if: runner.os == 'Windows'
+        run: choco install make --version=4.4.1 --yes --no-progress
+
+      - name: Build binary
+        run: make build-release TARGET=${{ matrix.target }}
+        shell: bash
+
+      - name: Run binary on native runner
+        if: matrix.target != 'aarch64-unknown-linux-gnu'
+        run: make smoke-release TARGET=${{ matrix.target }}
+        shell: bash
+
+      - name: Upload Linux ARM binary for native runtime check
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-smoke-linux-arm
+          path: target/aarch64-unknown-linux-gnu/release/colmsg
+          retention-days: 1
+
+      - name: Create archive
+        if: inputs.package
+        run: |
+          VERSION=${{ needs.get-version.outputs.version }}
+          ARCHIVE_NAME="colmsg-${VERSION}-${{ matrix.target }}"
+
+          cd target/${{ matrix.target }}/release
+
+          if [[ "${{ matrix.archive }}" == "zip" ]]; then
+            7z a "../../../${ARCHIVE_NAME}.zip" colmsg.exe
+            echo "ARCHIVE_PATH=${ARCHIVE_NAME}.zip" >> $GITHUB_ENV
+          else
+            tar -czf "../../../${ARCHIVE_NAME}.tar.gz" colmsg
+            echo "ARCHIVE_PATH=${ARCHIVE_NAME}.tar.gz" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Upload release archive
+        if: inputs.package
+        uses: actions/upload-artifact@v4
+        with:
+          name: colmsg-${{ matrix.target }}
+          path: ${{ env.ARCHIVE_PATH }}
+          retention-days: 7
+
+      - name: Show build info
+        if: inputs.package
+        run: |
+          echo "✅ ビルド完了"
+          echo "ターゲット: ${{ matrix.target }}"
+          echo "アーカイブ: ${{ env.ARCHIVE_PATH }}"
+
+  smoke-test-linux-arm:
+    needs: build-binaries
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: runtime-smoke-linux-arm
+          path: target/aarch64-unknown-linux-gnu/release
+      - name: Run Linux ARM release binary
+        run: |
+          chmod +x target/aarch64-unknown-linux-gnu/release/colmsg
+          make smoke-release TARGET=aarch64-unknown-linux-gnu

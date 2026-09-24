@@ -1,3 +1,5 @@
+日本語 | [English](README.en.md) | [简体中文](README.zh-Hans.md) | [繁體中文](README.zh-Hant.md)
+
 > [!WARNING]
 > 現在iOSで`refresh_token`が取得できない問題が発生しています。これは`colmsg`の問題ではなくメッセージアプリ側のアップデートによる影響です。現状この問題に対する完全な解決策はありません。Androidの場合は引き続き[こちら](https://github.com/proshunsuke/colmsg/blob/main/doc/how_to_get_refresh_token.md#android%E3%82%A2%E3%83%97%E3%83%AA%E3%81%AE%E5%A0%B4%E5%90%88)を参考にしてください。
 
@@ -188,6 +190,9 @@ yay -S colmsg
 
 ## 開発
 
+テストは `make test` で実行できます。全featureのテストは `make test-all-features` です。
+Rustのフォーマットは `make fmt` で自動修正でき、`make fmt-check` で確認できます。
+
 `colmsg` は外部APIを叩きます。開発時はOpenApiを利用したモックサーバーを建てることが出来ます。
 
 ```shell
@@ -203,7 +208,6 @@ S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=htt
 
 ## TODO
 
-* [ ] CIによる自動テスト
 * [ ] examplesの用意
 * [ ] メッセージ保存処理の並列化
 * [ ] api clientのcrate化
@@ -213,10 +217,3 @@ S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=htt
 `colmsg` は MIT License の条件の下で配布されています。
 
 ライセンスの詳細については [LICENSE](LICENSE.txt) ファイルを参照して下さい。
-
-## 注意事項
-
-アプリの利用規約 第8条（禁止事項）に以下の項目があるため注意してください。
-
-* (16) 当社が指定するアクセス方法以外の手段で本サービスにアクセスし、またはアクセスを試みる行為
-* (17) 自動化された手段（クローラおよび類似の技術を含む）を用いて本サービスにアクセスし、またはアクセスを試みる行為 

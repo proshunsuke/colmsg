@@ -2,7 +2,7 @@ use std::{env, ffi::OsString, fs, fs::File, io::Write, path::PathBuf};
 
 use shell_words;
 
-use colmsg::{errors::*, http, dirs::PROJECT_DIRS, http::client::SHNClient};
+use colmsg::{dirs::PROJECT_DIRS, errors::*, http, http::client::SHNClient};
 
 pub fn config_file() -> PathBuf {
     env::var("COLMSG_CONFIG_PATH")
@@ -27,29 +27,38 @@ fn get_args_from_str(content: &str) -> Result<Vec<OsString>> {
         .filter(|line| !line.is_empty())
         .filter(|line| !line.starts_with('#'))
         .map(|line| shell_words::split(line))
-        .collect::<Vec<_>>();
+        .collect::<std::result::Result<Vec<_>, _>>()?;
     Ok(args_par_line
         .iter()
-        .flatten()
         .flatten()
         .map(|line| line.into())
         .collect::<Vec<_>>())
 }
 
-pub fn get_access_token_from_file<C: SHNClient>(refresh_token: &String, client: C) -> Result<String> {
+pub fn get_access_token_from_file<C: SHNClient>(
+    refresh_token: &String,
+    client: C,
+    token_file: &str,
+) -> Result<String> {
     let dir = PROJECT_DIRS.config_dir().to_path_buf();
-    if !dir.is_dir() { fs::create_dir_all(&dir)? };
-    let file = dir.join("access_token");
-    if file.is_file() { return Ok(fs::read_to_string(file)?); }
+    if !dir.is_dir() {
+        fs::create_dir_all(&dir)?
+    };
+    let file = dir.join(token_file);
+    if file.is_file() {
+        return Ok(fs::read_to_string(file)?);
+    }
     let update_token_res = http::update_token::request(client, refresh_token)?;
     let mut f = File::create(file)?;
     f.write_all(update_token_res.access_token.as_ref())?;
     Ok(update_token_res.access_token)
 }
 
-pub fn delete_access_token_file() -> Result<()> {
+pub fn delete_access_token_file(token_file: &str) -> Result<()> {
     let dir = PROJECT_DIRS.config_dir().to_path_buf();
-    let file = dir.join("access_token");
-    if !file.is_file() { return Ok(()); }
+    let file = dir.join(token_file);
+    if !file.is_file() {
+        return Ok(());
+    }
     Ok(fs::remove_file(file)?)
 }
