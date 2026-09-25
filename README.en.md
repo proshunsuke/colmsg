@@ -182,8 +182,6 @@ Set `S_BASE_URL`, `H_BASE_URL`, and `N_BASE_URL` to route requests to the mock s
 env S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
 
-The OpenAPI mock member-list examples include only timeline poster IDs whose names are available. IDs absent from both the group and global member lists are written as `unknown` in filenames.
-
 ## TODO
 
 * [ ] Provide examples

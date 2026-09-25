@@ -207,8 +207,6 @@ make server/n46
 S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
 
-OpenAPI モックのメンバー一覧例には、timeline の例に登場し、かつ名前を確認できる投稿者だけを載せています。グループ別・全体のメンバー一覧のどちらにもない ID は、ファイル名で `unknown` として扱われます。
-
 ## TODO
 
 * [ ] examplesの用意

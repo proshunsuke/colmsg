@@ -182,8 +182,6 @@ make server/n46
 env S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
 
-OpenAPI 模拟的成员列表示例仅包含 timeline 示例中出现且可查到姓名的投稿者。若某个 ID 不在组成员列表和全局成员列表中，文件名会使用 `unknown`。
-
 ## TODO
 
 * [ ] 提供示例
