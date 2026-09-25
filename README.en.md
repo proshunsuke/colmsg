@@ -82,16 +82,16 @@ You can combine options. Run `colmsg --help` for details.
   colmsg/
   ├── 日向坂46 一期生
   │   └── 佐々木久美
-  │       └── 1_0_20191231235959.txt
+  │       └── 1_0_20191231235959_佐々木久美.txt
   ├── 乃木坂46
   │   └── 秋元真夏
-  │       └── 2_1_20200101000000.jpg
+  │       └── 2_1_20200101000000_秋元真夏.jpg
   └── 櫻坂46 一期生
       └── 菅井友香
-          ├── 3_2_20200101000001.mp4
-          └── 4_3_20200101000002.mp4
+          ├── 3_2_20200101000001_菅井友香.mp4
+          └── 4_3_20200101000002_菅井友香.mp4
   ```
-* File names use the format `<sequence>_<type>_<date>.<extension>`. Sequence numbers sort messages chronologically. The type number is:
+* File names use the format `<sequence>_<type>_<date>_<poster-name>.<extension>`. The sequence and date prefix remains unchanged, so files continue to sort chronologically. If the poster cannot be identified, the name is `unknown`. The type number is:
   * 0: Text
   * 1: Picture
   * 2: Video

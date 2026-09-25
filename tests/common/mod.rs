@@ -65,6 +65,8 @@ pub struct Scenario {
     pub root: TempDir,
     pub server: ServerGuard,
     pub service: Service,
+    global_members_mock: Option<Mock>,
+    group_members_mock: Option<Mock>,
 }
 
 impl Scenario {
@@ -73,11 +75,17 @@ impl Scenario {
         fs::create_dir_all(root.path().join("home/Downloads")).unwrap();
         fs::create_dir_all(root.path().join("config/colmsg")).unwrap();
         fs::write(root.path().join("config/colmsg/config"), "").unwrap();
-        Scenario {
+        let mut scenario = Scenario {
             root,
             server: Server::new(),
             service,
-        }
+            global_members_mock: None,
+            group_members_mock: None,
+        };
+        scenario.global_members_mock = Some(scenario.get("/v2/members", json!([])));
+        scenario.group_members_mock =
+            Some(scenario.get_at_most_once("/v2/groups/1/members", json!([])));
+        scenario
     }
 
     pub fn output(&self) -> PathBuf {
@@ -146,12 +154,21 @@ impl Scenario {
     }
 
     pub fn get(&mut self, path: &str, body: Value) -> Mock {
+        self.get_with_expectation(path, body, true)
+    }
+
+    fn get_at_most_once(&mut self, path: &str, body: Value) -> Mock {
+        self.get_with_expectation(path, body, false)
+    }
+
+    fn get_with_expectation(&mut self, path: &str, body: Value, required: bool) -> Mock {
         let path = if path.contains('?') {
             path.to_string()
         } else {
             format!("{}?", path)
         };
-        self.server
+        let mock = self
+            .server
             .mock("GET", path.as_str())
             .match_header("x-talk-app-id", self.service.app_id)
             .match_header(
@@ -160,9 +177,67 @@ impl Scenario {
             )
             .match_header("accept", "application/json")
             .with_header("content-type", "application/json")
-            .with_body(body.to_string())
+            .with_body(body.to_string());
+        if required {
+            mock.expect(1).create()
+        } else {
+            mock.expect_at_most(1).create()
+        }
+    }
+
+    pub fn set_global_members(&mut self, body: Value) {
+        if let Some(mock) = self.global_members_mock.take() {
+            mock.remove();
+        }
+        self.global_members_mock = Some(self.get("/v2/members", body));
+    }
+
+    #[allow(dead_code)]
+    pub fn fail_global_members(&mut self, status: usize) -> Mock {
+        if let Some(mock) = self.global_members_mock.take() {
+            mock.remove();
+        }
+        self.server
+            .mock("GET", "/v2/members?")
+            .match_header("x-talk-app-id", self.service.app_id)
+            .match_header(
+                "authorization",
+                format!("Bearer test-access-token-{}", self.service.group).as_str(),
+            )
+            .match_header("accept", "application/json")
+            .with_status(status)
             .expect(1)
             .create()
+    }
+
+    #[allow(dead_code)]
+    pub fn fail_group_members(&mut self, status: usize) -> Mock {
+        if let Some(mock) = self.group_members_mock.take() {
+            mock.remove();
+        }
+        self.server
+            .mock("GET", "/v2/groups/1/members?")
+            .match_header("x-talk-app-id", self.service.app_id)
+            .match_header(
+                "authorization",
+                format!("Bearer test-access-token-{}", self.service.group).as_str(),
+            )
+            .match_header("accept", "application/json")
+            .with_status(status)
+            .expect(1)
+            .create()
+    }
+
+    pub fn set_group_members(&mut self, body: Value) {
+        if let Some(mock) = self.group_members_mock.take() {
+            mock.remove();
+        }
+        self.group_members_mock = Some(self.get("/v2/groups/1/members", body));
+    }
+
+    pub fn assert_member_mocks(&self) {
+        self.global_members_mock.as_ref().unwrap().assert();
+        self.group_members_mock.as_ref().unwrap().assert();
     }
 
     pub fn catalog(&mut self) -> Vec<Mock> {
@@ -179,15 +254,29 @@ impl Scenario {
     }
 
     pub fn past(&mut self, messages: Vec<Value>) -> Mock {
+        self.past_for(1, messages)
+    }
+
+    pub fn past_for(&mut self, group_id: u32, messages: Vec<Value>) -> Mock {
         self.get(
-            "/v2/groups/1/past_messages?order=asc",
+            &format!("/v2/groups/{}/past_messages?order=asc", group_id),
             json!({"messages":messages}),
         )
     }
 
     pub fn timeline(&mut self, from: &str, count: usize, messages: Vec<Value>) -> Mock {
+        self.timeline_for(1, from, count, messages)
+    }
+
+    pub fn timeline_for(
+        &mut self,
+        group_id: u32,
+        from: &str,
+        count: usize,
+        messages: Vec<Value>,
+    ) -> Mock {
         self.server
-            .mock("GET", "/v2/groups/1/timeline")
+            .mock("GET", format!("/v2/groups/{}/timeline", group_id).as_str())
             .match_header("x-talk-app-id", self.service.app_id)
             .match_header(
                 "authorization",

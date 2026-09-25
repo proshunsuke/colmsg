@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -29,13 +30,17 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     }
 
     pub fn save(&self) -> Result<()> {
+        let all_members =
+            http::members::request_all(self.config.client.clone(), &self.config.access_token)?;
+        let all_members_map: HashMap<u32, String> =
+            all_members.into_iter().map(|m| (m.id, m.name)).collect();
         let groups = http::groups::request(self.config.client.clone(), &self.config.access_token)?;
         let tags = http::tags::request(self.config.client.clone(), &self.config.access_token)?;
 
         // TODO: 並列処理したい
         // 購読しているメンバー毎にメッセージを保存するためのループ
         for member_identifier in self.subscribed_list(&groups, &tags) {
-            self.save_messages(member_identifier)?;
+            self.save_messages(member_identifier, &all_members_map)?;
         }
 
         Ok(())
@@ -92,7 +97,11 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             .collect::<String>()
     }
 
-    fn save_messages(&self, member_identifier: MemberIdentifier) -> Result<()> {
+    fn save_messages(
+        &self,
+        member_identifier: MemberIdentifier,
+        all_members_map: &HashMap<u32, String>,
+    ) -> Result<()> {
         println!("saving messages of {}...", member_identifier.name);
 
         let member_dir_buf = self.create_member_dir_buf(&member_identifier)?;
@@ -102,6 +111,15 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             None => self.latest_date(&id_dates)?,
         };
 
+        // メンバー一覧を取得し、IDと名前のマップを作成
+        let members = http::members::request(
+            self.config.client.clone(),
+            &self.config.access_token,
+            &member_identifier.id,
+        )?;
+        let members_map: HashMap<u32, String> =
+            members.into_iter().map(|m| (m.id, m.name)).collect();
+
         // 購読開始から24時間前までに配信されたメッセージを保存する
         let past_messages = http::past_messages::request(
             self.config.client.clone(),
@@ -109,10 +127,15 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             &member_identifier.id,
         )?;
         for message in &past_messages.messages {
-            self.save_message(&message, &id_dates, &member_dir_buf)?
+            self.save_message(
+                &message,
+                &id_dates,
+                &member_dir_buf,
+                &members_map,
+                all_members_map,
+            )?
         }
         id_dates = self.id_dates(&member_dir_buf);
-
         let mut count = http::timeline::DEFAULT_COUNT;
 
         // 購読しているメンバーのメッセージを取得するAPIを複数回叩くためのループ
@@ -138,7 +161,13 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             // メッセージを取得するAPIを叩くと複数件のメッセージを取得出来る
             // そのメッセージを1件ずつ処理するためのループ
             for message in &timeline.messages {
-                self.save_message(&message, &id_dates, &member_dir_buf)?
+                self.save_message(
+                    &message,
+                    &id_dates,
+                    &member_dir_buf,
+                    &members_map,
+                    all_members_map,
+                )?
             }
 
             // 最新のメッセージまで保存し終わったら終了する
@@ -182,6 +211,8 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         message: &TimelineMessages,
         id_dates: &Vec<IdDate>,
         member_dir_buf: &PathBuf,
+        members_map: &HashMap<u32, String>,
+        all_members_map: &HashMap<u32, String>,
     ) -> Result<()> {
         // 既に保存済のファイルはAPIリクエストしない&上書き保存せずスルー
         if id_dates
@@ -192,6 +223,22 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         {
             return Ok(());
         }
+
+        let poster_name = message
+            .member_id
+            .and_then(|id| {
+                members_map
+                    .get(&id)
+                    .filter(|name| !name.trim().is_empty())
+                    .or_else(|| {
+                        all_members_map
+                            .get(&id)
+                            .filter(|name| !name.trim().is_empty())
+                    })
+            })
+            .map(String::as_str)
+            .unwrap_or("unknown");
+
         match message.messages_type.as_str() {
             "text" => {
                 if !self.config.kind.contains(&Kind::Text) {
@@ -199,7 +246,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 }
                 let message_file_text = Text::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &0, &message.updated_at)?,
+                    message::file::file_name(&message.id, &0, &message.updated_at, poster_name)?,
                     &message.text,
                 );
                 message_file_text.save()?
@@ -210,7 +257,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 }
                 let message_file_picture = Picture::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &1, &message.updated_at)?,
+                    message::file::file_name(&message.id, &1, &message.updated_at, poster_name)?,
                     &message.text,
                     &message.file,
                 );
@@ -222,7 +269,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 }
                 let message_file_video = Video::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &2, &message.updated_at)?,
+                    message::file::file_name(&message.id, &2, &message.updated_at, poster_name)?,
                     &message.file,
                 );
                 message_file_video.save()?
@@ -233,7 +280,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 }
                 let message_file_voice = Voice::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &3, &message.updated_at)?,
+                    message::file::file_name(&message.id, &3, &message.updated_at, poster_name)?,
                     &message.file,
                 );
                 message_file_voice.save()?
@@ -245,7 +292,7 @@ impl<'b, C: SHNClient> Saver<'b, C> {
                 }
                 let message_file_text = Text::new(
                     member_dir_buf,
-                    message::file::file_name(&message.id, &4, &message.updated_at)?,
+                    message::file::file_name(&message.id, &4, &message.updated_at, poster_name)?,
                     &message.text,
                 );
                 message_file_text.save()?

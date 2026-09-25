@@ -1,4 +1,4 @@
-use std::{io, process::Command};
+use std::{env, ffi::OsString, io, process::Command};
 
 use colmsg::{
     errors::{handle_error, Error},
@@ -56,6 +56,68 @@ fn required_fields_and_wrong_types_are_not_silently_accepted() {
         "published_at":"2026-09-23T01:02:03Z","updated_at":"2026-09-23T01:02:03Z","state":"published","type":"text"})].iter() {
         assert!(serde_json::from_value::<TimelineMessages>(value.clone()).is_err());
     }
+}
+
+struct BaseUrlEnvGuard {
+    previous: Vec<(&'static str, Option<OsString>)>,
+}
+
+impl BaseUrlEnvGuard {
+    fn set_only(name: &'static str, value: &str) -> Self {
+        const BASE_URLS: [&str; 3] = ["S_BASE_URL", "H_BASE_URL", "N_BASE_URL"];
+        let previous = BASE_URLS
+            .iter()
+            .map(|name| (*name, env::var_os(name)))
+            .collect();
+
+        for base_url in BASE_URLS {
+            if base_url == name {
+                env::set_var(base_url, value);
+            } else {
+                env::remove_var(base_url);
+            }
+        }
+
+        Self { previous }
+    }
+}
+
+impl Drop for BaseUrlEnvGuard {
+    fn drop(&mut self) {
+        for (name, value) in &self.previous {
+            if let Some(value) = value {
+                env::set_var(name, value);
+            } else {
+                env::remove_var(name);
+            }
+        }
+    }
+}
+
+fn dynamic_mock_request_sends_prefer_header<C: SHNClient>(base_url_env: &'static str) {
+    let mut server = mockito::Server::new();
+    let _base_url_guard = BaseUrlEnvGuard::set_only(base_url_env, &server.url());
+    let mock = server
+        .mock("GET", "/v2/members?")
+        .match_header("prefer", "dynamic=true")
+        .with_header("content-type", "application/json")
+        .with_body("[]")
+        .expect(1)
+        .create();
+
+    let members: Vec<Value> = C::new()
+        .get_request("/v2/members", "access-token", None, true)
+        .unwrap();
+
+    assert!(members.is_empty());
+    mock.assert();
+}
+
+#[test]
+fn dynamic_mock_requests_send_prefer_for_each_openapi_base_url() {
+    dynamic_mock_request_sends_prefer_header::<SClient>("S_BASE_URL");
+    dynamic_mock_request_sends_prefer_header::<HClient>("H_BASE_URL");
+    dynamic_mock_request_sends_prefer_header::<NClient>("N_BASE_URL");
 }
 
 #[test]

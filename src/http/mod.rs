@@ -1,5 +1,6 @@
 pub mod client;
 pub mod groups;
+pub mod members;
 pub mod past_messages;
 pub mod tags;
 pub mod timeline;

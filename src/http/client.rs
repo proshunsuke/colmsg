@@ -141,14 +141,13 @@ impl Client {
 
     fn insert_dynamic_header(&self, mut header: HeaderMap, is_dynamic: bool) -> Result<HeaderMap> {
         // 開発時はmockサーバーがOpenApiで定義された動的なデータを返すようにする
-        match (env::var("H_BASE_URL"), env::var("H_BASE_URL"), is_dynamic) {
-            (Err(_), Err(_), _) => Ok(header),
-            (_, _, false) => Ok(header),
-            _ => {
-                header.insert("Prefer", "dynamic=true".parse()?);
-                Ok(header)
-            }
+        let has_mock_base_url = ["S_BASE_URL", "H_BASE_URL", "N_BASE_URL"]
+            .iter()
+            .any(|name| env::var_os(name).is_some());
+        if is_dynamic && has_mock_base_url {
+            header.insert("Prefer", "dynamic=true".parse()?);
         }
+        Ok(header)
     }
 }
 

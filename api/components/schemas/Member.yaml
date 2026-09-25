@@ -1,0 +1,12 @@
+type: object
+properties:
+  id:
+    description: メンバー ID。timeline の member_id に対応する
+    type: integer
+    minimum: 0
+  name:
+    description: メンバー名
+    type: string
+required:
+  - id
+  - name
