@@ -9,16 +9,23 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 jobs:
   update-aur:
     runs-on: ubuntu-latest
     container: archlinux/archlinux:base-devel
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Install required packages
         run: |
           pacman -Syu --noconfirm
           pacman -S --noconfirm git namcap openssh clang cmake rust
-      
+
       - name: Set version
         id: version
         run: |
@@ -28,138 +35,57 @@ jobs:
             echo "❌ エラー: 最新リリースが見つかりません"
             exit 1
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
-      
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/aur
-          chmod 600 ~/.ssh/aur
-          echo "Host aur.archlinux.org
-            User aur
-            IdentityFile ~/.ssh/aur
-            StrictHostKeyChecking no" > ~/.ssh/config
-          # AURのホストキーを追加
-          ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts
-      
+
       - name: Clone AUR package
         run: |
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o StrictHostKeyChecking=no" git clone ssh://aur@aur.archlinux.org/colmsg.git aur-colmsg
-      
-      - name: Update PKGBUILD
+          git clone https://aur.archlinux.org/colmsg.git "$GITHUB_WORKSPACE/aur-colmsg"
+
+      - name: Get package version and source commit
+        id: package
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          cd aur-colmsg
-          VERSION=${{ steps.version.outputs.version }}
-          VERSION=${VERSION#v}  # v prefix を削除
-          
-          echo "=== Current PKGBUILD ==="
-          cat PKGBUILD
-          echo "======================="
-          
-          # PKGBUILDのバージョンを更新
-          sed -i "s/pkgver=.*/pkgver=$VERSION/" PKGBUILD
-          
-          # ソースのコミットハッシュを更新
-          COMMIT_HASH=$(git ls-remote https://github.com/${{ github.repository }}.git refs/tags/v$VERSION | cut -f1)
+          VERSION="${RELEASE_VERSION#v}"
+          COMMIT_HASH=$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" "refs/tags/v$VERSION" | cut -f1)
           if [[ -z "$COMMIT_HASH" ]]; then
             echo "❌ エラー: タグ v$VERSION が見つかりません"
             exit 1
           fi
           echo "✅ コミットハッシュ: $COMMIT_HASH"
-          sed -i "s|^source=.*$|source=(\"git+\$url#commit=$COMMIT_HASH\") # tag: v$VERSION|" PKGBUILD
-          
-          echo -e "\n=== Updated PKGBUILD ==="
-          cat PKGBUILD
-          echo "======================="
-      
-      - name: Validate PKGBUILD syntax
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "commit=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Build and verify AUR package
+        env:
+          PKG_VERSION: ${{ steps.package.outputs.version }}
+          COMMIT_HASH: ${{ steps.package.outputs.commit }}
         run: |
-          cd aur-colmsg
-          echo "📋 PKGBUILDの構文チェック"
-          bash -n PKGBUILD && echo "✅ PKGBUILDの構文は正常です" || {
-            echo "❌ PKGBUILDに構文エラーがあります"
-            exit 1
-          }
-      
-      - name: Create non-root user for makepkg
-        run: |
-          useradd -m builder
-          # builderユーザーにパスワードなしでsudo実行を許可
-          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-      
-      - name: Generate .SRCINFO
-        run: |
-          cd aur-colmsg
-          # builderユーザーに権限を付与
-          # .gitディレクトリを除外して権限変更
-          find . -name .git -prune -o -print0 | xargs -0 chown builder:builder
-          echo "📋 .SRCINFOの生成"
-          su builder -c "makepkg --printsrcinfo > .SRCINFO"
-          echo "=== Generated .SRCINFO ==="
-          cat .SRCINFO
-          echo "========================="
-      
-      - name: Run namcap checks
-        run: |
-          cd aur-colmsg
-          echo "🔍 namcapによるPKGBUILDの検証"
-          namcap PKGBUILD || true
-          echo ""
-      
-      - name: Build package verification
-        run: |
-          cd aur-colmsg
-          echo "🏗️  パッケージのビルドテスト"
-          
-          # 権限を再設定（.SRCINFOが生成されているため）
-          # .gitディレクトリを除外して権限変更
-          find . -name .git -prune -o -print0 | xargs -0 chown builder:builder
-          
-          # ビルドの実行
-          su builder -c "makepkg -sf --noconfirm" || {
-            echo "❌ ビルドに失敗しました"
-            exit 1
-          }
-          
-          echo "✅ ビルドが成功しました"
-          
-          # ビルドされたパッケージの情報表示
-          echo -e "\n=== ビルドされたパッケージ ==="
-          ls -la *.pkg.tar.*
-          
-          # パッケージの内容確認
-          echo -e "\n=== パッケージの内容 ==="
-          tar -tvf *.pkg.tar.* | head -20
-          
-          # namcapでパッケージをチェック
-          echo -e "\n🔍 namcapによるパッケージの検証"
-          namcap *.pkg.tar.* || true
-      
+          SOURCE_SPEC="git+\$url#commit=$COMMIT_HASH"
+          bash "$GITHUB_WORKSPACE/.github/scripts/aur-package-build.sh" \
+            "$GITHUB_WORKSPACE/aur-colmsg" "$PKG_VERSION" "$SOURCE_SPEC"
+
       - name: Show git diff
         run: |
-          cd aur-colmsg
           echo "📝 Git差分"
-          
-          # rootユーザーで実行（.gitディレクトリの権限を維持）
-          git config --global --add safe.directory $(pwd)
+          cd "$GITHUB_WORKSPACE/aur-colmsg"
+          git config --global --add safe.directory "$PWD"
           git diff --color=always
-          
-          # 差分がない場合の警告
           if [[ -z "$(git diff)" ]]; then
             echo "⚠️  警告: 変更がありません。バージョンが既に更新済みの可能性があります。"
           fi
-      
+
       - name: Show final summary
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          PKG_VERSION: ${{ steps.package.outputs.version }}
         run: |
-          cd aur-colmsg
           echo "========================================="
           echo "📊 最終確認サマリー"
           echo "========================================="
-          echo "バージョン: ${{ steps.version.outputs.version }}"
-          VERSION="${{ steps.version.outputs.version }}"
-          VERSION="${VERSION#v}"  # v prefix を削除
-          echo "コミットメッセージ: colmsg version${VERSION}"
+          echo "バージョン: $RELEASE_VERSION"
+          echo "コミットメッセージ: colmsg version${PKG_VERSION}"
           echo ""
           if [[ "${{ inputs.dry_run }}" == "true" ]]; then
             echo "🔍 ドライラン: 以下の操作はスキップされました"
@@ -169,19 +95,26 @@ jobs:
             echo "✅ 実際のAUR更新を実行します"
           fi
           echo "========================================="
-      
+
+      - name: Setup SSH
+        if: ${{ !inputs.dry_run }}
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          printf 'Host aur.archlinux.org\n  User aur\n  IdentityFile ~/.ssh/aur\n  StrictHostKeyChecking no\n' > ~/.ssh/config
+          ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts
+
       - name: Commit and push
         if: ${{ !inputs.dry_run }}
         run: |
-          cd aur-colmsg
-          
-          # PKGBUILD と .SRCINFO の所有者をrootに戻す（git addのため）
+          cd "$GITHUB_WORKSPACE/aur-colmsg"
           chown root:root PKGBUILD .SRCINFO
-          
+          git remote set-url origin ssh://aur@aur.archlinux.org/colmsg.git
           git config user.name "${{ secrets.AUR_USERNAME }}"
           git config user.email "${{ secrets.AUR_EMAIL }}"
           git add PKGBUILD .SRCINFO
-          VERSION="${{ steps.version.outputs.version }}"
-          VERSION="${VERSION#v}"  # v prefix を削除
-          git commit -m "colmsg version${VERSION}"
+          git commit -m "colmsg version${{ steps.package.outputs.version }}"
           GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o StrictHostKeyChecking=no" git push

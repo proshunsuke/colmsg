@@ -55,6 +55,44 @@ jobs:
             echo "🔍 ドライランモードで実行中"
           fi
 
+  build-aur-package:
+    name: Verify AUR package on Arch Linux
+    runs-on: ubuntu-latest
+    needs: get-version
+    if: ${{ inputs.package || github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Prepare AUR package with the checked-out source
+        run: |
+          AUR_DIR="$RUNNER_TEMP/aur-package"
+          git clone --depth=1 https://aur.archlinux.org/colmsg.git "$AUR_DIR"
+
+          # PRやリリース候補のcheckout内容を、AURのPKGBUILDで使うソース形式にする。
+          git archive --format=tar --prefix=colmsg/ HEAD | gzip > "$AUR_DIR/colmsg.tar.gz"
+
+      - name: Build AUR package in Arch Linux
+        env:
+          VERSION: ${{ needs.get-version.outputs.version }}
+        run: |
+          HOST_UID=$(id -u)
+          VERSION="${VERSION#v}"
+          AUR_DIR="$RUNNER_TEMP/aur-package"
+          docker run --rm \
+            --env HOST_UID="$HOST_UID" \
+            --env VERSION="$VERSION" \
+            --volume "$GITHUB_WORKSPACE:/repo:ro" \
+            --volume "$AUR_DIR:/work" \
+            --workdir /work \
+            archlinux/archlinux:base-devel \
+            bash -euo pipefail -c '
+              pacman -Syu --noconfirm
+              pacman -S --noconfirm git namcap openssh clang cmake rust
+              bash /repo/.github/scripts/aur-package-build.sh /work "$VERSION" colmsg.tar.gz "$HOST_UID"
+            '
+
   build-binaries:
     needs: get-version
     strategy:
