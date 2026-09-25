@@ -16,10 +16,13 @@ use std::{
 
 use reqwest::StatusCode;
 
-use crate::{app::App, config::delete_access_token_file, progress::ProgressDisplay};
+use crate::{
+    app::App,
+    config::{config_file, delete_access_token_file},
+    progress::ProgressDisplay,
+};
 
 use colmsg::controller::{Controller, ProgressEvent, ProgressSender, Service};
-use colmsg::dirs::PROJECT_DIRS;
 use colmsg::http::client::{AClient, HClient, MClient, NClient, SClient, SHNClient, YClient};
 use colmsg::{errors::*, Config};
 
@@ -251,20 +254,12 @@ fn run_selected_services(
 
 fn run() -> Result<process::ExitCode> {
     let app = App::new()?;
-    if app.matches.is_present("config-dir") {
-        writeln!(
-            io::stdout(),
-            "{}",
-            PROJECT_DIRS.config_dir().to_string_lossy()
-        )?;
+    if app.matches.is_present("config-path") {
+        writeln!(io::stdout(), "{}", config_file().to_string_lossy())?;
         return Ok(process::ExitCode::SUCCESS);
     }
     if app.matches.is_present("download-dir") {
-        writeln!(
-            io::stdout(),
-            "{}",
-            PROJECT_DIRS.download_dir().to_string_lossy()
-        )?;
+        writeln!(io::stdout(), "{}", app.download_dir().to_string_lossy())?;
         return Ok(process::ExitCode::SUCCESS);
     }
 

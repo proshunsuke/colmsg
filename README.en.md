@@ -103,12 +103,12 @@ You can combine options. Run `colmsg --help` for details.
   * 2: Video
   * 3: Voice
   * 4: Link
-* Run `colmsg --download-dir` to see the default download directory for your platform.
+* Run `colmsg --download-dir` to see the download directory resolved from the configuration file and command-line options.
 * Already-saved messages are not overwritten.
 
 ## Configuration file
 
-You can set default options in a configuration file. Run `colmsg --config-dir` to see its default directory. You can also set the configuration file path with `COLMSG_CONFIG_PATH`:
+You can set default options in a configuration file. Run `colmsg --config-path` to see the path to the configuration file currently used. You can also set the configuration file path with `COLMSG_CONFIG_PATH`:
 
 ```fish
 set -gx COLMSG_CONFIG_PATH /path/to/colmsg.conf
