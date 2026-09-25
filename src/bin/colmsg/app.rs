@@ -115,7 +115,6 @@ impl App {
             .map(PathBuf::from)
             .unwrap_or_else(|| PROJECT_DIRS.download_dir().to_path_buf());
         if !dir.is_dir() {
-            println!("create download directory: {}", dir.display());
             if let Err(e) = fs::create_dir_all(&dir) {
                 return Err(e.into());
             }

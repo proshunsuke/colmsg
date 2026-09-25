@@ -1,13 +1,23 @@
-use std::{env, ffi::OsString, io, process::Command};
+use std::{
+    env,
+    ffi::OsString,
+    io,
+    process::Command,
+    sync::{Mutex, MutexGuard},
+};
 
 use colmsg::{
+    controller::{Controller, Service},
     errors::{handle_error, Error},
     http::{
         client::{AClient, HClient, MClient, NClient, SClient, SHNClient, YClient},
         timeline::{Timeline, TimelineMessages},
     },
+    Config, Kind,
 };
 use serde_json::{json, Value};
+
+static BASE_URL_ENV_LOCK: Mutex<()> = Mutex::new(());
 
 fn rejects_invalid_authorization<C: SHNClient>() {
     // Header validation happens before sending: no external request is made.
@@ -60,11 +70,13 @@ fn required_fields_and_wrong_types_are_not_silently_accepted() {
 
 struct BaseUrlEnvGuard {
     previous: Vec<(&'static str, Option<OsString>)>,
+    _lock: MutexGuard<'static, ()>,
 }
 
 impl BaseUrlEnvGuard {
     fn set_only(name: &'static str, value: &str) -> Self {
         const BASE_URLS: [&str; 3] = ["S_BASE_URL", "H_BASE_URL", "N_BASE_URL"];
+        let lock = BASE_URL_ENV_LOCK.lock().unwrap();
         let previous = BASE_URLS
             .iter()
             .map(|name| (*name, env::var_os(name)))
@@ -78,7 +90,10 @@ impl BaseUrlEnvGuard {
             }
         }
 
-        Self { previous }
+        Self {
+            previous,
+            _lock: lock,
+        }
     }
 }
 
@@ -118,6 +133,48 @@ fn dynamic_mock_requests_send_prefer_for_each_openapi_base_url() {
     dynamic_mock_request_sends_prefer_header::<SClient>("S_BASE_URL");
     dynamic_mock_request_sends_prefer_header::<HClient>("H_BASE_URL");
     dynamic_mock_request_sends_prefer_header::<NClient>("N_BASE_URL");
+}
+
+#[test]
+fn controller_public_methods_keep_the_legacy_path_and_reject_zero_jobs() {
+    const APP_ID: &str = "jp.co.sonymusic.communication.sakurazaka 2.4";
+    let mut server = mockito::Server::new();
+    let _base_url_guard = BaseUrlEnvGuard::set_only("S_BASE_URL", &server.url());
+    let requests = ["/v2/members?", "/v2/groups?", "/v2/tags?"]
+        .iter()
+        .map(|path| {
+            server
+                .mock("GET", *path)
+                .match_header("x-talk-app-id", APP_ID)
+                .match_header("authorization", "Bearer access-token")
+                .match_header("accept", "application/json")
+                .with_header("content-type", "application/json")
+                .with_body("[]")
+                .expect(1)
+                .create()
+        })
+        .collect::<Vec<_>>();
+    let root = tempdir::TempDir::new("colmsg-controller-public-api").unwrap();
+    let config = Config {
+        name: vec![],
+        from: None,
+        kind: vec![Kind::Text],
+        dir: root.path().to_path_buf(),
+        client: SClient::new(),
+        access_token: "access-token".to_owned(),
+    };
+    let controller = Controller::new(&config);
+
+    controller.run().unwrap();
+    for request in requests {
+        request.assert();
+    }
+
+    let (progress, _) = std::sync::mpsc::channel();
+    let error = controller
+        .run_with_progress(0, Service::Sakurazaka, &progress)
+        .unwrap_err();
+    assert_eq!(error.to_string(), "jobs must be greater than zero");
 }
 
 #[test]

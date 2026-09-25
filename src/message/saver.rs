@@ -1,12 +1,18 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::path::PathBuf;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Barrier, Mutex,
+};
+use std::thread;
 
 use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use regex::Regex;
 use walkdir::{DirEntry, WalkDir};
 
+use crate::controller::{MemberStatus, ProgressEvent, ProgressSender, Service};
 use crate::http::timeline::Timeline;
 use crate::{
     errors::*,
@@ -30,6 +36,23 @@ impl<'b, C: SHNClient> Saver<'b, C> {
     }
 
     pub fn save(&self) -> Result<()> {
+        self.save_members_with_limit(4, None)
+    }
+
+    pub fn save_with_progress(
+        &self,
+        jobs: usize,
+        service: Service,
+        progress: &ProgressSender,
+    ) -> Result<()> {
+        self.save_members_with_limit(jobs, Some((service, progress)))
+    }
+
+    fn save_members_with_limit(
+        &self,
+        jobs: usize,
+        progress: Option<(Service, &ProgressSender)>,
+    ) -> Result<()> {
         let all_members =
             http::members::request_all(self.config.client.clone(), &self.config.access_token)?;
         let all_members_map: HashMap<u32, String> =
@@ -37,10 +60,95 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         let groups = http::groups::request(self.config.client.clone(), &self.config.access_token)?;
         let tags = http::tags::request(self.config.client.clone(), &self.config.access_token)?;
 
-        // TODO: 並列処理したい
-        // 購読しているメンバー毎にメッセージを保存するためのループ
-        for member_identifier in self.subscribed_list(&groups, &tags) {
-            self.save_messages(member_identifier, &all_members_map)?;
+        let member_identifiers = self.subscribed_list(&groups, &tags);
+        let total_members = member_identifiers.len();
+
+        if total_members == 0 {
+            return Ok(());
+        }
+
+        let worker_count = jobs.min(total_members);
+        let work_queue = Mutex::new(
+            member_identifiers
+                .into_iter()
+                .enumerate()
+                .collect::<VecDeque<_>>(),
+        );
+        let results = Mutex::new(Vec::with_capacity(total_members));
+        let unauthorized_found = AtomicBool::new(false);
+        let startup_barrier = Barrier::new(worker_count);
+        thread::scope(|scope| {
+            for _ in 0..worker_count {
+                let work_queue = &work_queue;
+                let results = &results;
+                let startup_barrier = &startup_barrier;
+                let all_members_map = &all_members_map;
+                let unauthorized_found = &unauthorized_found;
+                scope.spawn(move || {
+                    let mut next =
+                        next_member(work_queue, progress, total_members, unauthorized_found);
+                    startup_barrier.wait();
+                    while let Some((index, member_identifier)) = next {
+                        let name = member_identifier.name.clone();
+                        let result = self.save_messages(member_identifier, &all_members_map);
+                        if matches!(
+                            &result,
+                            Err(Error::ReqwestError(request_error))
+                                if request_error.status() == Some(reqwest::StatusCode::UNAUTHORIZED)
+                        ) {
+                            unauthorized_found.store(true, Ordering::Release);
+                        }
+                        if let Some((service, progress)) = progress {
+                            let status = if result.is_ok() {
+                                MemberStatus::Done
+                            } else {
+                                MemberStatus::Failed
+                            };
+                            let _ = progress.send(ProgressEvent::Member {
+                                service,
+                                index: index + 1,
+                                total_members,
+                                name: name.clone(),
+                                status,
+                            });
+                        }
+                        results.lock().unwrap().push((name, result));
+                        next = next_member(work_queue, progress, total_members, unauthorized_found);
+                    }
+                });
+            }
+        });
+        let results = results
+            .into_inner()
+            .map_err(|_| Error::Msg("member result queue was poisoned".to_owned()))?;
+
+        let mut unauthorized_error = None;
+        let mut member_errors = Vec::new();
+        for (name, result) in results {
+            if let Err(error) = result {
+                if matches!(
+                    &error,
+                    Error::ReqwestError(request_error)
+                        if request_error.status() == Some(reqwest::StatusCode::UNAUTHORIZED)
+                ) {
+                    if unauthorized_error.is_none() {
+                        unauthorized_error = Some(error);
+                    }
+                } else {
+                    member_errors.push(format!("{}: {}", name, error));
+                }
+            }
+        }
+
+        if let Some(error) = unauthorized_error {
+            return Err(error);
+        }
+        if !member_errors.is_empty() {
+            return Err(format!(
+                "failed to save messages for members:\n{}",
+                member_errors.join("\n")
+            )
+            .into());
         }
 
         Ok(())
@@ -102,8 +210,6 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         member_identifier: MemberIdentifier,
         all_members_map: &HashMap<u32, String>,
     ) -> Result<()> {
-        println!("saving messages of {}...", member_identifier.name);
-
         let member_dir_buf = self.create_member_dir_buf(&member_identifier)?;
         let mut id_dates = self.id_dates(&member_dir_buf);
         let mut fromdate = match self.config.from {
@@ -190,8 +296,6 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             // 保存し終わったらメッセージ取得数をデフォルトに戻す
             count = http::timeline::DEFAULT_COUNT;
         }
-        println!("complete saving messages of {}!", &member_identifier.name);
-
         Ok(())
     }
 
@@ -200,7 +304,6 @@ impl<'b, C: SHNClient> Saver<'b, C> {
         member_dir_buf.push(&member_identifier.gen);
         member_dir_buf.push(&member_identifier.name);
         if !member_dir_buf.is_dir() {
-            println!("create directory: {}", member_dir_buf.display());
             fs::create_dir_all(&member_dir_buf)?
         }
         Ok(member_dir_buf)
@@ -337,6 +440,30 @@ impl<'b, C: SHNClient> Saver<'b, C> {
             .iter()
             .all(|message| &message.updated_at == first_updated_at)
     }
+}
+
+fn next_member(
+    work_queue: &Mutex<VecDeque<(usize, MemberIdentifier)>>,
+    progress: Option<(Service, &ProgressSender)>,
+    total_members: usize,
+    unauthorized_found: &AtomicBool,
+) -> Option<(usize, MemberIdentifier)> {
+    let mut work_queue = work_queue.lock().unwrap();
+    if unauthorized_found.load(Ordering::Acquire) {
+        return None;
+    }
+    work_queue.pop_front().map(|(index, member_identifier)| {
+        if let Some((service, progress)) = progress {
+            let _ = progress.send(ProgressEvent::Member {
+                service,
+                index: index + 1,
+                total_members,
+                name: member_identifier.name.clone(),
+                status: MemberStatus::Saving,
+            });
+        }
+        (index, member_identifier)
+    })
 }
 
 #[derive(Clone, Debug)]
