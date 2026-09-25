@@ -9,7 +9,7 @@
 
   Save messages from the Sakurazaka46 Message, Hinatazaka46 Message, Nogizaka46 Message, Asuka Saito Message, Mai Shiraishi Message, and yodel apps to your computer.
 
-  ![Demo](https://user-images.githubusercontent.com/3148511/158026220-90735546-2401-40ca-a9e6-89d2176ad3b4.gif)
+  ![Demo](doc/demo/colmsg.gif)
 </div>
 
 ## Overview

@@ -9,7 +9,7 @@
 
   「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」「齋藤飛鳥メッセージ」「白石麻衣メッセージ」「yodel」アプリのメッセージをPCに保存します。
 
-  ![demo](https://user-images.githubusercontent.com/3148511/158026220-90735546-2401-40ca-a9e6-89d2176ad3b4.gif)
+  ![demo](doc/demo/colmsg.gif)
 </div>
 
 ## 概要
