@@ -78,6 +78,12 @@ colmsg -k picture -k video
 colmsg -F '2020/01/01 00:00:00'
 ```
 
+デフォルトでは、各サービスにつきメンバー4人分のメッセージを並列で保存します。`--jobs`（`-j`）で並列数を変更できます。
+
+```shell script
+colmsg --jobs 2
+```
+
 オプションは組み合わせて使用することが出来ます。より詳細な説明は以下を実行して確認してください。
 
 ```shell script
@@ -206,12 +212,6 @@ make server/n46
 ```shell script
 S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
-
-## TODO
-
-* [ ] examplesの用意
-* [ ] メッセージ保存処理の並列化
-* [ ] api clientのcrate化
 
 ## ライセンス
 

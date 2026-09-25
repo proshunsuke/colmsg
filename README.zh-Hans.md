@@ -72,6 +72,12 @@ colmsg -k picture -k video
 colmsg -F '2020/01/01 00:00:00'
 ```
 
+默认情况下，每个服务会并行保存4名成员的消息。可使用 `--jobs`（`-j`）更改并行数量。
+
+```fish
+colmsg --jobs 2
+```
+
 选项可以组合使用。运行 `colmsg --help` 查看详细说明。
 
 ## 详细信息
@@ -181,12 +187,6 @@ make server/n46
 ```fish
 env S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
-
-## TODO
-
-* [ ] 提供示例
-* [ ] 并行保存消息
-* [ ] 将 API 客户端拆分为独立 crate
 
 ## 许可证
 

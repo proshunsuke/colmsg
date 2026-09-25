@@ -22,6 +22,18 @@ If not specified, save messages both of groups")
 
         )
         .arg(
+            Arg::with_name("jobs")
+                .long("jobs")
+                .short("j")
+                .default_value("4")
+                .validator(|value| match value.parse::<usize>() {
+                    Ok(jobs) if jobs > 0 => Ok(()),
+                    _ => Err("must be a positive integer".to_owned()),
+                })
+                .help("Concurrent member saves per service (default: 4).")
+                .long_help("Set the number of members to save concurrently within each selected service. Selected services are run concurrently. Defaults to 4."),
+        )
+        .arg(
             Arg::with_name("name")
                 .long("name")
                 .short("n")

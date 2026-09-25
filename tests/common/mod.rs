@@ -193,6 +193,32 @@ impl Scenario {
     }
 
     #[allow(dead_code)]
+    pub fn set_global_members_repeated(&mut self, body: Value, requests: usize) {
+        if let Some(mock) = self.global_members_mock.take() {
+            mock.remove();
+        }
+        let mock = self
+            .server
+            .mock("GET", "/v2/members?")
+            .match_header("x-talk-app-id", self.service.app_id)
+            .match_header(
+                "authorization",
+                format!("Bearer test-access-token-{}", self.service.group).as_str(),
+            )
+            .match_header("accept", "application/json")
+            .with_header("content-type", "application/json")
+            .with_body(body.to_string())
+            .expect(requests)
+            .create();
+        self.global_members_mock = Some(mock);
+    }
+
+    #[allow(dead_code)]
+    pub fn assert_global_members_mock(&self) {
+        self.global_members_mock.as_ref().unwrap().assert();
+    }
+
+    #[allow(dead_code)]
     pub fn fail_global_members(&mut self, status: usize) -> Mock {
         if let Some(mock) = self.global_members_mock.take() {
             mock.remove();
@@ -233,6 +259,37 @@ impl Scenario {
             mock.remove();
         }
         self.group_members_mock = Some(self.get("/v2/groups/1/members", body));
+    }
+
+    #[allow(dead_code)]
+    pub fn set_group_members_with_chunked_body(
+        &mut self,
+        body: impl Fn(&mut dyn std::io::Write) -> std::io::Result<()> + Send + Sync + 'static,
+    ) {
+        if let Some(mock) = self.group_members_mock.take() {
+            mock.remove();
+        }
+        self.group_members_mock = Some(self.group_members_with_chunked_body(1, body));
+    }
+
+    #[allow(dead_code)]
+    pub fn group_members_with_chunked_body(
+        &mut self,
+        group_id: u32,
+        body: impl Fn(&mut dyn std::io::Write) -> std::io::Result<()> + Send + Sync + 'static,
+    ) -> Mock {
+        self.server
+            .mock("GET", format!("/v2/groups/{}/members?", group_id).as_str())
+            .match_header("x-talk-app-id", self.service.app_id)
+            .match_header(
+                "authorization",
+                format!("Bearer test-access-token-{}", self.service.group).as_str(),
+            )
+            .match_header("accept", "application/json")
+            .with_header("content-type", "application/json")
+            .with_chunked_body(body)
+            .expect(1)
+            .create()
     }
 
     pub fn assert_member_mocks(&self) {

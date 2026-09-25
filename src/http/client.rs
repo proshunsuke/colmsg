@@ -151,7 +151,7 @@ impl Client {
     }
 }
 
-pub trait SHNClient: Clone {
+pub trait SHNClient: Clone + Send + Sync {
     fn new() -> Self
     where
         Self: Sized;

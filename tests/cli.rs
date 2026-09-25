@@ -4,7 +4,227 @@ use common::*;
 use serde_json::json;
 
 const STAMP: &str = "20260923010203";
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    io::{Read, Write},
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    thread,
+    time::Duration,
+};
+
+#[cfg(unix)]
+fn run_with_terminal(
+    scenario: &Scenario,
+    extra_args: &[&str],
+    width: u16,
+) -> (std::process::ExitStatus, String) {
+    use std::{
+        ffi::CString,
+        os::{
+            fd::{AsRawFd, FromRawFd},
+            unix::{ffi::OsStrExt, process::ExitStatusExt},
+        },
+        time::Instant,
+    };
+
+    let root = scenario.root.path();
+    let mut args = vec![
+        CString::new("/usr/bin/env").unwrap(),
+        CString::new(format!("HOME={}", root.join("home").display())).unwrap(),
+        CString::new(format!("USERPROFILE={}", root.join("home").display())).unwrap(),
+        CString::new(format!("XDG_CONFIG_HOME={}", root.join("config").display())).unwrap(),
+        CString::new(format!("APPDATA={}", root.join("config").display())).unwrap(),
+        CString::new(format!(
+            "COLMSG_CONFIG_PATH={}",
+            scenario.config_file().display()
+        ))
+        .unwrap(),
+        CString::new(format!(
+            "COLMSG_CONFIG_DIR={}",
+            root.join("config/colmsg").display()
+        ))
+        .unwrap(),
+        CString::new("NO_PROXY=*").unwrap(),
+        CString::new("no_proxy=*").unwrap(),
+        CString::new("HTTP_PROXY=").unwrap(),
+        CString::new("HTTPS_PROXY=").unwrap(),
+        CString::new("ALL_PROXY=").unwrap(),
+        CString::new("http_proxy=").unwrap(),
+        CString::new("https_proxy=").unwrap(),
+        CString::new("all_proxy=").unwrap(),
+        CString::new("TERM=xterm-256color").unwrap(),
+    ];
+    for service in &SERVICES {
+        args.push(CString::new(format!("{}={}", service.base_env, scenario.server.url())).unwrap());
+    }
+    args.push(
+        CString::new(
+            assert_cmd::cargo::cargo_bin("colmsg")
+                .as_os_str()
+                .as_bytes(),
+        )
+        .unwrap(),
+    );
+    args.extend(
+        [scenario.service.token_flag, "test-refresh-token", "--dir"]
+            .iter()
+            .map(|arg| CString::new(*arg).unwrap()),
+    );
+    args.push(CString::new(scenario.output().as_os_str().as_bytes()).unwrap());
+    args.extend(extra_args.iter().map(|arg| CString::new(*arg).unwrap()));
+    let mut argv = args.iter().map(|arg| arg.as_ptr()).collect::<Vec<_>>();
+    argv.push(std::ptr::null());
+    let env_program = CString::new("/usr/bin/env").unwrap();
+    let working_directory = CString::new(root.as_os_str().as_bytes()).unwrap();
+
+    let mut master_fd = -1;
+    let mut window = libc::winsize {
+        ws_row: 24,
+        ws_col: width,
+        ws_xpixel: 0,
+        ws_ypixel: 0,
+    };
+    let child = unsafe {
+        libc::forkpty(
+            &mut master_fd,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            &mut window,
+        )
+    };
+    assert!(child >= 0, "failed to create a pseudo-terminal");
+    if child == 0 {
+        unsafe {
+            if libc::chdir(working_directory.as_ptr()) != 0 {
+                libc::_exit(126);
+            }
+            libc::execv(env_program.as_ptr(), argv.as_ptr());
+            libc::_exit(127);
+        }
+    }
+
+    let mut master = unsafe { fs::File::from_raw_fd(master_fd) };
+    let mut terminal_output = Vec::new();
+    let started = Instant::now();
+    loop {
+        let remaining = Duration::from_secs(15).saturating_sub(started.elapsed());
+        if remaining.is_zero() {
+            unsafe {
+                libc::kill(child, libc::SIGKILL);
+                libc::waitpid(child, std::ptr::null_mut(), 0);
+            }
+            panic!("CLI did not finish while connected to a pseudo-terminal");
+        }
+        let mut descriptor = libc::pollfd {
+            fd: master.as_raw_fd(),
+            events: libc::POLLIN | libc::POLLHUP,
+            revents: 0,
+        };
+        let timeout = remaining.as_millis().min(i32::MAX as u128) as i32;
+        let ready = unsafe { libc::poll(&mut descriptor, 1, timeout) };
+        if ready == 0 {
+            continue;
+        }
+        if ready < 0 {
+            let error = std::io::Error::last_os_error();
+            if error.raw_os_error() == Some(libc::EINTR) {
+                continue;
+            }
+            panic!("failed to poll pseudo-terminal output: {}", error);
+        }
+
+        let mut buffer = [0; 4096];
+        match master.read(&mut buffer) {
+            Ok(0) => break,
+            Ok(length) => terminal_output.extend_from_slice(&buffer[..length]),
+            Err(error) if error.raw_os_error() == Some(libc::EIO) => break,
+            Err(error) if error.raw_os_error() == Some(libc::EINTR) => continue,
+            Err(error) => panic!("failed to read pseudo-terminal output: {}", error),
+        }
+    }
+
+    let mut raw_status = 0;
+    let waited = unsafe { libc::waitpid(child, &mut raw_status, 0) };
+    assert_eq!(waited, child);
+    (
+        std::process::ExitStatus::from_raw(raw_status),
+        String::from_utf8_lossy(&terminal_output).into_owned(),
+    )
+}
+
+#[derive(Default)]
+struct RequestConcurrency {
+    active: AtomicUsize,
+    peak: AtomicUsize,
+}
+
+fn delayed_member_list(
+    concurrency: Arc<RequestConcurrency>,
+) -> impl Fn(&mut dyn Write) -> std::io::Result<()> + Send + Sync + 'static {
+    move |writer| {
+        let active = concurrency.active.fetch_add(1, Ordering::SeqCst) + 1;
+        concurrency.peak.fetch_max(active, Ordering::SeqCst);
+        thread::sleep(Duration::from_millis(300));
+        let result = writer.write_all(b"[]");
+        concurrency.active.fetch_sub(1, Ordering::SeqCst);
+        result
+    }
+}
+
+fn member_parallelism_peak(jobs: Option<usize>, member_count: u32) -> usize {
+    let mut s = Scenario::new(SERVICES[0]);
+    let auth = s.auth();
+    let groups = (1..=member_count)
+        .map(|id| group(id, &format!("メンバー{id}"), true, &[]))
+        .collect::<Vec<_>>();
+    let group_list = s.get("/v2/groups", json!(groups));
+    let tags = s.get("/v2/tags", json!([]));
+    let concurrency = Arc::new(RequestConcurrency::default());
+
+    s.set_group_members_with_chunked_body(delayed_member_list(Arc::clone(&concurrency)));
+    let remaining_group_members = (2..=member_count)
+        .map(|id| {
+            s.group_members_with_chunked_body(id, delayed_member_list(Arc::clone(&concurrency)))
+        })
+        .collect::<Vec<_>>();
+    let past = (1..=member_count)
+        .map(|id| s.past_for(id, vec![]))
+        .collect::<Vec<_>>();
+    let timelines = (1..=member_count)
+        .map(|id| s.timeline_for(id, INITIAL_DATE, 100, vec![]))
+        .collect::<Vec<_>>();
+
+    let mut command = s.download();
+    if let Some(jobs) = jobs {
+        command.args(["--jobs", &jobs.to_string()]);
+    }
+    let output = command.output().unwrap();
+    assert!(
+        output.status.success(),
+        "unexpected stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stderr)
+        .ends_with(&format!("{} members saved.\n", member_count)));
+
+    auth.assert();
+    group_list.assert();
+    tags.assert();
+    s.assert_member_mocks();
+    for mock in remaining_group_members
+        .iter()
+        .chain(&past)
+        .chain(&timelines)
+    {
+        mock.assert();
+    }
+
+    concurrency.peak.load(Ordering::SeqCst)
+}
 
 fn saves_service(service: Service) {
     let mut s = Scenario::new(service);
@@ -115,6 +335,296 @@ fn yodel_messages_are_downloaded_and_saved() {
 }
 
 #[test]
+fn member_saves_use_the_default_and_configured_concurrency() {
+    assert_eq!(member_parallelism_peak(None, 6), 4);
+    assert_eq!(member_parallelism_peak(Some(2), 6), 2);
+    // --jobs is a worker count, not a hard cap of four.
+    assert_eq!(member_parallelism_peak(Some(8), 6), 6);
+}
+
+#[test]
+fn selected_services_run_concurrently() {
+    let mut sakurazaka = Scenario::new(SERVICES[0]);
+    let mut hinatazaka = Scenario::new(SERVICES[1]);
+    let sakurazaka_auth = sakurazaka.auth();
+    let hinatazaka_auth = hinatazaka.auth();
+    let sakurazaka_catalog = sakurazaka.catalog();
+    let hinatazaka_catalog = hinatazaka.catalog();
+    let concurrency = Arc::new(RequestConcurrency::default());
+
+    sakurazaka.set_group_members_with_chunked_body(delayed_member_list(Arc::clone(&concurrency)));
+    hinatazaka.set_group_members_with_chunked_body(delayed_member_list(Arc::clone(&concurrency)));
+    let sakurazaka_past = sakurazaka.past(vec![]);
+    let sakurazaka_timeline = sakurazaka.timeline(INITIAL_DATE, 100, vec![]);
+    let hinatazaka_past = hinatazaka.past(vec![]);
+    let hinatazaka_timeline = hinatazaka.timeline(INITIAL_DATE, 100, vec![]);
+
+    let mut command = sakurazaka.download();
+    command
+        .args([SERVICES[1].token_flag, "test-refresh-token"])
+        .env(SERVICES[1].base_env, hinatazaka.server.url());
+    let output = command.output().unwrap();
+    assert!(
+        output.status.success(),
+        "unexpected stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(concurrency.peak.load(Ordering::SeqCst), 2);
+    assert!(String::from_utf8_lossy(&output.stderr).ends_with("2 members saved.\n"));
+
+    sakurazaka_auth.assert();
+    hinatazaka_auth.assert();
+    for mock in sakurazaka_catalog.iter().chain(&hinatazaka_catalog).chain([
+        &sakurazaka_past,
+        &sakurazaka_timeline,
+        &hinatazaka_past,
+        &hinatazaka_timeline,
+    ]) {
+        mock.assert();
+    }
+    sakurazaka.assert_member_mocks();
+    hinatazaka.assert_member_mocks();
+}
+
+#[test]
+fn member_progress_and_completion_are_logged_with_a_final_count() {
+    let mut s = Scenario::new(SERVICES[0]);
+    let auth = s.auth();
+    let catalog = s.catalog();
+    let past = s.past(vec![]);
+    let timeline = s.timeline(INITIAL_DATE, 100, vec![]);
+
+    let output = s.download().output().unwrap();
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("[Sakurazaka  1/ 1] downloading: テストメンバー"));
+    assert!(stderr.contains("[Sakurazaka  1/ 1] done: テストメンバー"));
+    assert!(stderr.ends_with("1 member saved.\n"));
+
+    auth.assert();
+    past.assert();
+    timeline.assert();
+    for mock in catalog {
+        mock.assert();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn terminal_progress_redraws_member_rows_and_truncates_long_names() {
+    let mut s = Scenario::new(SERVICES[0]);
+    let auth = s.auth();
+    let name = "長い名前".repeat(12);
+    let groups = s.get("/v2/groups", json!([group(1, &name, true, &[])]));
+    let tags = s.get("/v2/tags", json!([]));
+    let past = s.past(vec![]);
+    let timeline = s.timeline(INITIAL_DATE, 100, vec![]);
+
+    let (status, terminal_output) = run_with_terminal(&s, &[], 48);
+    assert!(status.success());
+    auth.assert();
+    groups.assert();
+    tags.assert();
+    s.assert_member_mocks();
+    past.assert();
+    timeline.assert();
+    assert!(
+        terminal_output.contains("Sakurazaka"),
+        "unexpected terminal output: {:?}",
+        terminal_output
+    );
+    assert!(terminal_output.contains("[ 1/ 1]"));
+    assert!(terminal_output.contains("downloading"));
+    assert!(terminal_output.contains("done"));
+    assert!(terminal_output.contains("…"));
+    assert!(terminal_output.contains("1 member saved."));
+}
+
+#[cfg(unix)]
+#[test]
+fn terminal_progress_animates_while_a_member_is_saving() {
+    let mut s = Scenario::new(SERVICES[0]);
+    let auth = s.auth();
+    let catalog = s.catalog();
+    let concurrency = Arc::new(RequestConcurrency::default());
+    s.set_group_members_with_chunked_body(delayed_member_list(concurrency));
+    let past = s.past(vec![]);
+    let timeline = s.timeline(INITIAL_DATE, 100, vec![]);
+
+    let (status, terminal_output) = run_with_terminal(&s, &[], 80);
+    assert!(status.success());
+    assert!(terminal_output.contains("[ 1/ 1] | downloading"));
+    assert!(terminal_output.contains("[ 1/ 1] / downloading"));
+    assert!(terminal_output.contains("done"));
+    assert!(terminal_output.contains("1 member saved."));
+
+    auth.assert();
+    s.assert_member_mocks();
+    past.assert();
+    timeline.assert();
+    for mock in catalog {
+        mock.assert();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn terminal_progress_omits_services_without_matching_members() {
+    let mut s = Scenario::new(SERVICES[0]);
+    let auth = s.auth();
+    let catalog = s.catalog();
+    let (status, terminal_output) = run_with_terminal(&s, &["--name", "not-a-member"], 80);
+    assert!(status.success());
+    assert!(!terminal_output.contains("Sakurazaka"));
+    assert!(terminal_output.contains("No matching members found."));
+
+    auth.assert();
+    s.assert_member_mocks();
+    for mock in catalog {
+        mock.assert();
+    }
+}
+
+#[test]
+fn failed_member_progress_is_reported_in_the_final_count() {
+    let mut s = Scenario::new(SERVICES[0]);
+    let auth = s.auth();
+    let catalog = s.catalog();
+    let past = s.past(vec![]);
+    let page = s.timeline(
+        INITIAL_DATE,
+        100,
+        vec![message(1, "picture", &s.server.url())],
+    );
+    let failure = s
+        .server
+        .mock("GET", "/media/1")
+        .with_status(403)
+        .expect(1)
+        .create();
+
+    let output = s.download().output().unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("[Sakurazaka  1/ 1] failed: テストメンバー"));
+    assert!(stderr.ends_with("1 member failed; 1 service failed.\n"));
+    assert!(files(&s.output()).is_empty());
+
+    auth.assert();
+    past.assert();
+    page.assert();
+    failure.assert();
+    for mock in catalog {
+        mock.assert();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn terminal_progress_marks_a_service_that_failed_to_save_a_member() {
+    let mut s = Scenario::new(SERVICES[0]);
+    let auth = s.auth();
+    let catalog = s.catalog();
+    let past = s.past(vec![]);
+    let page = s.timeline(
+        INITIAL_DATE,
+        100,
+        vec![message(1, "picture", &s.server.url())],
+    );
+    let failure = s
+        .server
+        .mock("GET", "/media/1")
+        .with_status(403)
+        .expect(1)
+        .create();
+
+    let (status, terminal_output) = run_with_terminal(&s, &[], 80);
+    assert_eq!(status.code(), Some(1));
+    assert!(terminal_output.contains("(failed)"));
+    assert!(terminal_output.contains("failed"));
+    assert!(terminal_output.contains("1 member failed; 1 service failed."));
+
+    auth.assert();
+    past.assert();
+    page.assert();
+    failure.assert();
+    for mock in catalog {
+        mock.assert();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn terminal_progress_shows_retrying_after_a_member_request_expires() {
+    let mut s = Scenario::new(SERVICES[0]);
+    let initial_auth = s.auth();
+    let retry_auth = s.auth();
+    s.set_global_members_repeated(json!([]), 2);
+    let groups_body = json!([
+        group(1, "テストメンバー", true, &[]),
+        group(2, "次のメンバー", true, &[])
+    ]);
+    let initial_groups = s.get("/v2/groups", groups_body.clone());
+    let retry_groups = s.get("/v2/groups", groups_body);
+    let initial_tags = s.get("/v2/tags", json!([]));
+    let retry_tags = s.get("/v2/tags", json!([]));
+    let expired_member = s.fail_group_members(401);
+    let retried_member = s.get("/v2/groups/1/members", json!([]));
+    let next_member = s.get("/v2/groups/2/members", json!([]));
+    let past_one = s.past_for(1, vec![]);
+    let past_two = s.past_for(2, vec![]);
+    let timeline_one = s.timeline_for(1, INITIAL_DATE, 100, vec![]);
+    let timeline_two = s.timeline_for(2, INITIAL_DATE, 100, vec![]);
+
+    let (status, terminal_output) = run_with_terminal(&s, &["--jobs", "1"], 80);
+    assert!(status.success());
+    assert!(terminal_output.contains("(retrying)"));
+    assert!(terminal_output.contains("2 members saved."));
+
+    initial_auth.assert();
+    retry_auth.assert();
+    s.assert_global_members_mock();
+    for mock in [
+        &initial_groups,
+        &retry_groups,
+        &initial_tags,
+        &retry_tags,
+        &expired_member,
+        &retried_member,
+        &next_member,
+        &past_one,
+        &past_two,
+        &timeline_one,
+        &timeline_two,
+    ] {
+        mock.assert();
+    }
+}
+
+#[test]
+fn no_matching_members_only_prints_the_result_line() {
+    let mut s = Scenario::new(SERVICES[0]);
+    let auth = s.auth();
+    let catalog = s.catalog();
+
+    let output = s
+        .download()
+        .args(["--name", "not-a-member"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&output.stderr),
+        "No matching members found.\n"
+    );
+
+    auth.assert();
+    for mock in catalog {
+        mock.assert();
+    }
+}
+
+#[test]
 fn only_selected_service_is_contacted() {
     for service in SERVICES {
         let mut s = Scenario::new(service);
@@ -145,6 +655,10 @@ fn help_version_and_directory_options_do_not_contact_the_api() {
         assert!(output.status.success());
         assert!(String::from_utf8_lossy(&output.stdout).contains(expected));
     }
+    let help = s.command().arg("--help").output().unwrap();
+    let help = String::from_utf8_lossy(&help.stdout);
+    assert!(help.contains("--jobs"));
+    assert!(help.contains("default: 4"));
     let output = s.command().arg("--config-dir").output().unwrap();
     assert!(output.status.success());
     assert_eq!(
@@ -166,6 +680,8 @@ fn invalid_cli_arguments_fail_without_network() {
         vec!["--kind", "invalid"],
         vec!["--group", "invalid"],
         vec!["--s_refresh_token"],
+        vec!["--jobs", "0"],
+        vec!["--jobs", "not-a-number"],
     ] {
         Scenario::new(SERVICES[0])
             .command()
@@ -947,13 +1463,20 @@ fn stalled_api_response_times_out_without_retrying_or_saving() {
         })
         .expect(1)
         .create();
+    // If the response did not time out, the command can finish successfully after 31 seconds.
+    let _tags = s.get("/v2/tags", json!([]));
     let output = s
         .download()
         .timeout(std::time::Duration::from_secs(40))
         .output()
         .unwrap();
     assert_eq!(output.status.code(), Some(1));
-    assert!(String::from_utf8_lossy(&output.stderr).contains("timed out"));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Sakurazaka:"),
+        "unexpected stderr: {}",
+        stderr
+    );
     assert!(files(&s.output()).is_empty());
     auth.assert();
     stalled.assert();

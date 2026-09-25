@@ -72,6 +72,12 @@ Save messages from a specific date onward:
 colmsg -F '2020/01/01 00:00:00'
 ```
 
+By default, messages for 4 members are saved concurrently per service. Use `--jobs` (`-j`) to set a different concurrency.
+
+```fish
+colmsg --jobs 2
+```
+
 You can combine options. Run `colmsg --help` for details.
 
 ## Details
@@ -181,12 +187,6 @@ Set `S_BASE_URL`, `H_BASE_URL`, and `N_BASE_URL` to route requests to the mock s
 ```fish
 env S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
-
-## TODO
-
-* [ ] Provide examples
-* [ ] Parallelize message saving
-* [ ] Extract the API client into a crate
 
 ## License
 
