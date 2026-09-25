@@ -1,5 +1,23 @@
 ## Packaging
 
+# v4.0.0
+
+## BREAKING CHANGES
+
+- Rename `--config-dir` to `--config-path`; the option now reports the selected configuration file path (#142).
+- Append the posting member's name to saved message file names, using `unknown` when the name cannot be resolved. Existing files are not renamed (#134).
+- Replace the public `error-chain` `ErrorKind` wrapper with typed `errors::Error` variants. Rust library consumers that match on the old error type must update (#140).
+
+## Changes
+
+- Add `--jobs` (`-j`) to configure concurrent member saves per service (default: 4). Selected services run concurrently, with per-member progress and a final summary (#141).
+- Make `--download-dir` report the effective download directory, including a configured `--dir` (#142).
+
+## Maintenance
+
+- Add public behavior and regression tests, cross-platform CI, and release-binary validation for five targets (#138).
+- Pin the Rust toolchain to 1.98.1 (#139).
+
 # v3.5.0
 
 ## Changes
