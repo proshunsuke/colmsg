@@ -82,16 +82,16 @@ You can combine options. Run `colmsg --help` for details.
   colmsg/
   ├── 日向坂46 一期生
   │   └── 佐々木久美
-  │       └── 1_0_20191231235959.txt
+  │       └── 1_0_20191231235959_佐々木久美.txt
   ├── 乃木坂46
   │   └── 秋元真夏
-  │       └── 2_1_20200101000000.jpg
+  │       └── 2_1_20200101000000_秋元真夏.jpg
   └── 櫻坂46 一期生
       └── 菅井友香
-          ├── 3_2_20200101000001.mp4
-          └── 4_3_20200101000002.mp4
+          ├── 3_2_20200101000001_菅井友香.mp4
+          └── 4_3_20200101000002_菅井友香.mp4
   ```
-* File names use the format `<sequence>_<type>_<date>.<extension>`. Sequence numbers sort messages chronologically. The type number is:
+* File names use the format `<sequence>_<type>_<date>_<poster-name>.<extension>`. The sequence and date prefix remains unchanged, so files continue to sort chronologically. If the poster cannot be identified, the name is `unknown`. The type number is:
   * 0: Text
   * 1: Picture
   * 2: Video
@@ -181,6 +181,8 @@ Set `S_BASE_URL`, `H_BASE_URL`, and `N_BASE_URL` to route requests to the mock s
 ```fish
 env S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
+
+The OpenAPI mock member-list examples include only timeline poster IDs whose names are available. IDs absent from both the group and global member lists are written as `unknown` in filenames.
 
 ## TODO
 
