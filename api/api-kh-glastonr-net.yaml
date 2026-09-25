@@ -1171,6 +1171,36 @@ paths:
                   value:
                     code: unauthorized
                     message: 認証情報エラー
+  /v2/members:
+    get:
+      summary: /v2/members
+      operationId: get-v2-members
+      description: グループ構成に依存しないメンバー一覧。timeline の member_id に一致するメンバーが含まれない場合もある
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/Members.yaml'
+              examples:
+                example:
+                  value:
+                    - id: 12
+                      name: 菅井 友香
+                    - id: 84
+                      name: 藤吉 夏鈴
   '/v2/groups/{id}':
     parameters:
       - schema:
@@ -1331,6 +1361,49 @@ paths:
                   value:
                     code: unauthorized
                     message: 認証情報エラー
+  '/v2/groups/{id}/members':
+    parameters:
+      - schema:
+          type: integer
+          minimum: 0
+        name: id
+        in: path
+        required: true
+    get:
+      summary: '/v2/groups/{id}/members'
+      operationId: get-v2-group-id-members
+      description: グループ別のメンバー一覧の取得。現在のメンバーがいない場合は空配列を返す
+      parameters:
+        - $ref: './components/schemas/RequestHeaderAccept.yaml'
+        - $ref: './components/schemas/RequestHeaderContent-type.yaml'
+        - $ref: '#/components/parameters/RequestHeaderX-Talk-App-ID'
+        - $ref: './components/schemas/RequestHeaderAccept-Language.yaml'
+        - $ref: './components/schemas/RequestHeaderTE.yaml'
+        - $ref: './components/schemas/RequestHeaderUser-Agent.yaml'
+        - $ref: '#/components/parameters/RequestHeaderHost'
+        - $ref: './components/schemas/RequestHeaderConnection.yaml'
+        - $ref: './components/schemas/RequestHeaderAccept-Encoding.yaml'
+        - $ref: './components/schemas/RequestHeaderAuthorization.yaml'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/Members.yaml'
+              examples:
+                group-12:
+                  summary: 菅井 友香のグループ
+                  value:
+                    - id: 12
+                      name: 菅井 友香
+                group-48:
+                  summary: 藤吉 夏鈴のグループ
+                  value:
+                    - id: 84
+                      name: 藤吉 夏鈴
+                empty:
+                  value: []
   '/v2/groups/{id}/timeline':
     parameters:
       - schema:
