@@ -9,7 +9,7 @@
 
   將「櫻坂46 Message」「日向坂46 Message」「乃木坂46 Message」「齋藤飛鳥 Message」「白石麻衣 Message」和 yodel App 中的訊息儲存到電腦。
 
-  ![示範](https://user-images.githubusercontent.com/3148511/158026220-90735546-2401-40ca-a9e6-89d2176ad3b4.gif)
+  ![示範](doc/demo/colmsg.gif)
 </div>
 
 ## 概述

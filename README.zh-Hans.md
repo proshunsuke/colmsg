@@ -9,7 +9,7 @@
 
   将「樱坂46 Message」「日向坂46 Message」「乃木坂46 Message」「斋藤飞鸟 Message」「白石麻衣 Message」和 yodel 应用中的消息保存到电脑。
 
-  ![演示](https://user-images.githubusercontent.com/3148511/158026220-90735546-2401-40ca-a9e6-89d2176ad3b4.gif)
+  ![演示](doc/demo/colmsg.gif)
 </div>
 
 ## 概述
