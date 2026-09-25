@@ -103,12 +103,12 @@ colmsg --jobs 2
   * 2：视频
   * 3：语音
   * 4：链接
-* 运行 `colmsg --download-dir` 可查看当前平台的默认下载目录。
+* 运行 `colmsg --download-dir` 可查看根据配置文件和命令行选项确定的下载目录。
 * 已保存的消息不会被覆盖。
 
 ## 配置文件
 
-可以在配置文件中预先设置默认选项。运行 `colmsg --config-dir` 查看默认目录。也可以通过 `COLMSG_CONFIG_PATH` 指定配置文件路径：
+可以在配置文件中预先设置默认选项。运行 `colmsg --config-path` 可查看当前使用的配置文件路径。也可以通过 `COLMSG_CONFIG_PATH` 指定配置文件路径：
 
 ```fish
 set -gx COLMSG_CONFIG_PATH /path/to/colmsg.conf

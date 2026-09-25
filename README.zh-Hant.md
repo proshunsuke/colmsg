@@ -103,12 +103,12 @@ colmsg --jobs 2
   * 2：影片
   * 3：語音
   * 4：連結
-* 執行 `colmsg --download-dir` 可查看目前平台的預設下載目錄。
+* 執行 `colmsg --download-dir` 可查看依據設定檔和命令列選項決定的下載目錄。
 * 已儲存的訊息不會被覆寫。
 
 ## 設定檔
 
-可以在設定檔中預先設定預設選項。執行 `colmsg --config-dir` 查看預設目錄。也可以透過 `COLMSG_CONFIG_PATH` 指定設定檔路徑：
+可以在設定檔中預先設定預設選項。執行 `colmsg --config-path` 可查看目前使用的設定檔路徑。也可以透過 `COLMSG_CONFIG_PATH` 指定設定檔路徑：
 
 ```fish
 set -gx COLMSG_CONFIG_PATH /path/to/colmsg.conf

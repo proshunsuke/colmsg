@@ -25,6 +25,13 @@ impl App {
         })
     }
 
+    pub fn download_dir(&self) -> PathBuf {
+        self.matches
+            .value_of("dir")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PROJECT_DIRS.download_dir().to_path_buf())
+    }
+
     fn matches() -> Result<ArgMatches<'static>> {
         let mut cli_args = wild::args_os();
         let mut args = get_args_from_config_file()?;
@@ -109,11 +116,7 @@ impl App {
             ],
         };
 
-        let dir = self
-            .matches
-            .value_of("dir")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| PROJECT_DIRS.download_dir().to_path_buf());
+        let dir = self.download_dir();
         if !dir.is_dir() {
             if let Err(e) = fs::create_dir_all(&dir) {
                 return Err(e.into());

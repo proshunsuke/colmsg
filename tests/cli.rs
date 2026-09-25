@@ -659,11 +659,11 @@ fn help_version_and_directory_options_do_not_contact_the_api() {
     let help = String::from_utf8_lossy(&help.stdout);
     assert!(help.contains("--jobs"));
     assert!(help.contains("default: 4"));
-    let output = s.command().arg("--config-dir").output().unwrap();
+    let output = s.command().arg("--config-path").output().unwrap();
     assert!(output.status.success());
     assert_eq!(
         PathBuf::from(String::from_utf8(output.stdout).unwrap().trim()),
-        s.root.path().join("config/colmsg")
+        s.config_file()
     );
     let output = s.command().arg("--download-dir").output().unwrap();
     assert!(output.status.success());
@@ -1369,20 +1369,21 @@ fn token_cache_is_created_when_configuration_directory_is_missing() {
 
 #[cfg(target_os = "macos")]
 #[test]
-fn config_directory_falls_back_to_isolated_home_when_xdg_is_unset_or_relative() {
+fn config_path_falls_back_to_isolated_home_when_xdg_is_unset_or_relative() {
     let s = Scenario::new(SERVICES[0]);
     for relative in [false, true].iter() {
         let mut command = s.command();
         command.env_remove("COLMSG_CONFIG_DIR");
+        command.env_remove("COLMSG_CONFIG_PATH");
         command.env_remove("XDG_CONFIG_HOME");
         if *relative {
             command.env("XDG_CONFIG_HOME", "relative/config");
         }
-        let output = command.arg("--config-dir").output().unwrap();
+        let output = command.arg("--config-path").output().unwrap();
         assert!(output.status.success());
         assert_eq!(
             PathBuf::from(String::from_utf8(output.stdout).unwrap().trim()),
-            s.root.path().join("home/.config/colmsg")
+            s.root.path().join("home/.config/colmsg/config")
         );
     }
 }

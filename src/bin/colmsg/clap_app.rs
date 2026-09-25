@@ -127,14 +127,15 @@ If you execute command with this option, all saved messages are deleted from you
 Please use be careful."),
         )
         .arg(
-            Arg::with_name("config-dir")
-                .long("config-dir")
-                .help("Show colmsg's default configuration directory.")
+            Arg::with_name("config-path")
+                .long("config-path")
+                .help("Show the path to the configuration file used by colmsg.")
         )
         .arg(
             Arg::with_name("download-dir")
                 .long("download-dir")
-                .help("Show colmsg's default download directory.")
+                .help("Show the effective download directory.")
+                .long_help("Show the effective download directory, using '--dir' from the configuration file or command line when set.")
         )
         .help_message("Print this help message.")
         .version_message("Show version information.")
