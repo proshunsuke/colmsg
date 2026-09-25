@@ -29,12 +29,12 @@ fn saves_service(service: Service) {
     assert_eq!(
         files(&s.output()),
         vec![
-            "一期生/テストメンバー/1_0_20260923010203.txt",
-            "一期生/テストメンバー/2_1_20260923010203.jpg",
-            "一期生/テストメンバー/2_1_20260923010203.txt",
-            "一期生/テストメンバー/3_2_20260923010203.mp4",
-            "一期生/テストメンバー/4_3_20260923010203.mp4",
-            "一期生/テストメンバー/5_4_20260923010203.txt",
+            "一期生/テストメンバー/1_0_20260923010203_unknown.txt",
+            "一期生/テストメンバー/2_1_20260923010203_unknown.jpg",
+            "一期生/テストメンバー/2_1_20260923010203_unknown.txt",
+            "一期生/テストメンバー/3_2_20260923010203_unknown.mp4",
+            "一期生/テストメンバー/4_3_20260923010203_unknown.mp4",
+            "一期生/テストメンバー/5_4_20260923010203_unknown.txt",
         ]
         .into_iter()
         .map(PathBuf::from)
@@ -42,14 +42,18 @@ fn saves_service(service: Service) {
     );
     for name in &["1_0", "2_1", "5_4"] {
         assert_eq!(
-            fs::read_to_string(s.member_dir().join(format!("{}_{}.txt", name, STAMP))).unwrap(),
+            fs::read_to_string(
+                s.member_dir()
+                    .join(format!("{}_{}_unknown.txt", name, STAMP)),
+            )
+            .unwrap(),
             format!("{}\n", TEXT)
         );
     }
     for name in &[
-        "2_1_20260923010203.jpg",
-        "3_2_20260923010203.mp4",
-        "4_3_20260923010203.mp4",
+        "2_1_20260923010203_unknown.jpg",
+        "3_2_20260923010203_unknown.mp4",
+        "4_3_20260923010203_unknown.mp4",
     ] {
         assert_eq!(fs::read(s.member_dir().join(name)).unwrap(), MEDIA);
     }
@@ -242,6 +246,8 @@ fn names_subscriptions_and_optional_tag_metadata_are_respected() {
             tag("generation", "一期生", json!(null))
         ]),
     );
+    s.set_global_members(json!([]));
+    s.set_group_members(json!([]));
     let past = s.past(vec![]);
     let page = s.timeline(INITIAL_DATE, 100, vec![message(1, "text", &s.server.url())]);
     s.download()
@@ -250,11 +256,14 @@ fn names_subscriptions_and_optional_tag_metadata_are_respected() {
         .success();
     assert_eq!(
         files(&s.output()),
-        vec![PathBuf::from("テストメンバー/1_0_20260923010203.txt")]
+        vec![PathBuf::from(
+            "テストメンバー/1_0_20260923010203_unknown.txt"
+        )]
     );
     auth.assert();
     groups.assert();
     tags.assert();
+    s.assert_member_mocks();
     past.assert();
     page.assert();
 }
@@ -340,7 +349,7 @@ fn literal_escaped_line_breaks_are_normalized() {
     let page = s.timeline(INITIAL_DATE, 100, vec![m]);
     s.download().assert().success();
     assert_eq!(
-        fs::read_to_string(s.member_dir().join("1_0_20260923010203.txt")).unwrap(),
+        fs::read_to_string(s.member_dir().join("1_0_20260923010203_unknown.txt")).unwrap(),
         "a\nb\n"
     );
     auth.assert();
@@ -556,7 +565,7 @@ fn expired_cached_token_is_refreshed_for_each_service() {
         fs::write(s.token_file(), "expired").unwrap();
         let expired = s
             .server
-            .mock("GET", "/v2/groups?")
+            .mock("GET", "/v2/members?")
             .match_header("authorization", "Bearer expired")
             .with_status(401)
             .expect(1)
@@ -605,7 +614,7 @@ fn filesystem_errors_are_reported() {
     }
 
     let mut s = Scenario::new(SERVICES[0]);
-    fs::create_dir_all(s.member_dir().join("1_0_20260923010203.txt")).unwrap();
+    fs::create_dir_all(s.member_dir().join("1_0_20260923010203_unknown.txt")).unwrap();
     let auth = s.auth();
     let catalog = s.catalog();
     let past = s.past(vec![]);
@@ -623,7 +632,11 @@ fn filesystem_errors_are_reported() {
 fn invalid_date_in_existing_filename_is_reported() {
     let mut s = Scenario::new(SERVICES[0]);
     fs::create_dir_all(s.member_dir()).unwrap();
-    fs::write(s.member_dir().join("1_0_20261399010203.txt"), "keep").unwrap();
+    fs::write(
+        s.member_dir().join("1_0_20261399010203_unknown.txt"),
+        "keep",
+    )
+    .unwrap();
     let auth = s.auth();
     let catalog = s.catalog();
     s.download().assert().code(1);
@@ -636,17 +649,22 @@ fn invalid_date_in_existing_filename_is_reported() {
 #[test]
 fn failures_at_each_api_stage_stop_without_saving() {
     for path in &[
+        "/v2/members?",
         "/v2/tags?",
+        "/v2/groups/1/members?",
         "/v2/groups/1/past_messages?order=asc",
         "/v2/groups/1/timeline",
     ] {
         let mut s = Scenario::new(SERVICES[0]);
         let auth = s.auth();
-        let mut mocks = vec![s.get(
-            "/v2/groups",
-            json!([group(1, "テスト メンバー", true, &["generation"])]),
-        )];
-        if *path != "/v2/tags?" {
+        let mut mocks = vec![];
+        if *path != "/v2/members?" {
+            mocks.push(s.get(
+                "/v2/groups",
+                json!([group(1, "テスト メンバー", true, &["generation"])]),
+            ));
+        }
+        if *path != "/v2/tags?" && *path != "/v2/members?" {
             mocks.push(s.get(
                 "/v2/tags",
                 json!([tag("generation", "一期生", json!(null))]),
@@ -655,13 +673,17 @@ fn failures_at_each_api_stage_stop_without_saving() {
         if *path == "/v2/groups/1/timeline" {
             mocks.push(s.past(vec![]));
         }
-        let failure = s
-            .server
-            .mock("GET", path.split('?').next().unwrap())
-            .match_query(mockito::Matcher::Any)
-            .with_status(503)
-            .expect(1)
-            .create();
+        let failure = match *path {
+            "/v2/members?" => s.fail_global_members(503),
+            "/v2/groups/1/members?" => s.fail_group_members(503),
+            _ => s
+                .server
+                .mock("GET", path.split('?').next().unwrap())
+                .match_query(mockito::Matcher::Any)
+                .with_status(503)
+                .expect(1)
+                .create(),
+        };
         s.download().assert().code(1);
         assert!(files(&s.output()).is_empty());
         auth.assert();
@@ -683,7 +705,7 @@ fn response_can_add_fields_and_omit_optional_fields() {
     let page = s.timeline(INITIAL_DATE, 100, vec![m]);
     s.download().assert().success();
     assert_eq!(
-        fs::read_to_string(s.member_dir().join("1_0_20260923010203.txt")).unwrap(),
+        fs::read_to_string(s.member_dir().join("1_0_20260923010203_unknown.txt")).unwrap(),
         format!("{}\n", TEXT)
     );
     auth.assert();
@@ -721,7 +743,7 @@ fn media_download_follows_redirects_without_api_authorization() {
         .create();
     s.download().assert().success();
     assert_eq!(
-        fs::read(s.member_dir().join("1_1_20260923010203.jpg")).unwrap(),
+        fs::read(s.member_dir().join("1_1_20260923010203_unknown.jpg")).unwrap(),
         MEDIA
     );
     auth.assert();
@@ -764,7 +786,7 @@ fn empty_text_is_preserved_as_a_message() {
     let page = s.timeline(INITIAL_DATE, 100, vec![m]);
     s.download().assert().success();
     assert_eq!(
-        fs::read(s.member_dir().join("1_0_20260923010203.txt")).unwrap(),
+        fs::read(s.member_dir().join("1_0_20260923010203_unknown.txt")).unwrap(),
         b"\n"
     );
     auth.assert();
@@ -862,7 +884,7 @@ fn service_works_with_only_its_own_api_override() {
     }
     command.assert().success();
     assert_eq!(
-        fs::read_to_string(s.member_dir().join("1_0_20260923010203.txt")).unwrap(),
+        fs::read_to_string(s.member_dir().join("1_0_20260923010203_unknown.txt")).unwrap(),
         format!("{}\n", TEXT)
     );
     auth.assert();

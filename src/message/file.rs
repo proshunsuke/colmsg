@@ -125,12 +125,7 @@ pub trait SaveToFile {
     fn save(&self) -> Result<()>;
 }
 
-pub fn file_name<'a>(
-    seq_id: &u32,
-    media: &u32,
-    date: &str,
-    poster_name: &str,
-) -> Result<String> {
+pub fn file_name<'a>(seq_id: &u32, media: &u32, date: &str, poster_name: &str) -> Result<String> {
     let parse_result = NaiveDateTime::parse_from_str(date, "%Y-%m-%dT%H:%M:%SZ");
     if let Err(_e) = parse_result {
         return Err(format!("Parse error. date: {}", date).into());
