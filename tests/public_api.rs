@@ -212,3 +212,56 @@ fn public_error_handler_handles_broken_pipe_and_reports_other_errors() {
         }
     }
 }
+
+fn web_endpoint_preserves_browser_headers<C: SHNClient>() {
+    let mut server = mockito::Server::new();
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert("x-talk-app-id", "browser-app".parse().unwrap());
+    headers.insert("x-talk-app-platform", "web".parse().unwrap());
+    headers.insert("user-agent", "browser-agent".parse().unwrap());
+    headers.insert("accept", "application/json".parse().unwrap());
+    headers.insert("content-type", "application/json".parse().unwrap());
+    let client = C::new().with_web_endpoint(server.url(), headers);
+    let get = server
+        .mock("GET", "/v2/probe?")
+        .match_header("x-talk-app-id", "browser-app")
+        .match_header("x-talk-app-platform", "web")
+        .match_header("user-agent", "browser-agent")
+        .match_header("authorization", "Bearer browser-access-token")
+        .match_header("cookie", mockito::Matcher::Missing)
+        .with_header("content-type", "application/json")
+        .with_body("{\"ok\":true}")
+        .expect(1)
+        .create();
+    let post = server
+        .mock("POST", "/v2/probe")
+        .match_header("x-talk-app-id", "browser-app")
+        .match_header("x-talk-app-platform", "web")
+        .match_header("user-agent", "browser-agent")
+        .match_header("authorization", mockito::Matcher::Missing)
+        .match_body(mockito::Matcher::Json(json!({"value":42})))
+        .with_header("content-type", "application/json")
+        .with_body("{\"ok\":true}")
+        .expect(1)
+        .create();
+    let response: Value = client
+        .get_request("/v2/probe", "browser-access-token", None, false)
+        .unwrap();
+    assert_eq!(response, json!({"ok":true}));
+    let response: Value = client
+        .post_request("/v2/probe", &json!({"value":42}), false)
+        .unwrap();
+    assert_eq!(response, json!({"ok":true}));
+    get.assert();
+    post.assert();
+}
+
+#[test]
+fn all_public_clients_use_the_web_endpoint_for_get_and_post() {
+    web_endpoint_preserves_browser_headers::<SClient>();
+    web_endpoint_preserves_browser_headers::<HClient>();
+    web_endpoint_preserves_browser_headers::<NClient>();
+    web_endpoint_preserves_browser_headers::<AClient>();
+    web_endpoint_preserves_browser_headers::<MClient>();
+    web_endpoint_preserves_browser_headers::<YClient>();
+}

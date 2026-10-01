@@ -1,8 +1,5 @@
 日本語 | [English](README.en.md) | [简体中文](README.zh-Hans.md) | [繁體中文](README.zh-Hant.md)
 
-> [!WARNING]
-> 現在iOSで`refresh_token`が取得できない問題が発生しています。これは`colmsg`の問題ではなくメッセージアプリ側のアップデートによる影響です。現状この問題に対する完全な解決策はありません。Androidの場合は引き続き[こちら](https://github.com/proshunsuke/colmsg/blob/main/doc/how_to_get_refresh_token.md#android%E3%82%A2%E3%83%97%E3%83%AA%E3%81%AE%E5%A0%B4%E5%90%88)を参考にしてください。
-
 <div align="center">
   <h1><strong>colmsg</strong></h1>
   <img src="https://user-images.githubusercontent.com/3148511/158018437-09822a33-8767-4e03-ba90-e0f69594c493.jpeg" width="32px" alt="櫻坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018441-dd7cb9eb-bf31-4938-830d-1ef293a2afba.jpg" width="32px" alt="日向坂46メッセージのロゴ"><img src="https://user-images.githubusercontent.com/3148511/158018442-ae54e926-760d-4b47-b0a0-7255485e1f28.jpg" width="32px" alt="乃木坂46メッセージのロゴ">
@@ -12,81 +9,76 @@
   ![demo](doc/demo/colmsg.gif)
 </div>
 
-## 概要
+## 使い始める
 
-`colmsg` のインストール方法は[こちら](#インストール)を参照してください。
+[こちら](#インストール)を参考に `colmsg` をインストールしてください。  
+Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
 
-**まず初めに**refresh_tokenを取得してください。取得方法は[こちら](doc/how_to_get_refresh_token.md)を参照してください。
+アプリ上でログインアカウント設定を済ませておいてください。  
+サービスごとに一度ログインを行ってください。
 
-取得出来たら以下を実行してください。  
-`<s_refresh_token>` , `<h_refresh_token>` , `<n_refresh_token>` , `<a_refresh_token>` , `<m_refresh_token>` , `<y_refresh_token>` に「櫻坂46メッセージ」「日向坂46メッセージ」「乃木坂46メッセージ」「齋藤飛鳥メッセージ」「白石麻衣メッセージ」「yodel」それぞれで取得してきたrefresh_tokenを入れてください。  
-※ 指定するのは購読しているアプリのみで問題ありません。  
-
-購読しているメンバー全員の全期間のメッセージが保存されます。  
-
-```shell script
-colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token> --n_refresh_token <n_refresh_token> --a_refresh_token <a_refresh_token> --m_refresh_token <m_refresh_token> --y_refresh_token <y_refresh_token>
+```sh
+colmsg login sakurazaka
 ```
 
-Windowsの場合は実行ファイル名を `colmsg.exe` に読み替えてください。
+指定可能なサービス名は `sakurazaka`、`hinatazaka`、`nogizaka`、`asukasaito`、`maishiraishi`、`yodel` です。  
+購読しているメンバー全員の全期間のメッセージを保存します。
+
+```sh
+colmsg
+```
+
+ログイン成功後の認証情報は設定ディレクトリの `auth/<service>.json` に保存されます。  
+保存された認証方式・アカウント・期限を確認します。
+
+```sh
+colmsg auth status
+```
 
 ## 特徴
 
 * ✅ 端末のroot化の必要がありません
-* ✅ Android, iosアプリどちらにも対応しています
+* ✅ colmsgだけで完結します
 * ✅ Windows, macos, Linuxで実行できます
 * ✅ 様々な保存方法が選べます
-* ✅ 以下のアプリのバージョンに対応しています
-  * 「櫻坂46メッセージ」: バージョン1.12.01.169
-  * 「日向坂46メッセージ」: バージョン2.13.01.169
-  * 「乃木坂46メッセージ」: バージョン1.8.01.169
-  * 「齋藤飛鳥メッセージ」: バージョン1.1.01.169
-  * 「白石麻衣メッセージ」: バージョン3.4.3.426
-  * 「yodel」: バージョン4.1.1.455
 
 ## 使い方
-
-概要で基本的な使い方を説明しました。  
-しかし、refresh_tokenは機微情報なため、ターミナル上で直接入力するのはあまり良くないでしょう。  
-そこで、configファイルにデフォルトのオプションを設定しておくことをおすすめします。  
-configファイルについては[こちら](#configファイル)を参照してください。  
-以降はconfigファイルでrefresh_tokenが設定されているものとします。
 
 `colmsg` にはいくつかのオプションがあり、様々な保存方法を選べます。
 
 特定のメンバーのメッセージを保存したい場合
 
-```shell script
+```sh
 colmsg -n 菅井友香 -n 佐々木久美
 ```
 
 特定のグループのメッセージを保存したい場合
 
-```shell script
+```sh
 colmsg -g sakurazaka
 ```
 
 特定の種類のメッセージを保存したい場合
 
-```shell script
+```sh
 colmsg -k picture -k video
 ```
 
 特定の日時以降のメッセージを保存したい場合
 
-```shell script
+```sh
 colmsg -F '2020/01/01 00:00:00'
 ```
 
 デフォルトでは、各サービスにつきメンバー4人分のメッセージを並列で保存します。`--jobs`（`-j`）で並列数を変更できます。
 
-```shell script
+```sh
 colmsg --jobs 2
 ```
 
 オプションは組み合わせて使用することが出来ます。より詳細な説明は以下を実行して確認してください。
 
-```shell script
+```sh
 colmsg --help
 ```
 
@@ -94,7 +86,7 @@ colmsg --help
 
 * 既にいくつかメッセージが保存されている場合にコマンドを実行すると、最後に保存したメッセージ以降のメッセージを取得して保存します  
 * 保存されるメッセージは次のディレクトリ構造で保存されます
-  * ```shell script
+  * ```text
     colmsg/
     ├── 日向坂46 一期生
     │   └── 佐々木久美
@@ -117,7 +109,7 @@ colmsg --help
     * 3: ボイス
     * 4: リンク
 * 設定ファイルとコマンドラインの指定を反映した保存先は、以下を実行すると確認できます
-  * ```shell script
+  * ```sh
     colmsg --download-dir
     ```
 * 既に保存済のメッセージは上書き保存されません
@@ -127,22 +119,41 @@ colmsg --help
 `colmsg` は設定ファイルで予めオプションを指定することが出来ます。  
 現在使用する設定ファイルのパスは以下を実行すると確認できます。
 
-```shell script
+```sh
 colmsg --config-path
 ```
 また、環境変数 `COLMSG_CONFIG_PATH` に設定ファイルの場所を明記することもできます。
 
-```shell script
+```sh
 export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 ```
 
 ### フォーマット
 
-この設定ファイルはコマンドライン引数の単純なリストです。`colmsg --help` を利用すると、利用可能なオプションとその値を閲覧することが出来ます。さらに、`#` でコメント文を加えることができます。
+この設定ファイルはコマンドライン引数の単純なリストです。`colmsg --help` で利用可能なオプションと値を確認できます。`#` でコメントを加えることができます。
 
-設定ファイルの例:
+設定ファイルの例：
 
-```bash
+```text
+# 櫻坂のメッセージだけを対象とする
+-g sakurazaka
+
+# メディアファイルだけ保存
+-k picture -k video -k voice
+
+# サービスごとの同時保存数を6にする
+--jobs 6
+```
+
+## 従来のrefresh_token認証（非推奨）
+
+`refresh_token` 方式は **非推奨** です。新規利用・移行には `colmsg login <service>` によるCookie認証を使用してください。
+
+従来方式を使用する場合のみ、[旧取得手順](doc/how_to_get_refresh_token.md)を参照し、各サービスのトークンを設定ファイルに指定します。
+
+従来方式の設定例（非推奨・必要なサービスのみ指定）：
+
+```text
 # s_refresh_tokenを指定
 --s_refresh_token s_refresh_token
 
@@ -160,9 +171,6 @@ export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 
 # y_refresh_tokenを指定
 --y_refresh_token y_refresh_token
-
-# メディアファイルだけ保存するように設定
--k picture -k video -k voice
 ```
 
 ## インストール
@@ -178,7 +186,7 @@ Windows用のビルド済実行ファイルをzipに圧縮して[リリースペ
 
 Homebrewでインストールすることが出来ます。
 
-```shell script
+```sh
 brew tap proshunsuke/colmsg
 brew install colmsg
 ```
@@ -187,7 +195,7 @@ brew install colmsg
 
 [AUR](https://aur.archlinux.org/packages/colmsg/)からインストールできます。
 
-```bash
+```sh
 yay -S colmsg
 ```
 
@@ -202,14 +210,14 @@ Rustのフォーマットは `make fmt` で自動修正でき、`make fmt-check`
 
 `colmsg` は外部APIを叩きます。開発時はOpenApiを利用したモックサーバーを建てることが出来ます。
 
-```shell
+```sh
 make server/kh
 make server/n46
 ```
 
 環境変数 `S_BASE_URL` , `H_BASE_URL` , `N_BASE_URL` を指定することでモックサーバーへリクエストすることが出来ます。
 
-```shell script
+```sh
 S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
 

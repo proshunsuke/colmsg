@@ -22,6 +22,7 @@ struct Client {
     client: reqwest_client,
     base_url: String,
     x_talk_app_id: String,
+    web_headers: Option<HeaderMap>,
 }
 
 impl Client {
@@ -30,6 +31,7 @@ impl Client {
             client: reqwest_client::new(),
             base_url,
             x_talk_app_id,
+            web_headers: None,
         }
     }
 
@@ -104,6 +106,9 @@ impl Client {
     }
 
     fn insert_headers(&self, mut header: HeaderMap) -> Result<HeaderMap> {
+        if let Some(headers) = &self.web_headers {
+            return Ok(headers.clone());
+        }
         header.insert(ACCEPT, "application/json".parse()?);
         header.insert(CONTENT_TYPE, "application/json".parse()?);
         header.insert("X-Talk-App-ID", (&self.x_talk_app_id).parse()?);
@@ -152,6 +157,10 @@ impl Client {
 }
 
 pub trait SHNClient: Clone + Send + Sync {
+    fn with_web_endpoint(self, _base_url: String, _headers: HeaderMap) -> Self {
+        self
+    }
+
     fn new() -> Self
     where
         Self: Sized;
@@ -178,6 +187,12 @@ pub struct SClient {
 }
 
 impl SHNClient for SClient {
+    fn with_web_endpoint(mut self, base_url: String, headers: HeaderMap) -> Self {
+        self.client.base_url = base_url;
+        self.client.web_headers = Some(headers);
+        self
+    }
+
     fn new() -> SClient {
         SClient {
             client: Client::new(
@@ -222,6 +237,12 @@ pub struct HClient {
 }
 
 impl SHNClient for HClient {
+    fn with_web_endpoint(mut self, base_url: String, headers: HeaderMap) -> Self {
+        self.client.base_url = base_url;
+        self.client.web_headers = Some(headers);
+        self
+    }
+
     fn new() -> HClient {
         HClient {
             client: Client::new(
@@ -266,6 +287,12 @@ pub struct NClient {
 }
 
 impl SHNClient for NClient {
+    fn with_web_endpoint(mut self, base_url: String, headers: HeaderMap) -> Self {
+        self.client.base_url = base_url;
+        self.client.web_headers = Some(headers);
+        self
+    }
+
     fn new() -> NClient {
         NClient {
             client: Client::new(
@@ -310,6 +337,12 @@ pub struct AClient {
 }
 
 impl SHNClient for AClient {
+    fn with_web_endpoint(mut self, base_url: String, headers: HeaderMap) -> Self {
+        self.client.base_url = base_url;
+        self.client.web_headers = Some(headers);
+        self
+    }
+
     fn new() -> AClient {
         AClient {
             client: Client::new(
@@ -354,6 +387,12 @@ pub struct MClient {
 }
 
 impl SHNClient for MClient {
+    fn with_web_endpoint(mut self, base_url: String, headers: HeaderMap) -> Self {
+        self.client.base_url = base_url;
+        self.client.web_headers = Some(headers);
+        self
+    }
+
     fn new() -> MClient {
         MClient {
             client: Client::new(
@@ -398,6 +437,12 @@ pub struct YClient {
 }
 
 impl SHNClient for YClient {
+    fn with_web_endpoint(mut self, base_url: String, headers: HeaderMap) -> Self {
+        self.client.base_url = base_url;
+        self.client.web_headers = Some(headers);
+        self
+    }
+
     fn new() -> YClient {
         YClient {
             client: Client::new(
@@ -434,4 +479,21 @@ fn y_base_url() -> String {
     env::var("Y_BASE_URL")
         .ok()
         .unwrap_or_else(|| "https://api.ydl.glastonr.net".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SHNClient;
+    use crate::http::test_support::Client;
+    use serde_json::{json, Value};
+
+    #[test]
+    fn custom_clients_can_use_the_default_web_endpoint_behavior() {
+        let client = Client::new(json!({"ok":true})).with_web_endpoint(
+            "https://example.invalid".into(),
+            reqwest::header::HeaderMap::new(),
+        );
+        let response: Value = client.get_request("/probe", "token", None, false).unwrap();
+        assert_eq!(response, json!({"ok":true}));
+    }
 }
