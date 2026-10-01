@@ -2,6 +2,7 @@
 extern crate clap;
 
 mod app;
+mod auth;
 mod clap_app;
 mod config;
 mod progress;
@@ -40,23 +41,26 @@ fn run_controller<C: SHNClient>(
 fn run_with_401_retry<F>(
     service: Service,
     token_file: &str,
+    browser_auth: bool,
     progress: &ProgressSender,
     mut run: F,
 ) -> Result<()>
 where
-    F: FnMut() -> Result<()>,
+    F: FnMut(bool) -> Result<()>,
 {
     let _ = progress.send(ProgressEvent::ServiceStarted { service });
-    let result = run();
+    let result = run(false);
     if matches!(
         &result,
         Err(Error::ReqwestError(request_error))
             if request_error.status() == Some(StatusCode::UNAUTHORIZED)
     ) {
         let _ = progress.send(ProgressEvent::ServiceRetrying { service });
-        delete_access_token_file(token_file)?;
+        if !browser_auth {
+            delete_access_token_file(token_file)?;
+        }
         let _ = progress.send(ProgressEvent::ServiceStarted { service });
-        return run();
+        return run(true);
     }
     result
 }
@@ -64,67 +68,109 @@ where
 fn run_sakurazaka(app: &App, jobs: usize, progress: &ProgressSender) -> Result<()> {
     let refresh_token = match app.matches.value_of("s_refresh_token") {
         Some(token) => token,
-        None => return Ok(()),
+        None if app.browser_auth(Service::Sakurazaka) => "",
+        None => return Err("No authentication configured for sakurazaka. Use colmsg login sakurazaka (recommended Cookie authentication); deprecated refresh-token mode requires --s_refresh_token.".into()),
     };
-    run_with_401_retry(Service::Sakurazaka, "s_access_token", progress, || {
-        let config: Config<SClient> = app.sakurazaka_config(refresh_token)?;
-        run_controller(&config, jobs, Service::Sakurazaka, progress)
-    })
+    run_with_401_retry(
+        Service::Sakurazaka,
+        "s_access_token",
+        app.browser_auth(Service::Sakurazaka),
+        progress,
+        |force| {
+            let config: Config<SClient> = app.sakurazaka_config(refresh_token, force)?;
+            run_controller(&config, jobs, Service::Sakurazaka, progress)
+        },
+    )
 }
 
 fn run_hinatazaka(app: &App, jobs: usize, progress: &ProgressSender) -> Result<()> {
     let refresh_token = match app.matches.value_of("h_refresh_token") {
         Some(token) => token,
-        None => return Ok(()),
+        None if app.browser_auth(Service::Hinatazaka) => "",
+        None => return Err("No authentication configured for hinatazaka. Use colmsg login hinatazaka (recommended Cookie authentication); deprecated refresh-token mode requires --h_refresh_token.".into()),
     };
-    run_with_401_retry(Service::Hinatazaka, "h_access_token", progress, || {
-        let config: Config<HClient> = app.hinatazaka_config(refresh_token)?;
-        run_controller(&config, jobs, Service::Hinatazaka, progress)
-    })
+    run_with_401_retry(
+        Service::Hinatazaka,
+        "h_access_token",
+        app.browser_auth(Service::Hinatazaka),
+        progress,
+        |force| {
+            let config: Config<HClient> = app.hinatazaka_config(refresh_token, force)?;
+            run_controller(&config, jobs, Service::Hinatazaka, progress)
+        },
+    )
 }
 
 fn run_nogizaka(app: &App, jobs: usize, progress: &ProgressSender) -> Result<()> {
     let refresh_token = match app.matches.value_of("n_refresh_token") {
         Some(token) => token,
-        None => return Ok(()),
+        None if app.browser_auth(Service::Nogizaka) => "",
+        None => return Err("No authentication configured for nogizaka. Use colmsg login nogizaka (recommended Cookie authentication); deprecated refresh-token mode requires --n_refresh_token.".into()),
     };
-    run_with_401_retry(Service::Nogizaka, "n_access_token", progress, || {
-        let config: Config<NClient> = app.nogizaka_config(refresh_token)?;
-        run_controller(&config, jobs, Service::Nogizaka, progress)
-    })
+    run_with_401_retry(
+        Service::Nogizaka,
+        "n_access_token",
+        app.browser_auth(Service::Nogizaka),
+        progress,
+        |force| {
+            let config: Config<NClient> = app.nogizaka_config(refresh_token, force)?;
+            run_controller(&config, jobs, Service::Nogizaka, progress)
+        },
+    )
 }
 
 fn run_asukasaito(app: &App, jobs: usize, progress: &ProgressSender) -> Result<()> {
     let refresh_token = match app.matches.value_of("a_refresh_token") {
         Some(token) => token,
-        None => return Ok(()),
+        None if app.browser_auth(Service::Asukasaito) => "",
+        None => return Err("No authentication configured for asukasaito. Use colmsg login asukasaito (recommended Cookie authentication); deprecated refresh-token mode requires --a_refresh_token.".into()),
     };
-    run_with_401_retry(Service::Asukasaito, "a_access_token", progress, || {
-        let config: Config<AClient> = app.asukasaito_config(refresh_token)?;
-        run_controller(&config, jobs, Service::Asukasaito, progress)
-    })
+    run_with_401_retry(
+        Service::Asukasaito,
+        "a_access_token",
+        app.browser_auth(Service::Asukasaito),
+        progress,
+        |force| {
+            let config: Config<AClient> = app.asukasaito_config(refresh_token, force)?;
+            run_controller(&config, jobs, Service::Asukasaito, progress)
+        },
+    )
 }
 
 fn run_maishiraishi(app: &App, jobs: usize, progress: &ProgressSender) -> Result<()> {
     let refresh_token = match app.matches.value_of("m_refresh_token") {
         Some(token) => token,
-        None => return Ok(()),
+        None if app.browser_auth(Service::Maishiraishi) => "",
+        None => return Err("No authentication configured for maishiraishi. Use colmsg login maishiraishi (recommended Cookie authentication); deprecated refresh-token mode requires --m_refresh_token.".into()),
     };
-    run_with_401_retry(Service::Maishiraishi, "m_access_token", progress, || {
-        let config: Config<MClient> = app.maishiraishi_config(refresh_token)?;
-        run_controller(&config, jobs, Service::Maishiraishi, progress)
-    })
+    run_with_401_retry(
+        Service::Maishiraishi,
+        "m_access_token",
+        app.browser_auth(Service::Maishiraishi),
+        progress,
+        |force| {
+            let config: Config<MClient> = app.maishiraishi_config(refresh_token, force)?;
+            run_controller(&config, jobs, Service::Maishiraishi, progress)
+        },
+    )
 }
 
 fn run_yodel(app: &App, jobs: usize, progress: &ProgressSender) -> Result<()> {
     let refresh_token = match app.matches.value_of("y_refresh_token") {
         Some(token) => token,
-        None => return Ok(()),
+        None if app.browser_auth(Service::Yodel) => "",
+        None => return Err("No authentication configured for yodel. Use colmsg login yodel (recommended Cookie authentication); deprecated refresh-token mode requires --y_refresh_token.".into()),
     };
-    run_with_401_retry(Service::Yodel, "y_access_token", progress, || {
-        let config: Config<YClient> = app.yodel_config(refresh_token)?;
-        run_controller(&config, jobs, Service::Yodel, progress)
-    })
+    run_with_401_retry(
+        Service::Yodel,
+        "y_access_token",
+        app.browser_auth(Service::Yodel),
+        progress,
+        |force| {
+            let config: Config<YClient> = app.yodel_config(refresh_token, force)?;
+            run_controller(&config, jobs, Service::Yodel, progress)
+        },
+    )
 }
 
 fn selected_services(app: &App) -> Vec<Service> {
@@ -140,7 +186,12 @@ fn selected_services(app: &App) -> Vec<Service> {
                 Service::Maishiraishi => "m_refresh_token",
                 Service::Yodel => "y_refresh_token",
             };
-            if app.matches.value_of(token_argument).is_none() {
+            let configured = if app.browser_auth(*service) {
+                auth::has_browser_login(*service)
+            } else {
+                app.matches.value_of(token_argument).is_some()
+            };
+            if !configured && app.matches.values_of("group").is_none() {
                 return false;
             }
             match app.matches.values_of("group") {
@@ -170,6 +221,23 @@ fn run_selected_services(
     let services = selected_services(app);
     if services.is_empty() {
         return Ok(process::ExitCode::SUCCESS);
+    }
+
+    for service in &services {
+        let token_argument = match service {
+            Service::Sakurazaka => "s_refresh_token",
+            Service::Hinatazaka => "h_refresh_token",
+            Service::Nogizaka => "n_refresh_token",
+            Service::Asukasaito => "a_refresh_token",
+            Service::Maishiraishi => "m_refresh_token",
+            Service::Yodel => "y_refresh_token",
+        };
+        if !app.browser_auth(*service) && app.matches.is_present(token_argument) {
+            eprintln!("{}", ansi_term::Colour::Yellow.paint(format!(
+                "[colmsg warning] {}: refresh-token authentication is deprecated. Use Cookie authentication: colmsg login {}; then colmsg -g {}.",
+                service.name(), service.slug(), service.slug()
+            )));
+        }
     }
 
     let (progress, events) = mpsc::channel();
@@ -254,6 +322,17 @@ fn run_selected_services(
 
 fn run() -> Result<process::ExitCode> {
     let app = App::new()?;
+    if let Some(login) = app.matches.subcommand_matches("login") {
+        auth::login(
+            auth::service(login.value_of("service").unwrap())?,
+            login.value_of("browser"),
+        )?;
+        return Ok(process::ExitCode::SUCCESS);
+    }
+    if app.matches.subcommand_matches("auth").is_some() {
+        auth::status()?;
+        return Ok(process::ExitCode::SUCCESS);
+    }
     if app.matches.is_present("config-path") {
         writeln!(io::stdout(), "{}", config_file().to_string_lossy())?;
         return Ok(process::ExitCode::SUCCESS);
