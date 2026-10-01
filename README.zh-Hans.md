@@ -28,13 +28,6 @@ colmsg login sakurazaka
 colmsg
 ```
 
-登录成功后，认证信息保存在配置目录中的 `auth/<service>.json`。
-查看已保存的认证方式、账户和有效期。
-
-```sh
-colmsg auth status
-```
-
 ## 功能
 
 * ✅ 无需 root 设备
@@ -42,7 +35,7 @@ colmsg auth status
 * ✅ 可在 Windows、macOS 和 Linux 上运行
 * ✅ 支持多种消息筛选和保存方式
 
-## 使用方法
+## 消息保存选项
 
 可通过选项选择要保存的内容。
 
@@ -77,6 +70,23 @@ colmsg --jobs 2
 ```
 
 选项可以组合使用。运行 `colmsg --help` 查看详细说明。
+
+## 登录
+
+登录时使用的浏览器会自动检测。如需指定 Chrome、Brave、Edge 等基于 Chromium 的浏览器，或自动检测失败，请通过 `--browser` 指定浏览器可执行文件的路径。
+
+```sh
+colmsg login sakurazaka --browser '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
+```
+
+也可通过环境变量 `COLMSG_BROWSER` 指定，`--browser` 优先。
+
+登录成功后，认证信息保存在配置目录中的 `auth/<service>.json`。
+可以查看已保存的认证方式、账户和有效期。
+
+```sh
+colmsg auth status
+```
 
 ## 详细信息
 

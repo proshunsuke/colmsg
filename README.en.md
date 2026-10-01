@@ -28,13 +28,6 @@ Save the full message history for all subscribed members.
 colmsg
 ```
 
-After a successful login, credentials are saved in `auth/<service>.json` under the configuration directory.
-Check the saved authentication method, account, and expiry.
-
-```sh
-colmsg auth status
-```
-
 ## Features
 
 * ✅ No device rooting required
@@ -42,7 +35,7 @@ colmsg auth status
 * ✅ Runs on Windows, macOS, and Linux
 * ✅ Offers several ways to filter and save messages
 
-## Usage
+## Message saving options
 
 You can use options to choose what to save.
 
@@ -77,6 +70,23 @@ colmsg --jobs 2
 ```
 
 You can combine options. Run `colmsg --help` for details.
+
+## Login
+
+The browser used for login is detected automatically. To select a Chromium-based browser such as Chrome, Brave, or Edge, or if automatic detection fails, specify the browser executable path with `--browser`.
+
+```sh
+colmsg login sakurazaka --browser '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
+```
+
+You can also set the `COLMSG_BROWSER` environment variable; `--browser` takes precedence.
+
+After a successful login, credentials are saved in `auth/<service>.json` under the configuration directory.
+You can check the saved authentication method, account, and expiry.
+
+```sh
+colmsg auth status
+```
 
 ## Details
 
