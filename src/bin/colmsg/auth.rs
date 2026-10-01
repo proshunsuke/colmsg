@@ -487,7 +487,9 @@ impl Cdp {
                 Err(tungstenite::Error::Io(e))
                     if matches!(
                         e.kind(),
-                        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                        std::io::ErrorKind::WouldBlock
+                            | std::io::ErrorKind::TimedOut
+                            | std::io::ErrorKind::Interrupted
                     ) => {}
                 Err(_) => return Err("Browser connection closed before login completed".into()),
             }
