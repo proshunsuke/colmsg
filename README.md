@@ -28,13 +28,6 @@ colmsg login sakurazaka
 colmsg
 ```
 
-ログイン成功後の認証情報は設定ディレクトリの `auth/<service>.json` に保存されます。  
-保存された認証方式・アカウント・期限を確認します。
-
-```sh
-colmsg auth status
-```
-
 ## 特徴
 
 * ✅ 端末のroot化の必要がありません
@@ -42,7 +35,7 @@ colmsg auth status
 * ✅ Windows, macos, Linuxで実行できます
 * ✅ 様々な保存方法が選べます
 
-## 使い方
+## 保存方法のオプション
 
 `colmsg` にはいくつかのオプションがあり、様々な保存方法を選べます。
 
@@ -80,6 +73,23 @@ colmsg --jobs 2
 
 ```sh
 colmsg --help
+```
+
+## ログイン
+
+ログイン時に使用するブラウザは自動検出されます。Chrome・Brave・EdgeなどのChromium系ブラウザを指定したい場合や、自動検出できない場合は、`--browser` にブラウザの実行ファイルのパスを指定してください。
+
+```sh
+colmsg login sakurazaka --browser '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
+```
+
+環境変数 `COLMSG_BROWSER` でも指定でき、`--browser` が優先されます。
+
+ログイン成功後の認証情報は設定ディレクトリの `auth/<service>.json` に保存されます。  
+保存された認証方式・アカウント・期限を確認できます。
+
+```sh
+colmsg auth status
 ```
 
 ## 詳細な仕様
