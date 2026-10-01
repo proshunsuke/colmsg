@@ -1,4 +1,9 @@
-# refresh_tokenの取得方法
+# refresh_tokenの旧取得手順（非推奨）
+
+> [!WARNING]
+> refresh_token認証は非推奨（deprecated）です。基本の利用方法は[ブラウザ認証（Cookie）](../README.md#使い始める)を参照してください。`colmsg login <service>` で認証を登録でき、MITMやアプリデータの削除は不要です。
+>
+> 以下は従来方式の旧手順です。現在のアプリ・OSでの動作やトークン取得を保証しません。iOSではアプリ更新によって取得できない問題が報告されています。従来方式で保存すると、colmsgは黄色の警告と移行方法を表示します。
 
 ## はじめに
 

@@ -1,8 +1,5 @@
 [日本語](README.md) | English | [简体中文](README.zh-Hans.md) | [繁體中文](README.zh-Hant.md)
 
-> [!WARNING]
-> iOS users currently cannot obtain a `refresh_token`. This is caused by an update to the messaging apps, not by `colmsg`, and there is currently no complete workaround. Android users can follow the [Japanese instructions](doc/how_to_get_refresh_token.md#android%E3%82%A2%E3%83%97%E3%83%AA%E3%81%AE%E5%A0%B4%E5%90%88).
-
 <div align="center">
   <h1><strong>colmsg</strong></h1>
   <img src="https://user-images.githubusercontent.com/3148511/158018437-09822a33-8767-4e03-ba90-e0f69594c493.jpeg" width="32px" alt="Sakurazaka46 Message logo"><img src="https://user-images.githubusercontent.com/3148511/158018441-dd7cb9eb-bf31-4938-830d-1ef293a2afba.jpg" width="32px" alt="Hinatazaka46 Message logo"><img src="https://user-images.githubusercontent.com/3148511/158018442-ae54e926-760d-4b47-b0a0-7255485e1f28.jpg" width="32px" alt="Nogizaka46 Message logo">
@@ -12,69 +9,70 @@
   ![Demo](doc/demo/colmsg.gif)
 </div>
 
-## Overview
+## Getting started
 
-See [Installation](#installation) for how to install `colmsg`.
+Install `colmsg` by following [Installation](#installation).
+On Windows, use `colmsg.exe` instead of `colmsg`.
 
-First, obtain a `refresh_token`. The instructions are [here (Japanese)](doc/how_to_get_refresh_token.md).
+Complete the login account setup in the app beforehand.  
+Log in once for each service.
 
-Then run the following command. Replace each placeholder with the `refresh_token` from its corresponding app: Sakurazaka46 Message, Hinatazaka46 Message, Nogizaka46 Message, Asuka Saito Message, Mai Shiraishi Message, or yodel. You only need to provide tokens for apps to which you subscribe.
-
-This saves the full message history for all subscribed members.
-
-```fish
-colmsg --s_refresh_token <s_refresh_token> --h_refresh_token <h_refresh_token> --n_refresh_token <n_refresh_token> --a_refresh_token <a_refresh_token> --m_refresh_token <m_refresh_token> --y_refresh_token <y_refresh_token>
+```sh
+colmsg login sakurazaka
 ```
 
-On Windows, use `colmsg.exe` instead of `colmsg`.
+Available service names are `sakurazaka`, `hinatazaka`, `nogizaka`, `asukasaito`, `maishiraishi`, and `yodel`.
+Save the full message history for all subscribed members.
+
+```sh
+colmsg
+```
+
+After a successful login, credentials are saved in `auth/<service>.json` under the configuration directory.
+Check the saved authentication method, account, and expiry.
+
+```sh
+colmsg auth status
+```
 
 ## Features
 
 * ✅ No device rooting required
-* ✅ Works with both Android and iOS apps
+* ✅ The workflow can be completed entirely with colmsg
 * ✅ Runs on Windows, macOS, and Linux
 * ✅ Offers several ways to filter and save messages
-* ✅ Supports the following app versions:
-  * Sakurazaka46 Message: 1.12.01.169
-  * Hinatazaka46 Message: 2.13.01.169
-  * Nogizaka46 Message: 1.8.01.169
-  * Asuka Saito Message: 1.1.01.169
-  * Mai Shiraishi Message: 3.4.3.426
-  * yodel: 4.1.1.455
 
 ## Usage
-
-The overview shows the basic usage. Since a `refresh_token` is sensitive, avoid entering it directly in the terminal. We recommend setting it in a configuration file. See [Configuration file](#configuration-file). The examples below assume that the tokens are configured there.
 
 You can use options to choose what to save.
 
 Save messages from specific members:
 
-```fish
+```sh
 colmsg -n 菅井友香 -n 佐々木久美
 ```
 
 Save messages from a specific group:
 
-```fish
+```sh
 colmsg -g sakurazaka
 ```
 
 Save specific message types:
 
-```fish
+```sh
 colmsg -k picture -k video
 ```
 
 Save messages from a specific date onward:
 
-```fish
+```sh
 colmsg -F '2020/01/01 00:00:00'
 ```
 
 By default, messages for 4 members are saved concurrently per service. Use `--jobs` (`-j`) to set a different concurrency.
 
-```fish
+```sh
 colmsg --jobs 2
 ```
 
@@ -97,12 +95,15 @@ You can combine options. Run `colmsg --help` for details.
           ├── 3_2_20200101000001_菅井友香.mp4
           └── 4_3_20200101000002_菅井友香.mp4
   ```
-* File names use the format `<sequence>_<type>_<date>_<poster-name>.<extension>`. The sequence and date prefix remains unchanged, so files continue to sort chronologically. If the poster cannot be identified, the name is `unknown`. The type number is:
-  * 0: Text
-  * 1: Picture
-  * 2: Video
-  * 3: Voice
-  * 4: Link
+* File names use the format `<sequence>_<type>_<date>_<poster-name>.<extension>`.
+  * The sequence number represents the chronological order of messages. The portion before the poster's name retains its order, so sorting files lexicographically in a file browser displays messages chronologically.
+  * If the poster cannot be identified, `unknown` is used.
+  * The type numbers are:
+    * 0: Text
+    * 1: Picture
+    * 2: Video
+    * 3: Voice
+    * 4: Link
 * Run `colmsg --download-dir` to see the download directory resolved from the configuration file and command-line options.
 * Already-saved messages are not overwritten.
 
@@ -110,50 +111,69 @@ You can combine options. Run `colmsg --help` for details.
 
 You can set default options in a configuration file. Run `colmsg --config-path` to see the path to the configuration file currently used. You can also set the configuration file path with `COLMSG_CONFIG_PATH`:
 
-```fish
-set -gx COLMSG_CONFIG_PATH /path/to/colmsg.conf
+```sh
+export COLMSG_CONFIG_PATH="/path/to/colmsg.conf"
 ```
 
 ### Format
 
-The configuration file is a list of command-line arguments. Run `colmsg --help` to see available options. Lines beginning with `#` are comments.
+The configuration file is a simple list of command-line arguments. Run `colmsg --help` to see available options and values. Use `#` to add comments.
 
 Example:
 
 ```text
-# Sakurazaka46 refresh token
---s_refresh_token s_refresh_token
-
-# Hinatazaka46 refresh token
---h_refresh_token h_refresh_token
-
-# Nogizaka46 refresh token
---n_refresh_token n_refresh_token
-
-# Asuka Saito refresh token
---a_refresh_token a_refresh_token
-
-# Mai Shiraishi refresh token
---m_refresh_token m_refresh_token
-
-# yodel refresh token
---y_refresh_token y_refresh_token
+# Save only Sakurazaka messages
+-g sakurazaka
 
 # Save only media files
 -k picture -k video -k voice
+
+# Set concurrent member saves per service to 6
+--jobs 6
+```
+
+## Legacy refresh_token authentication (deprecated)
+
+The `refresh_token` method is **deprecated**. For new setups and migration, use Cookie authentication with `colmsg login <service>`.
+
+Only when using the legacy method, consult the [old acquisition instructions (Japanese)](doc/how_to_get_refresh_token.md) and put the tokens for each service in the configuration file.
+
+Legacy configuration example (deprecated; include only the services you need):
+
+```text
+# Set s_refresh_token
+--s_refresh_token s_refresh_token
+
+# Set h_refresh_token
+--h_refresh_token h_refresh_token
+
+# Set n_refresh_token
+--n_refresh_token n_refresh_token
+
+# Set a_refresh_token
+--a_refresh_token a_refresh_token
+
+# Set m_refresh_token
+--m_refresh_token m_refresh_token
+
+# Set y_refresh_token
+--y_refresh_token y_refresh_token
 ```
 
 ## Installation
 
 ### Windows
 
-Download the Windows archive from the [releases page](https://github.com/proshunsuke/colmsg/releases) and extract it with a tool such as [7-Zip](https://www.7-zip.org/). The archive contains `colmsg.exe`, which you can run from PowerShell or another terminal.
+Download the ZIP archive containing the prebuilt Windows executable from the [releases page](https://github.com/proshunsuke/colmsg/releases).
+Extract it with a tool such as [7-Zip](https://sevenzip.osdn.jp/).
+The extracted executable is `colmsg.exe`.
+Run it from [PowerShell](https://docs.microsoft.com/ja-jp/powershell/) or another terminal.
 
 ### macOS
 
 Install with Homebrew:
 
-```fish
+```sh
 brew tap proshunsuke/colmsg
 brew install colmsg
 ```
@@ -162,7 +182,7 @@ brew install colmsg
 
 Install from the [AUR](https://aur.archlinux.org/packages/colmsg/):
 
-```fish
+```sh
 yay -S colmsg
 ```
 
@@ -177,15 +197,15 @@ Format Rust code with `make fmt`; check formatting with `make fmt-check`.
 
 For local API development, you can start the OpenAPI mock servers:
 
-```fish
+```sh
 make server/kh
 make server/n46
 ```
 
 Set `S_BASE_URL`, `H_BASE_URL`, and `N_BASE_URL` to route requests to the mock servers. For example:
 
-```fish
-env S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
+```sh
+S_BASE_URL=http://localhost:8003 H_BASE_URL=http://localhost:8003 N_BASE_URL=http://localhost:8006 cargo run -- -d ~/Downloads/temp/ --help
 ```
 
 ## License
