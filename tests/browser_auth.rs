@@ -240,6 +240,57 @@ fn browser_yodel() {
 }
 
 #[test]
+fn repeated_logins_reset_only_the_selected_service_with_or_without_credentials() {
+    for service in SERVICES {
+        let mut s = scenario(service);
+        let origin = format!("https://{}", host(&s));
+        let api_origin = format!("https://api.{}", host(&s));
+        let parent_api_origin = format!("https://api.{}", host(&s).split_once('.').unwrap().1);
+        let mut data = browser_scenario(&s);
+        let mut storage = json!({
+            "https://accounts.google.com":{"session":"google-session"},
+            "https://unrelated.example":{"session":"other-service-session"}
+        });
+        for site in [&origin, &api_origin, &parent_api_origin] {
+            storage[site] = json!({"session":"old-service-session","access_token":"cached-token"});
+        }
+        data["initial_storage"] = storage.clone();
+        let mut previous_profile = None;
+        for attempt in 0..3 {
+            if attempt == 1 {
+                fs::remove_file(auth_path(&s)).unwrap();
+            }
+            let refresh = good_update(&mut s);
+            let who = account(&mut s, 200, json!({"username":"test-user"}));
+            login(&s, data.clone()).assert().success();
+            refresh.assert();
+            who.assert();
+            assert_eq!(saved(&s)["username"], "test-user");
+            let profile =
+                PathBuf::from(fs::read_to_string(s.root.path().join("profile.txt")).unwrap());
+            if let Some(previous) = &previous_profile {
+                assert_eq!(&profile, previous);
+            }
+            let before: Value =
+                serde_json::from_slice(&fs::read(profile.join("before-navigation.json")).unwrap())
+                    .unwrap();
+            for site in [&origin, &api_origin, &parent_api_origin] {
+                assert!(before.get(site).is_none());
+            }
+            assert_eq!(
+                before["https://accounts.google.com"],
+                storage["https://accounts.google.com"]
+            );
+            assert_eq!(
+                before["https://unrelated.example"],
+                storage["https://unrelated.example"]
+            );
+            previous_profile = Some(profile);
+        }
+    }
+}
+
+#[test]
 fn expired_tokens_are_updated_for_every_service() {
     for service in SERVICES {
         let mut s = scenario(service);
@@ -331,27 +382,73 @@ fn invalid_saved_credentials_are_rejected_without_network_or_secrets() {
     assert!(!String::from_utf8_lossy(&out.stderr).contains("SECRET"));
 }
 #[test]
-fn failed_updates_leave_saved_credentials_unchanged() {
+fn failed_updates_preserve_rotated_cookies_only_after_successful_http_responses() {
     for (status, body) in [
         (400, json!({})),
         (401, json!({})),
         (500, json!({})),
         (302, json!({})),
+        (200, json!({})),
         (200, json!({"access_token":"","expires_in":3600})),
+        (200, json!({"access_token":"SECRET"})),
         (200, json!({"access_token":"SECRET","expires_in":0})),
         (200, json!({"access_token":"SECRET","expires_in":-1})),
         (200, json!({"access_token":"SECRET","expires_in":i64::MAX})),
         (200, json!({"access_token":"SECRET","expires_in":"3600"})),
     ] {
         let mut s = scenario(SERVICES[0]);
-        let c = credential(&s, 0);
+        let mut c = credential(
+            &s,
+            if status == 200 {
+                chrono::Utc::now().timestamp() + 3600
+            } else {
+                0
+            },
+        );
+        if status == 200 {
+            c["access_token"] = json!("rejected-token");
+        }
         write_credential(&s, &c);
+        let rejected = if status == 200 {
+            Some(
+                s.server
+                    .mock("GET", "/v2/members?")
+                    .match_header("authorization", "Bearer rejected-token")
+                    .with_status(401)
+                    .expect(1)
+                    .create(),
+            )
+        } else {
+            None
+        };
         let refresh = update(&mut s, status, body, "session=old-secret");
         let out = download(&s).output().unwrap();
         assert!(!out.status.success());
-        assert_eq!(saved(&s), c);
+        if status == 200 {
+            let stored = saved(&s);
+            assert_eq!(stored["expires_at"], 0);
+            assert_eq!(stored["access_token"], "");
+            assert_eq!(stored["username"], c["username"]);
+            assert_eq!(stored["cookie_expires_at"], 1924992000_i64);
+            assert_eq!(stored["cookies"].as_array().unwrap().len(), 1);
+            assert!(stored["cookies"][0]
+                .as_str()
+                .unwrap()
+                .contains("rotated-secret"));
+            let body = json!({"access_token":format!("test-access-token-{}",s.service.group),"expires_in":3600});
+            let retry = update(&mut s, 200, body, "session=rotated-secret");
+            let who = account(&mut s, 200, json!({"username":"test-user"}));
+            assert_download(&mut s);
+            retry.assert();
+            who.assert();
+        } else {
+            assert_eq!(saved(&s), c);
+        }
         assert!(!String::from_utf8_lossy(&out.stderr).contains("SECRET"));
         refresh.assert();
+        if let Some(rejected) = rejected {
+            rejected.assert();
+        }
     }
 }
 #[test]
@@ -390,6 +487,7 @@ fn browser_errors_do_not_overwrite_existing_credentials_and_retain_profile() {
         "targets",
         "missing_connection",
         "command_error",
+        "reset_error",
         "close",
         "invalid_protocol",
         "encoded",
@@ -407,6 +505,7 @@ fn browser_errors_do_not_overwrite_existing_credentials_and_retain_profile() {
             "targets" => data["targets"] = json!([]),
             "missing_connection" => data["targets"] = json!([{"type":"page"}]),
             "command_error" => data[mode] = json!("Network.enable"),
+            "reset_error" => data["command_error"] = json!("Storage.clearDataForOrigin"),
             "encoded" => data["body_result"] = json!({"base64Encoded":true}),
             "body" => data["body_result"] = json!({"body":"SECRET invalid response"}),
             "cookies" => data[mode] = json!([]),
@@ -422,6 +521,7 @@ fn browser_errors_do_not_overwrite_existing_credentials_and_retain_profile() {
             "targets" => "Browser has no page target",
             "missing_connection" => "Browser has no debugging connection",
             "command_error" => "Browser command failed: Network.enable",
+            "reset_error" => "Browser command failed: Storage.clearDataForOrigin",
             "close" => "Browser closed before login completed",
             "invalid_protocol" => "Invalid browser protocol response",
             "encoded" => "Unexpected encoded authentication response",
@@ -753,6 +853,13 @@ fn authentication_and_account_invalid_json_are_sanitized() {
                 },
             )
             .with_header("content-type", "application/json")
+            .with_header(
+                "set-cookie",
+                &format!(
+                    "session=rotated-secret; Domain={}; Path=/v2/update_token; Secure; HttpOnly; Expires=Wed, 01 Jan 2031 00:00:00 GMT",
+                    host(&s)
+                ),
+            )
             .with_body("SECRET invalid-json")
             .expect(1)
             .create();
@@ -764,8 +871,19 @@ fn authentication_and_account_invalid_json_are_sanitized() {
             m.assert();
             assert_eq!(saved(&s)["expires_at"], 0);
         } else {
-            assert_eq!(saved(&s), c);
+            assert_eq!(saved(&s)["expires_at"], 0);
+            assert_eq!(saved(&s)["access_token"], "");
         }
+        assert!(saved(&s)["cookies"][0]
+            .as_str()
+            .unwrap()
+            .contains("rotated-secret"));
+        let body = json!({"access_token":format!("test-access-token-{}",s.service.group),"expires_in":3600});
+        let retry = update(&mut s, 200, body, "session=rotated-secret");
+        let who = account(&mut s, 200, json!({"username":"test-user"}));
+        assert_download(&mut s);
+        retry.assert();
+        who.assert();
     }
 }
 

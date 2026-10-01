@@ -475,7 +475,12 @@ fn terminal_progress_omits_services_without_matching_members() {
     let catalog = s.catalog();
     let (status, terminal_output) = run_with_terminal(&s, &["--name", "not-a-member"], 80);
     assert!(status.success());
-    assert!(!terminal_output.contains("Sakurazaka"));
+    let (warnings, progress): (Vec<_>, Vec<_>) = terminal_output
+        .lines()
+        .partition(|line| line.contains("[colmsg warning]"));
+    assert_eq!(warnings.len(), 1);
+    assert!(warnings[0].contains("refresh-token authentication is deprecated"));
+    assert!(!progress.iter().any(|line| line.contains("Sakurazaka")));
     assert!(terminal_output.contains("No matching members found."));
 
     auth.assert();
@@ -613,10 +618,13 @@ fn no_matching_members_only_prints_the_result_line() {
         .output()
         .unwrap();
     assert!(output.status.success());
-    assert_eq!(
-        String::from_utf8_lossy(&output.stderr),
-        "No matching members found.\n"
-    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let (warnings, progress): (Vec<_>, Vec<_>) = stderr
+        .lines()
+        .partition(|line| line.contains("[colmsg warning]"));
+    assert_eq!(warnings.len(), 1);
+    assert!(warnings[0].contains("refresh-token authentication is deprecated"));
+    assert_eq!(progress, vec!["No matching members found."]);
 
     auth.assert();
     for mock in catalog {

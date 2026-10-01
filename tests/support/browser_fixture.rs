@@ -17,6 +17,16 @@ fn main() {
     let scenario: Value =
         serde_json::from_slice(&fs::read(env::var_os("BROWSER_SCENARIO").unwrap()).unwrap())
             .unwrap();
+    let storage_path = profile.join("browser-storage.json");
+    let mut storage: Value = fs::read(&storage_path)
+        .ok()
+        .map(|bytes| serde_json::from_slice(&bytes).unwrap())
+        .unwrap_or_else(|| {
+            scenario
+                .get("initial_storage")
+                .cloned()
+                .unwrap_or_else(|| json!({}))
+        });
     fs::write(
         env::var_os("BROWSER_PROFILE").unwrap(),
         profile.to_string_lossy().as_bytes(),
@@ -89,6 +99,14 @@ fn main() {
                 .unwrap();
             continue;
         }
+        if method == "Storage.clearDataForOrigin" {
+            assert_eq!(request["params"]["storageTypes"], "all");
+            storage
+                .as_object_mut()
+                .unwrap()
+                .remove(request["params"]["origin"].as_str().unwrap());
+            fs::write(&storage_path, storage.to_string()).unwrap();
+        }
         let result = match method {
             "Network.getResponseBody" if scenario["bodies"][request["params"]["requestId"].as_str().unwrap_or("")].is_object() => scenario["bodies"][request["params"]["requestId"].as_str().unwrap()].clone(),
             "Network.getResponseBody" => scenario.get("body_result").cloned().unwrap_or_else(||json!({"body":"{\"access_token\":\"browser-only-token\"}","base64Encoded":false})),
@@ -97,6 +115,21 @@ fn main() {
         };
         // Deliver events while a command is pending, exercising protocol event queuing.
         if method == "Page.navigate" {
+            let url = url::Url::parse(request["params"]["url"].as_str().unwrap()).unwrap();
+            let origin = url.origin().ascii_serialization();
+            fs::write(profile.join("before-navigation.json"), storage.to_string()).unwrap();
+            if storage.get(&origin).is_some() {
+                socket
+                    .send(Message::Text(
+                        json!({"id":request["id"],"error":{"message":"Service is already logged in"}})
+                            .to_string()
+                            .into(),
+                    ))
+                    .unwrap();
+                continue;
+            }
+            storage[&origin] = json!({"session":"new-service-session"});
+            fs::write(&storage_path, storage.to_string()).unwrap();
             if scenario["disconnect"] == true {
                 return;
             }
