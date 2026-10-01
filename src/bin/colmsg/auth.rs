@@ -55,14 +55,21 @@ fn web_host(service: Service) -> &'static str {
     }
 }
 
+fn web_api_hosts(service: Service) -> [String; 3] {
+    let host = web_host(service);
+    [
+        host.to_owned(),
+        format!("api.{}", host),
+        format!("api.{}", host.split_once('.').unwrap().1),
+    ]
+}
+
 fn trusted_api(service: Service, url: &Url) -> bool {
     url.scheme() == "https"
         && url.port_or_known_default() == Some(443)
-        && url.host_str().is_some_and(|h| {
-            h == web_host(service)
-                || h == format!("api.{}", web_host(service))
-                || h == format!("api.{}", web_host(service).split_once('.').unwrap().1)
-        })
+        && url
+            .host_str()
+            .is_some_and(|h| web_api_hosts(service).iter().any(|host| host == h))
 }
 
 #[derive(Serialize, Deserialize)]
@@ -188,22 +195,6 @@ fn update(service: Service, c: &mut Credential) -> Result<()> {
     for cookie in &rotated {
         jar.add_cookie_str(cookie, &url);
     }
-    let body: Value = response
-        .json()
-        .map_err(|_| Error::Msg("Invalid authentication update response".into()))?;
-    c.access_token = body["access_token"]
-        .as_str()
-        .filter(|s| !s.is_empty())
-        .ok_or("Authentication response has no access token")?
-        .to_owned();
-    let seconds = body["expires_in"]
-        .as_i64()
-        .filter(|s| *s > 0)
-        .ok_or("Authentication response has no token lifetime")?;
-    c.expires_at = Utc::now()
-        .timestamp()
-        .checked_add(seconds)
-        .ok_or("Invalid token lifetime")?;
     if !jar.cookies(&url).is_some_and(|cookies| {
         cookies.to_str().is_ok_and(|value| {
             value
@@ -213,6 +204,7 @@ fn update(service: Service, c: &mut Credential) -> Result<()> {
     }) {
         return Err("Authentication update removed the session cookie".into());
     }
+    let mut cookies_updated = false;
     for cookie in rotated {
         // Keep cookies for this update endpoint only; logout-path cookies are unnecessary.
         let pair = cookie.split(';').next().unwrap_or("");
@@ -234,7 +226,32 @@ fn update(service: Service, c: &mut Credential) -> Result<()> {
             }
         }
         c.cookies.push(cookie);
+        cookies_updated = true;
     }
+    if cookies_updated && !c.username.is_empty() {
+        // A rotated cookie may invalidate the previous one even if the body is
+        // malformed. Preserve it before parsing, without caching an unverified
+        // token. New logins remain unsaved until their account is verified.
+        c.access_token.clear();
+        c.expires_at = 0;
+        save(service, c)?;
+    }
+    let body: Value = response
+        .json()
+        .map_err(|_| Error::Msg("Invalid authentication update response".into()))?;
+    c.access_token = body["access_token"]
+        .as_str()
+        .filter(|s| !s.is_empty())
+        .ok_or("Authentication response has no access token")?
+        .to_owned();
+    let seconds = body["expires_in"]
+        .as_i64()
+        .filter(|s| *s > 0)
+        .ok_or("Authentication response has no token lifetime")?;
+    c.expires_at = Utc::now()
+        .timestamp()
+        .checked_add(seconds)
+        .ok_or("Invalid token lifetime")?;
     Ok(())
 }
 
@@ -632,6 +649,14 @@ pub fn login(service: Service, browser_path: Option<&str>) -> Result<()> {
         "Network.setBlockedURLs",
         json!({"urls": ["*/v2/groups/*/timeline*", "*/v2/groups/*/past_messages*"]}),
     )?;
+    // Start a fresh service login on every invocation. Keep identity-provider
+    // sessions (e.g. Google) and other services in the shared profile intact.
+    for host in web_api_hosts(service) {
+        cdp.command(
+            "Storage.clearDataForOrigin",
+            json!({"origin":format!("https://{}", host),"storageTypes":"all"}),
+        )?;
+    }
     cdp.command(
         "Page.navigate",
         json!({"url":format!("https://{}/", web_host(service))}),
