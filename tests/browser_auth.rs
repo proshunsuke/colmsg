@@ -1095,7 +1095,11 @@ fn cancelling_browser_login_cleans_up_during_startup_and_during_network_wait() {
         assert_eq!(unsafe { libc::kill(child.id() as i32, libc::SIGINT) }, 0);
         let out = bounded_output(child);
         assert!(!out.status.success());
-        assert!(String::from_utf8_lossy(&out.stderr).contains("cancelled"));
+        assert!(
+            String::from_utf8_lossy(&out.stderr).contains("cancelled"),
+            "startup={startup}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
         assert_eq!(saved(&s), c);
         assert_profile_retained(&s);
     }
