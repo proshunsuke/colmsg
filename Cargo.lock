@@ -289,7 +289,7 @@ dependencies = [
 
 [[package]]
 name = "colmsg"
-version = "4.0.0"
+version = "5.0.0"
 dependencies = [
  "ansi_colours",
  "ansi_term",
