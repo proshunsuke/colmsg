@@ -1,5 +1,17 @@
 ## Packaging
 
+# v5.0.0
+
+## Changes
+
+- Add browser Cookie authentication for all six services with `colmsg login <service>`, automatic token renewal, and `colmsg auth status` (#146).
+- Allow browser selection with `--browser` or `COLMSG_BROWSER` (#146).
+- Deprecate refresh-token authentication and display a warning when used. To migrate, set up the login account in the app and run `colmsg login <service>` for each service. Saved Cookie credentials take precedence over refresh tokens (#146).
+
+## Maintenance
+
+- Verify AUR package builds before release and on every pull request (#145).
+
 # v4.0.0
 
 ## BREAKING CHANGES
