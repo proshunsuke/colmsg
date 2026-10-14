@@ -55,7 +55,7 @@ optional = true
 
 [dev-dependencies]
 tempdir = "^0.3.7"
-assert_cmd = "^0.12.0"
+assert_cmd = "^2.2.2"
 escargot = { version = "^0.5.0", features = ["test_unstable"] }
 mockito = "1.7.2"
 libc = "0.2.189"
